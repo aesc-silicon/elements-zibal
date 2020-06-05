@@ -95,6 +95,7 @@ fresh: clean
 	rm -rf $(CALLPATH)/target
 	rm -rf $(MCUPATH)/project/target
 	rm -rf $(MCUPATH)/scripts/target
+	rm -rf $(MCUPATH)/build
 	rm -rf $(CALLPATH)/zephyr-dev/target
 	rm -rf $(CALLPATH)/VexRiscv/project/project/target
 	rm -rf $(CALLPATH)/VexRiscv/project/target

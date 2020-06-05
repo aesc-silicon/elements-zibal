@@ -7,6 +7,7 @@ project/*
 target/*
 simWorkspace/
 tmp/
+build/
 
 eda/OSS/sim/build
 eda/Xilinx/sim/vivado*.str
