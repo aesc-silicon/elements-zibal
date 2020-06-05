@@ -1,0 +1,78 @@
+package zibal.peripherals.com.uart
+
+import spinal.core._
+import spinal.lib._
+import spinal.lib.bus.misc._
+import spinal.lib.bus.amba3.apb._
+import spinal.lib.bus.avalon._
+import spinal.lib.bus.wishbone._
+
+object Uart {
+  case class Io(p: UartCtrl.Parameter) extends Bundle with IMasterSlave {
+    val txd = Bool
+    val rxd = Bool
+
+    override def asMaster(): Unit = {
+      out(txd)
+      in(rxd)
+    }
+    override def asSlave(): Unit = {
+      in(txd)
+      out(rxd)
+    }
+  }
+
+  object ParityType extends SpinalEnum(binarySequential) {
+    val NONE, EVEN, ODD = newElement()
+  }
+
+  object StopType extends SpinalEnum(binarySequential) {
+    val ONE, TWO = newElement()
+    def toBitCount(that: C) : UInt = (that === ONE) ? U"0" | U"1"
+  }
+
+  class Core[T <: spinal.core.Data with IMasterSlave](
+    p: UartCtrl.Parameter,
+    busType: HardType[T],
+    factory: T => BusSlaveFactory
+  ) extends Component {
+    val io = new Bundle {
+      val bus = slave(busType())
+      val uart = master(Io(p))
+      val interrupt = out(Bool)
+    }
+
+    val ctrl = UartCtrl(p)
+    ctrl.io.uart <> io.uart
+    io.interrupt := ctrl.io.interrupt
+
+    val mapper = UartCtrl.Mapper(factory(io.bus), ctrl.io, p)
+  }
+}
+
+case class Apb3Uart(
+  parameter: UartCtrl.Parameter,
+  busConfig: Apb3Config = Apb3Config(12, 32)
+) extends Uart.Core[Apb3] (
+  parameter,
+  Apb3(busConfig),
+  Apb3SlaveFactory(_)
+) { val dummy = 0 }
+
+case class WishboneUart(
+  parameter: UartCtrl.Parameter,
+  busConfig: WishboneConfig = WishboneConfig(12, 32)
+) extends Uart.Core[Wishbone] (
+  parameter,
+  Wishbone(busConfig),
+  WishboneSlaveFactory(_)
+) { val dummy = 0 }
+
+case class AvalonMMUart(
+  parameter: UartCtrl.Parameter,
+  busConfig: AvalonMMConfig = AvalonMMConfig.fixed(12, 32, 1)
+) extends Uart.Core[AvalonMM] (
+  parameter,
+  AvalonMM(busConfig),
+  AvalonMMSlaveFactory(_)
+) { val dummy = 0 }

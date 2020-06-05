@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="simulate_xsim.wdb" id="1">
+         <top_modules>
+            <top_module name="TH250_tb" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="8477389289fs"></ZoomEndTime>
+      <Cursor1Time time="2000000000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="249"></NameColumnWidth>
+      <ValueColumnWidth column_width="74"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="161" />
+   <wvobject type="logic" fp_name="/TH250_tb/io_clock">
+      <obj_property name="ElementShortName">io_clock</obj_property>
+      <obj_property name="ObjectShortName">io_clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_reset">
+      <obj_property name="ElementShortName">io_reset</obj_property>
+      <obj_property name="ObjectShortName">io_reset</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/io_gpio0">
+      <obj_property name="ElementShortName">io_gpio0[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_gpio0[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/io_gpioStatus">
+      <obj_property name="ElementShortName">io_gpioStatus[2:0]</obj_property>
+      <obj_property name="ObjectShortName">io_gpioStatus[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_jtag_tms">
+      <obj_property name="ElementShortName">io_jtag_tms</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tms</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_jtag_tdi">
+      <obj_property name="ElementShortName">io_jtag_tdi</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tdi</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_jtag_tdo">
+      <obj_property name="ElementShortName">io_jtag_tdo</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tdo</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_jtag_tck">
+      <obj_property name="ElementShortName">io_jtag_tck</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tck</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_uartStd_txd">
+      <obj_property name="ElementShortName">io_uartStd_txd</obj_property>
+      <obj_property name="ObjectShortName">io_uartStd_txd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_uartStd_rxd">
+      <obj_property name="ElementShortName">io_uartStd_rxd</obj_property>
+      <obj_property name="ObjectShortName">io_uartStd_rxd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_uartCom_txd">
+      <obj_property name="ElementShortName">io_uartCom_txd</obj_property>
+      <obj_property name="ObjectShortName">io_uartCom_txd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_uartCom_rxd">
+      <obj_property name="ElementShortName">io_uartCom_rxd</obj_property>
+      <obj_property name="ObjectShortName">io_uartCom_rxd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_uartRS232_txd">
+      <obj_property name="ElementShortName">io_uartRS232_txd</obj_property>
+      <obj_property name="ObjectShortName">io_uartRS232_txd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_uartRS232_rxd">
+      <obj_property name="ElementShortName">io_uartRS232_rxd</obj_property>
+      <obj_property name="ObjectShortName">io_uartRS232_rxd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_spi1_sclk">
+      <obj_property name="ElementShortName">io_spi1_sclk</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_sclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_spi1_ss">
+      <obj_property name="ElementShortName">io_spi1_ss</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_ss</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_spi1_mosi">
+      <obj_property name="ElementShortName">io_spi1_mosi</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_mosi</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/io_spi1_miso">
+      <obj_property name="ElementShortName">io_spi1_miso</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_miso</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_clock">
+      <obj_property name="ElementShortName">io_clock</obj_property>
+      <obj_property name="ObjectShortName">io_clock</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/io_gpioStatus">
+      <obj_property name="ElementShortName">io_gpioStatus[2:0]</obj_property>
+      <obj_property name="ObjectShortName">io_gpioStatus[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_uartStd_txd">
+      <obj_property name="ElementShortName">io_uartStd_txd</obj_property>
+      <obj_property name="ObjectShortName">io_uartStd_txd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_uartStd_rxd">
+      <obj_property name="ElementShortName">io_uartStd_rxd</obj_property>
+      <obj_property name="ObjectShortName">io_uartStd_rxd</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_spi1_sclk">
+      <obj_property name="ElementShortName">io_spi1_sclk</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_sclk</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_spi1_ss">
+      <obj_property name="ElementShortName">io_spi1_ss</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_ss</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_spi1_mosi">
+      <obj_property name="ElementShortName">io_spi1_mosi</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_mosi</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_spi1_miso">
+      <obj_property name="ElementShortName">io_spi1_miso</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_miso</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_spi1_rst">
+      <obj_property name="ElementShortName">io_spi1_rst</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_rst</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_spi1_wp">
+      <obj_property name="ElementShortName">io_spi1_wp</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_wp</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_spi1_hold">
+      <obj_property name="ElementShortName">io_spi1_hold</obj_property>
+      <obj_property name="ObjectShortName">io_spi1_hold</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_jtag_tms">
+      <obj_property name="ElementShortName">io_jtag_tms</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tms</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_jtag_tdi">
+      <obj_property name="ElementShortName">io_jtag_tdi</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tdi</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_jtag_tdo">
+      <obj_property name="ElementShortName">io_jtag_tdo</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tdo</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/io_jtag_tck">
+      <obj_property name="ElementShortName">io_jtag_tck</obj_property>
+      <obj_property name="ObjectShortName">io_jtag_tck</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/io_gpio0">
+      <obj_property name="ElementShortName">io_gpio0[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_gpio0[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/gpioStatus_rd">
+      <obj_property name="ElementShortName">gpioStatus_rd[2:0]</obj_property>
+      <obj_property name="ObjectShortName">gpioStatus_rd[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/gpioStatus_wr">
+      <obj_property name="ElementShortName">gpioStatus_wr[2:0]</obj_property>
+      <obj_property name="ObjectShortName">gpioStatus_wr[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/gpioStatus_wrEn">
+      <obj_property name="ElementShortName">gpioStatus_wrEn[2:0]</obj_property>
+      <obj_property name="ObjectShortName">gpioStatus_wrEn[2:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/sysReset">
+      <obj_property name="ElementShortName">sysReset</obj_property>
+      <obj_property name="ObjectShortName">sysReset</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider263" type="divider">
+      <obj_property name="label">gpio0</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/gpio0_rd">
+      <obj_property name="ElementShortName">gpio0_rd[0:11]</obj_property>
+      <obj_property name="ObjectShortName">gpio0_rd[0:11]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/gpio0_wr">
+      <obj_property name="ElementShortName">gpio0_wr[0:11]</obj_property>
+      <obj_property name="ObjectShortName">gpio0_wr[0:11]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/gpio0_wrEn">
+      <obj_property name="ElementShortName">gpio0_wrEn[0:11]</obj_property>
+      <obj_property name="ObjectShortName">gpio0_wrEn[0:11]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PADDR">
+      <obj_property name="ElementShortName">io_bus_PADDR[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PADDR[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PSEL">
+      <obj_property name="ElementShortName">io_bus_PSEL[0:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PSEL[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PENABLE">
+      <obj_property name="ElementShortName">io_bus_PENABLE</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PENABLE</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PREADY">
+      <obj_property name="ElementShortName">io_bus_PREADY</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PREADY</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PWRITE">
+      <obj_property name="ElementShortName">io_bus_PWRITE</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PWRITE</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PWDATA">
+      <obj_property name="ElementShortName">io_bus_PWDATA[31:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PWDATA[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PRDATA">
+      <obj_property name="ElementShortName">io_bus_PRDATA[31:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PRDATA[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_bus_PSLVERROR">
+      <obj_property name="ElementShortName">io_bus_PSLVERROR</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PSLVERROR</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_gpio_pins_read">
+      <obj_property name="ElementShortName">io_gpio_pins_read[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_gpio_pins_read[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_gpio_pins_write">
+      <obj_property name="ElementShortName">io_gpio_pins_write[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_gpio_pins_write[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_gpio_pins_writeEnable">
+      <obj_property name="ElementShortName">io_gpio_pins_writeEnable[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_gpio_pins_writeEnable[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_interrupt">
+      <obj_property name="ElementShortName">io_interrupt[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_interrupt[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/io_clock">
+      <obj_property name="ElementShortName">io_clock</obj_property>
+      <obj_property name="ObjectShortName">io_clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/resetCtrl_systemReset">
+      <obj_property name="ElementShortName">resetCtrl_systemReset</obj_property>
+      <obj_property name="ObjectShortName">resetCtrl_systemReset</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_gpio_pins_write">
+      <obj_property name="ElementShortName">ctrl_io_gpio_pins_write[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_gpio_pins_write[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_gpio_pins_writeEnable">
+      <obj_property name="ElementShortName">ctrl_io_gpio_pins_writeEnable[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_gpio_pins_writeEnable[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_value">
+      <obj_property name="ElementShortName">ctrl_io_value[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_value[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_interrupt">
+      <obj_property name="ElementShortName">ctrl_io_interrupt[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_interrupt[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_irqHigh_valid">
+      <obj_property name="ElementShortName">ctrl_io_irqHigh_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_irqHigh_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_irqLow_valid">
+      <obj_property name="ElementShortName">ctrl_io_irqLow_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_irqLow_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_irqRise_valid">
+      <obj_property name="ElementShortName">ctrl_io_irqRise_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_irqRise_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl_io_irqFall_valid">
+      <obj_property name="ElementShortName">ctrl_io_irqFall_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">ctrl_io_irqFall_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl_io_pendings">
+      <obj_property name="ElementShortName">mapper_interrupt_irqHighCtrl_io_pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqHighCtrl_io_pendings[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl_io_pendings">
+      <obj_property name="ElementShortName">mapper_interrupt_irqLowCtrl_io_pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqLowCtrl_io_pendings[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqRiseCtrl_io_pendings">
+      <obj_property name="ElementShortName">mapper_interrupt_irqRiseCtrl_io_pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqRiseCtrl_io_pendings[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqFallCtrl_io_pendings">
+      <obj_property name="ElementShortName">mapper_interrupt_irqFallCtrl_io_pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqFallCtrl_io_pendings[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_busCtrl_askWrite">
+      <obj_property name="ElementShortName">mapper_busCtrl_askWrite</obj_property>
+      <obj_property name="ObjectShortName">mapper_busCtrl_askWrite</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_busCtrl_askRead">
+      <obj_property name="ElementShortName">mapper_busCtrl_askRead</obj_property>
+      <obj_property name="ObjectShortName">mapper_busCtrl_askRead</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_busCtrl_doWrite">
+      <obj_property name="ElementShortName">mapper_busCtrl_doWrite</obj_property>
+      <obj_property name="ObjectShortName">mapper_busCtrl_doWrite</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_busCtrl_doRead">
+      <obj_property name="ElementShortName">mapper_busCtrl_doRead</obj_property>
+      <obj_property name="ObjectShortName">mapper_busCtrl_doRead</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl_io_masks_driver">
+      <obj_property name="ElementShortName">mapper_interrupt_irqHighCtrl_io_masks_driver[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqHighCtrl_io_masks_driver[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl_io_masks_driver">
+      <obj_property name="ElementShortName">mapper_interrupt_irqLowCtrl_io_masks_driver[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqLowCtrl_io_masks_driver[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqRiseCtrl_io_masks_driver">
+      <obj_property name="ElementShortName">mapper_interrupt_irqRiseCtrl_io_masks_driver[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqRiseCtrl_io_masks_driver[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqFallCtrl_io_masks_driver">
+      <obj_property name="ElementShortName">mapper_interrupt_irqFallCtrl_io_masks_driver[11:0]</obj_property>
+      <obj_property name="ObjectShortName">mapper_interrupt_irqFallCtrl_io_masks_driver[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqHigh_pending">
+      <obj_property name="ElementShortName">io_irqHigh_pending[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqHigh_pending[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqLow_pending">
+      <obj_property name="ElementShortName">io_irqLow_pending[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqLow_pending[11:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider89" type="divider">
+      <obj_property name="label">plic</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_interrupt">
+      <obj_property name="ElementShortName">io_interrupt[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_interrupt[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqHigh_valid">
+      <obj_property name="ElementShortName">io_irqHigh_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqHigh_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqHigh_pending">
+      <obj_property name="ElementShortName">io_irqHigh_pending[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqHigh_pending[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqLow_valid">
+      <obj_property name="ElementShortName">io_irqLow_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqLow_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqLow_pending">
+      <obj_property name="ElementShortName">io_irqLow_pending[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqLow_pending[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqRise_valid">
+      <obj_property name="ElementShortName">io_irqRise_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqRise_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqRise_pending">
+      <obj_property name="ElementShortName">io_irqRise_pending[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqRise_pending[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqFall_valid">
+      <obj_property name="ElementShortName">io_irqFall_valid[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqFall_valid[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/ctrl/io_irqFall_pending">
+      <obj_property name="ElementShortName">io_irqFall_pending[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_irqFall_pending[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PADDR">
+      <obj_property name="ElementShortName">io_bus_PADDR[15:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PADDR[15:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PSEL">
+      <obj_property name="ElementShortName">io_bus_PSEL[0:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PSEL[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PENABLE">
+      <obj_property name="ElementShortName">io_bus_PENABLE</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PENABLE</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PREADY">
+      <obj_property name="ElementShortName">io_bus_PREADY</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PREADY</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PWRITE">
+      <obj_property name="ElementShortName">io_bus_PWRITE</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PWRITE</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PWDATA">
+      <obj_property name="ElementShortName">io_bus_PWDATA[31:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PWDATA[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PRDATA">
+      <obj_property name="ElementShortName">io_bus_PRDATA[31:0]</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PRDATA[31:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_bus_PSLVERROR">
+      <obj_property name="ElementShortName">io_bus_PSLVERROR</obj_property>
+      <obj_property name="ObjectShortName">io_bus_PSLVERROR</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_interrupt">
+      <obj_property name="ElementShortName">io_interrupt</obj_property>
+      <obj_property name="ObjectShortName">io_interrupt</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_sources">
+      <obj_property name="ElementShortName">io_sources[3:0]</obj_property>
+      <obj_property name="ObjectShortName">io_sources[3:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/io_clock">
+      <obj_property name="ElementShortName">io_clock</obj_property>
+      <obj_property name="ObjectShortName">io_clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/resetCtrl_systemReset">
+      <obj_property name="ElementShortName">resetCtrl_systemReset</obj_property>
+      <obj_property name="ObjectShortName">resetCtrl_systemReset</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_0_source">
+      <obj_property name="ElementShortName">gateways_0_source</obj_property>
+      <obj_property name="ObjectShortName">gateways_0_source</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_0_priority">
+      <obj_property name="ElementShortName">gateways_0_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">gateways_0_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_0_ip">
+      <obj_property name="ElementShortName">gateways_0_ip</obj_property>
+      <obj_property name="ObjectShortName">gateways_0_ip</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_0_waitCompletion">
+      <obj_property name="ElementShortName">gateways_0_waitCompletion</obj_property>
+      <obj_property name="ObjectShortName">gateways_0_waitCompletion</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_1_source">
+      <obj_property name="ElementShortName">gateways_1_source</obj_property>
+      <obj_property name="ObjectShortName">gateways_1_source</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_1_priority">
+      <obj_property name="ElementShortName">gateways_1_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">gateways_1_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_1_ip">
+      <obj_property name="ElementShortName">gateways_1_ip</obj_property>
+      <obj_property name="ObjectShortName">gateways_1_ip</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_1_waitCompletion">
+      <obj_property name="ElementShortName">gateways_1_waitCompletion</obj_property>
+      <obj_property name="ObjectShortName">gateways_1_waitCompletion</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_2_source">
+      <obj_property name="ElementShortName">gateways_2_source</obj_property>
+      <obj_property name="ObjectShortName">gateways_2_source</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_2_priority">
+      <obj_property name="ElementShortName">gateways_2_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">gateways_2_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_2_ip">
+      <obj_property name="ElementShortName">gateways_2_ip</obj_property>
+      <obj_property name="ObjectShortName">gateways_2_ip</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_2_waitCompletion">
+      <obj_property name="ElementShortName">gateways_2_waitCompletion</obj_property>
+      <obj_property name="ObjectShortName">gateways_2_waitCompletion</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_3_source">
+      <obj_property name="ElementShortName">gateways_3_source</obj_property>
+      <obj_property name="ObjectShortName">gateways_3_source</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_3_priority">
+      <obj_property name="ElementShortName">gateways_3_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">gateways_3_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_3_ip">
+      <obj_property name="ElementShortName">gateways_3_ip</obj_property>
+      <obj_property name="ObjectShortName">gateways_3_ip</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/gateways_3_waitCompletion">
+      <obj_property name="ElementShortName">gateways_3_waitCompletion</obj_property>
+      <obj_property name="ObjectShortName">gateways_3_waitCompletion</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_ie_0">
+      <obj_property name="ElementShortName">targets_0_ie_0</obj_property>
+      <obj_property name="ObjectShortName">targets_0_ie_0</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_ie_1">
+      <obj_property name="ElementShortName">targets_0_ie_1</obj_property>
+      <obj_property name="ObjectShortName">targets_0_ie_1</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_ie_2">
+      <obj_property name="ElementShortName">targets_0_ie_2</obj_property>
+      <obj_property name="ObjectShortName">targets_0_ie_2</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_ie_3">
+      <obj_property name="ElementShortName">targets_0_ie_3</obj_property>
+      <obj_property name="ObjectShortName">targets_0_ie_3</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_threshold">
+      <obj_property name="ElementShortName">targets_0_threshold[0:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_threshold[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_0_priority">
+      <obj_property name="ElementShortName">targets_0_requests_0_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_0_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_0_id">
+      <obj_property name="ElementShortName">targets_0_requests_0_id[1:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_0_id[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_0_valid">
+      <obj_property name="ElementShortName">targets_0_requests_0_valid</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_0_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_1_priority">
+      <obj_property name="ElementShortName">targets_0_requests_1_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_1_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_1_id">
+      <obj_property name="ElementShortName">targets_0_requests_1_id[1:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_1_id[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_1_valid">
+      <obj_property name="ElementShortName">targets_0_requests_1_valid</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_1_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_2_priority">
+      <obj_property name="ElementShortName">targets_0_requests_2_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_2_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_2_id">
+      <obj_property name="ElementShortName">targets_0_requests_2_id[1:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_2_id[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_2_valid">
+      <obj_property name="ElementShortName">targets_0_requests_2_valid</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_2_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_3_priority">
+      <obj_property name="ElementShortName">targets_0_requests_3_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_3_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_3_id">
+      <obj_property name="ElementShortName">targets_0_requests_3_id[1:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_3_id[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_3_valid">
+      <obj_property name="ElementShortName">targets_0_requests_3_valid</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_3_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_4_priority">
+      <obj_property name="ElementShortName">targets_0_requests_4_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_4_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_4_id">
+      <obj_property name="ElementShortName">targets_0_requests_4_id[1:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_4_id[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_requests_4_valid">
+      <obj_property name="ElementShortName">targets_0_requests_4_valid</obj_property>
+      <obj_property name="ObjectShortName">targets_0_requests_4_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_bestRequest_priority">
+      <obj_property name="ElementShortName">targets_0_bestRequest_priority[0:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_bestRequest_priority[0:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_bestRequest_id">
+      <obj_property name="ElementShortName">targets_0_bestRequest_id[1:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_bestRequest_id[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_bestRequest_valid">
+      <obj_property name="ElementShortName">targets_0_bestRequest_valid</obj_property>
+      <obj_property name="ObjectShortName">targets_0_bestRequest_valid</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_iep">
+      <obj_property name="ElementShortName">targets_0_iep</obj_property>
+      <obj_property name="ObjectShortName">targets_0_iep</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/targets_0_claim">
+      <obj_property name="ElementShortName">targets_0_claim[1:0]</obj_property>
+      <obj_property name="ObjectShortName">targets_0_claim[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/mapping_claim_valid">
+      <obj_property name="ElementShortName">mapping_claim_valid</obj_property>
+      <obj_property name="ObjectShortName">mapping_claim_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/mapping_claim_payload">
+      <obj_property name="ElementShortName">mapping_claim_payload[1:0]</obj_property>
+      <obj_property name="ObjectShortName">mapping_claim_payload[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/mapping_completion_valid">
+      <obj_property name="ElementShortName">mapping_completion_valid</obj_property>
+      <obj_property name="ObjectShortName">mapping_completion_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/mapping_completion_payload">
+      <obj_property name="ElementShortName">mapping_completion_payload[1:0]</obj_property>
+      <obj_property name="ObjectShortName">mapping_completion_payload[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/mapping_targetMapping_0_targetCompletion_valid">
+      <obj_property name="ElementShortName">mapping_targetMapping_0_targetCompletion_valid</obj_property>
+      <obj_property name="ObjectShortName">mapping_targetMapping_0_targetCompletion_valid</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_plicCtrl/mapping_targetMapping_0_targetCompletion_payload">
+      <obj_property name="ElementShortName">mapping_targetMapping_0_targetCompletion_payload[1:0]</obj_property>
+      <obj_property name="ObjectShortName">mapping_targetMapping_0_targetCompletion_payload[1:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl/io_inputs">
+      <obj_property name="ElementShortName">io_inputs[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_inputs[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl/io_clears">
+      <obj_property name="ElementShortName">io_clears[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_clears[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl/io_masks">
+      <obj_property name="ElementShortName">io_masks[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_masks[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl/io_pendings">
+      <obj_property name="ElementShortName">io_pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_pendings[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl/io_clock">
+      <obj_property name="ElementShortName">io_clock</obj_property>
+      <obj_property name="ObjectShortName">io_clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl/resetCtrl_systemReset">
+      <obj_property name="ElementShortName">resetCtrl_systemReset</obj_property>
+      <obj_property name="ObjectShortName">resetCtrl_systemReset</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqHighCtrl/pendings">
+      <obj_property name="ElementShortName">pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">pendings[11:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl/io_inputs">
+      <obj_property name="ElementShortName">io_inputs[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_inputs[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl/io_clears">
+      <obj_property name="ElementShortName">io_clears[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_clears[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl/io_masks">
+      <obj_property name="ElementShortName">io_masks[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_masks[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl/io_pendings">
+      <obj_property name="ElementShortName">io_pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">io_pendings[11:0]</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl/io_clock">
+      <obj_property name="ElementShortName">io_clock</obj_property>
+      <obj_property name="ObjectShortName">io_clock</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl/resetCtrl_systemReset">
+      <obj_property name="ElementShortName">resetCtrl_systemReset</obj_property>
+      <obj_property name="ObjectShortName">resetCtrl_systemReset</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="/TH250_tb/TOP/SOC/system_gpio0Ctrl/mapper_interrupt_irqLowCtrl/pendings">
+      <obj_property name="ElementShortName">pendings[11:0]</obj_property>
+      <obj_property name="ObjectShortName">pendings[11:0]</obj_property>
+   </wvobject>
+</wave_config>
