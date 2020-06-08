@@ -1,13 +1,15 @@
 Zibal.v
 VexRiscv.v
 *.bin*
-*.yaml
 verbose.log
 project/*
 target/*
 simWorkspace/
 tmp/
-build/
+build/*.v
+build/*.yaml
+
+/software/*
 
 eda/OSS/sim/build
 eda/Xilinx/sim/vivado*.str
