@@ -17,10 +17,10 @@ object GpioCtrl {
     var input: Seq[Int] = null,
     var interrupt: Seq[Int] = null
   ) {
-    if (input == null)
-      input = (0 until width)
     if (output == null)
       output = (0 until width)
+    if (input == null)
+      input = (0 until width)
     if (interrupt == null)
       interrupt = (0 until width)
   }
@@ -48,7 +48,7 @@ object GpioCtrl {
     val config = in(Config(p))
     val value = out(Bits(p.width bits))
     val enable = in(EnableConfig(p))
-    val interrupt = out(Bits(p.width bits))
+    val interrupt = out(Bool)
     val irqHigh = InterruptConfig(p)
     val irqLow = InterruptConfig(p)
     val irqRise = InterruptConfig(p)
@@ -74,8 +74,8 @@ object GpioCtrl {
     io.irqRise.valid := (synchronized & ~last)
     io.irqFall.valid := (~synchronized & last)
 
-    io.interrupt := io.irqHigh.pending | io.irqLow.pending |
-                    io.irqRise.pending | io.irqFall.pending
+    io.interrupt := (io.irqHigh.pending | io.irqLow.pending |
+                    io.irqRise.pending | io.irqFall.pending).orR
   }
 
   case class Mapper(

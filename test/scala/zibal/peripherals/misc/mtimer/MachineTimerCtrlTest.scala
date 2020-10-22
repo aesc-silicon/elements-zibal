@@ -1,11 +1,16 @@
+/*
+ * Copyright (c) 2020 Phytec Messtechnik GmbH
+ */
+package zibal.peripherals.misc.mtimer
+
+import org.scalatest.FunSuite
+
 import spinal.sim._
 import spinal.core._
 import spinal.core.sim._
 
-import zibal.peripherals.misc.mtimer._
-
-object MachineTimerCtrlTest {
-  def main(args: Array[String]): Unit = {
+class MachineTimerCtrlTest extends FunSuite {
+  test("basic") {
     val compiled = SimConfig.withWave.compile(
       MachineTimerCtrl(MachineTimerCtrl.Parameter.default)
     )
@@ -57,7 +62,6 @@ object MachineTimerCtrlTest {
         dut.clockDomain.waitFallingEdge(1)
       }
       assert(dut.io.interrupt.toBoolean == true)
-
     }
   }
 }

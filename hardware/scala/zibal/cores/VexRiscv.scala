@@ -13,10 +13,10 @@ case class VexRiscvCoreParameter(
 ) {}
 
 object VexRiscvCoreParameter {
-  def default(mtvecInit: BigInt) = VexRiscvCoreParameter(
+  def default(resetAddress: BigInt) = VexRiscvCoreParameter(
     plugins = ArrayBuffer(
       new IBusSimplePlugin(
-        resetVector = 0x80000000l,
+        resetVector = resetAddress,
         cmdForkOnSecondStage = true,
         cmdForkPersistence = true,
         prediction = NONE,
@@ -65,7 +65,7 @@ object VexRiscvCoreParameter {
           misaExtensionsInit = 0x001100,
           misaAccess = CsrAccess.READ_WRITE,
           mtvecAccess = CsrAccess.READ_WRITE,
-          mtvecInit = mtvecInit,
+          mtvecInit = resetAddress,
           mepcAccess = CsrAccess.READ_WRITE,
           mscratchGen = true,
           mcauseAccess = CsrAccess.READ_WRITE,
@@ -81,7 +81,7 @@ object VexRiscvCoreParameter {
         earlyBranch = true,
         catchAddressMisaligned = true
       ),
-      new YamlPlugin("build/VexRiscv.yaml")
+      new YamlPlugin("../build/zibal/VexRiscv.yaml")
     )
   )
 }

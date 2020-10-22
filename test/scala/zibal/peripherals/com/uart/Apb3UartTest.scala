@@ -1,15 +1,20 @@
+/*
+ * Copyright (c) 2020 Phytec Messtechnik GmbH
+ */
+package zibal.peripherals.com.uart
+
+import org.scalatest.FunSuite
+
 import spinal.sim._
 import spinal.core._
 import spinal.core.sim._
 import spinal.lib.bus.amba3.apb.sim.Apb3Driver
 
-import zibal.peripherals.com.uart._
 
-
-object Apb3UartTest {
-  def main(args: Array[String]): Unit = {
+class Apb3UartTest extends FunSuite {
+  test("basic") {
     val compiled = SimConfig.withWave.compile {
-      /* TODO: InitParameter will thrown an exception because no ClockDomain is defined */
+      /* TODO: InitParameter will throwe an exception because no ClockDomain is defined */
       val dut = Apb3Uart(
         UartCtrl.Parameter(
           UartCtrl.PermissionParameter.full,

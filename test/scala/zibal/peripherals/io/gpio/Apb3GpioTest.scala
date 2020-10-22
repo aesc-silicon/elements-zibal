@@ -1,13 +1,17 @@
+/*
+ * Copyright (c) 2020 Phytec Messtechnik GmbH
+ */
+package zibal.peripherals.io.gpio
+
+import org.scalatest.FunSuite
+
 import spinal.sim._
 import spinal.core._
 import spinal.core.sim._
 import spinal.lib.bus.amba3.apb.sim.Apb3Driver
 
-import zibal.peripherals.io.gpio._
-
-
-object Apb3GpioTest {
-  def main(args: Array[String]): Unit = {
+class Apb3GpioTest extends FunSuite {
+  test("basic") {
     val compiled = SimConfig.withWave.compile {
       val dut = Apb3Gpio(GpioCtrl.Parameter(
           width = 32,
@@ -118,7 +122,7 @@ object Apb3GpioTest {
       }
       dut.clockDomain.waitFallingEdge()
       assert(
-        dut.io.interrupt.toBigInt == BigInt("800000A9", 16),
+        dut.io.interrupt.toBigInt == 1,
         f"Interrupt not pending (0x${dut.io.interrupt.toBigInt}%08x)"
       )
       apb.write(BigInt("14", 16), BigInt("00000000", 16))

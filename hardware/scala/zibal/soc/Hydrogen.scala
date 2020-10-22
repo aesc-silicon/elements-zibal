@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Phytec Messtechnik GmbH
+ * Copyright (c) 2020 Phytec Messtechnik GmbH
  */
 
 package zibal.soc
@@ -41,19 +41,18 @@ import vexriscv.{plugin, _}
 import vexriscv.plugin._
 
 case class HydrogenParameter(
-    sysFrequency: HertzNumber,
-    dbgFrequency: HertzNumber,
-    onChipRamSize: BigInt,
-    mtimer: MachineTimerCtrl.Parameter,
-    gpio0: GpioCtrl.Parameter,
-    gpioStatus: GpioCtrl.Parameter,
-    uartStd: UartCtrl.Parameter,
-    uartCom: UartCtrl.Parameter,
-    uartRS232: UartCtrl.Parameter,
-    spi0: SpiCtrl.Parameter,
-    plic: PlicCtrl.Parameter,
-    uniqueID: UniqueIDCtrl.Parameter,
-    core: ArrayBuffer[Plugin[VexRiscv]]
+  sysFrequency: HertzNumber,
+  dbgFrequency: HertzNumber,
+  onChipRamSize: BigInt,
+  mtimer: MachineTimerCtrl.Parameter,
+  plic: PlicCtrl.Parameter,
+  uartStd: UartCtrl.Parameter,
+  gpioStatus: GpioCtrl.Parameter,
+  //gpio1: GpioCtrl.Parameter,
+  //gpio2: GpioCtrl.Parameter,
+  //gpio3: GpioCtrl.Parameter,
+  spi0: SpiCtrl.Parameter,
+  core: ArrayBuffer[Plugin[VexRiscv]]
 ) {}
 
 object HydrogenParameter {
@@ -62,32 +61,31 @@ object HydrogenParameter {
     dbgFrequency = 10 MHz,
     onChipRamSize = 128 kB,
     mtimer = MachineTimerCtrl.Parameter.default,
-    gpio0 = GpioCtrl.Parameter(12, 2, null, (0 until 11), (0 until 11)),
-    gpioStatus =
-      GpioCtrl.Parameter(3, 2, (0 until 3), (1 until 3), (0 until 1)),
-    uartStd = UartCtrl.Parameter.default,
-    uartCom = UartCtrl.Parameter.full,
-    uartRS232 = UartCtrl.Parameter.full,
-    spi0 = SpiCtrl.Parameter.default,
+    //plic = PlicCtrl.Parameter.default(7),
     plic = PlicCtrl.Parameter.default(4),
-    uniqueID = UniqueIDCtrl.Parameter.default,
+    uartStd = UartCtrl.Parameter.default,
+    //gpioStatus = GpioCtrl.Parameter(5, 2, (0 to 3), (4 to 4), (4 to 4)),
+    gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 3), List(), List()),
+    spi0 = SpiCtrl.Parameter.default,
+    //gpio1 = GpioCtrl.Parameter.default,
+    //gpio2 = GpioCtrl.Parameter.default,
+    //gpio3 = GpioCtrl.Parameter(2, 2, null, null, null),
     core = VexRiscvCoreParameter.default(0x80000000L).plugins
   )
 }
 
-case class Hydrogen(p: HydrogenParameter) extends Component {
+case class Hydrogen1(p: HydrogenParameter) extends Component {
   val io = new Bundle {
-//    val reset = in(Bool)
     val clock = in(Bool)
     val reset = in(Bool)
     val sysReset_out = out(Bool)
     val jtag = slave(Jtag())
-    val gpio0 = Gpio.Io(p.gpio0)
+    val uartStd = master(Uart.Io(p.uartStd))
     val gpioStatus = Gpio.Io(p.gpioStatus)
-    val uartStd = master(Uart.Io(p.uartCom))
-    val uartCom = master(Uart.Io(p.uartCom))
-    val uartRS232 = master(Uart.Io(p.uartRS232))
     val spi0 = master(Spi.Io(p.spi0))
+    //val gpio1 = Gpio.Io(p.gpio1)
+    //val gpio2 = Gpio.Io(p.gpio2)
+    //val gpio3 = Gpio.Io(p.gpio3)
   }
 
   val resetCtrlClockDomain = ClockDomain(
@@ -234,61 +232,31 @@ case class Hydrogen(p: HydrogenParameter) extends Component {
     uartStdCtrl.io.uart <> io.uartStd
     plicCtrl.io.sources(1) := uartStdCtrl.io.interrupt
 
-    val uartComCtrl = Apb3Uart(p.uartCom)
-    apbMapping += uartComCtrl.io.bus -> (0x01000, 4 kB)
-    uartComCtrl.io.uart <> io.uartCom
-    plicCtrl.io.sources(2) := uartComCtrl.io.interrupt
-
-    val uartRS232Ctrl = Apb3Uart(p.uartRS232)
-    apbMapping += uartRS232Ctrl.io.bus -> (0x02000, 4 kB)
-    uartRS232Ctrl.io.uart <> io.uartRS232
-    plicCtrl.io.sources(3) := uartRS232Ctrl.io.interrupt
-
     val gpioStatusCtrl = Apb3Gpio(p.gpioStatus)
     apbMapping += gpioStatusCtrl.io.bus -> (0x10000, 4 kB)
     gpioStatusCtrl.io.gpio <> io.gpioStatus
-
-    val gpio0Ctrl = Apb3Gpio(p.gpio0)
-    apbMapping += gpio0Ctrl.io.bus -> (0x11000, 4 kB)
-    gpio0Ctrl.io.gpio <> io.gpio0
+    plicCtrl.io.sources(2) := gpioStatusCtrl.io.interrupt
 
     val spiMaster0Ctrl = Apb3SpiMaster(p.spi0)
     apbMapping += spiMaster0Ctrl.io.bus -> (0x40000, 4 kB)
     spiMaster0Ctrl.io.spi <> io.spi0
+    plicCtrl.io.sources(3) := spiMaster0Ctrl.io.interrupt
+/*
+    val gpio1Ctrl = Apb3Gpio(p.gpio1)
+    apbMapping += gpio1Ctrl.io.bus -> (0x11000, 4 kB)
+    gpio1Ctrl.io.gpio <> io.gpio1
+    plicCtrl.io.sources(4) :=gpio1Ctrl.io.interrupt
 
-    val uniqueID0Ctrl = Apb3UniqueID(p.uniqueID)
-    apbMapping += uniqueID0Ctrl.io.bus -> (0xA0000, 4 kB)
+    val gpio2Ctrl = Apb3Gpio(p.gpio2)
+    apbMapping += gpio2Ctrl.io.bus -> (0x12000, 4 kB)
+    gpio2Ctrl.io.gpio <> io.gpio2
+    plicCtrl.io.sources(5) := gpio2Ctrl.io.interrupt
 
-    /*
-    val uartACtrl = Apb3Uart(p.uartA)
-    apbMapping += uartACtrl.io.bus -> (0x00000, 4 kB)
-    uartACtrl.io.uart <> io.uartA
-    plicCtrl.io.sources(1) := uartACtrl.io.interrupt
-
-    val uartBCtrl = Apb3Uart(p.uartB)
-    apbMapping += uartBCtrl.io.bus -> (0x01000, 4 kB)
-    uartBCtrl.io.uart <> io.uartB
-    plicCtrl.io.sources(2) := uartBCtrl.io.interrupt
-
-    val gpioACtrl = Apb3Gpio(p.gpioA)
-    apbMapping += gpioACtrl.io.bus -> (0x10000, 4 kB)
-    gpioACtrl.io.gpio <> io.gpioA
-
-    val gpioBCtrl = Apb3Gpio(p.gpioB)
-    apbMapping += gpioBCtrl.io.bus -> (0x11000, 4 kB)
-    gpioBCtrl.io.gpio <> io.gpioB
-    plicCtrl.io.sources(9 downto 4) := gpioBCtrl.io.interrupt(5 downto 0)
-
-    val spiMasterACtrl = Apb3SpiMaster(p.spiA)
-    apbMapping += spiMasterACtrl.io.bus -> (0x40000, 4 kB)
-    spiMasterACtrl.io.spi <> io.spiA
-    plicCtrl.io.sources(3) := spiMasterACtrl.io.interrupt
-
-
-    val sevenSegCtrl = Apb3SevenSegment(p.sevenSeg)
-    apbMapping += sevenSegCtrl.io.bus -> (0x30000, 4 kB)
-    sevenSegCtrl.io.segments <> io.sevenSegmentsA
-     */
+    val gpio3Ctrl = Apb3Gpio(p.gpio3)
+    apbMapping += gpio3Ctrl.io.bus -> (0x13000, 4 kB)
+    gpio3Ctrl.io.gpio <> io.gpio3
+    plicCtrl.io.sources(6) := gpio3Ctrl.io.interrupt
+*/
     val apbDecoder = Apb3Decoder(
       master = apbBridge.io.apb,
       slaves = apbMapping
@@ -297,13 +265,13 @@ case class Hydrogen(p: HydrogenParameter) extends Component {
   }
 }
 
-object Hydrogen {
+object Hydrogen1 {
   def main(args: Array[String]) {
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = "./build/")
+    val config = SpinalConfig(noRandBoot = false, targetDirectory = "./../build/zibal/")
     config.generateVerilog({
-      val toplevel = Hydrogen(HydrogenParameter.default)
+      val toplevel = Hydrogen1(HydrogenParameter.default)
       BinTools
-        .initRam(toplevel.system.onChipRam.ram, "software/zephyr/firmware.bin")
+        .initRam(toplevel.system.onChipRam.ram, "../build/zephyr/zephyr/zephyr.bin")
       toplevel
     })
   }

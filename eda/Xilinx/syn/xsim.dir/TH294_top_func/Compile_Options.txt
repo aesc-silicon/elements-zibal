@@ -1,0 +1,1 @@
+-debug "typical" --lib "unisims" --lib "unisims_ver" -s "TH294_top_func" -log "./output/logs/TH294_tb_xelab.log" --timescale "1ns/1ns" "TH294_tb" "glbl" -v "2" --incr 

@@ -1,8 +1,8 @@
 syn:
-	vivado -mode tcl -source tcl/${BOARD}.tcl -log ./output/logs/vivado.log -journal ./output/logs/vivado.jou
+	${VIVADO}/bin/vivado -mode tcl -source tcl/${BOARD}.tcl -log ./output/logs/vivado.log -journal ./output/logs/vivado.jou
 
 sim:
-	vivado -mode tcl -source tcl/${BOARD}_sim.tcl -log ./output/logs/vivado.log -journal ./output/logs/vivado.jou
+	${VIVADO}/bin/vivado -mode tcl -source tcl/${BOARD}_sim.tcl -log ./output/logs/vivado.log -journal ./output/logs/vivado.jou
 #	vivado -mode tcl -source tcl/sim.tcl -log ./output/logs/vivado.log -journal ./output/logs/vivado.jou
 init:
 	@mkdir -p output/logs

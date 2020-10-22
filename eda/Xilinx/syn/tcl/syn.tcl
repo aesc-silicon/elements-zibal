@@ -1,5 +1,5 @@
 # Synthesis
-source sources.tcl
+source tcl/sources.tcl
 read_xdc XDC/${board}_clk.xdc
 #synth_design -top ${top_module} -part ${part} -keep_equivalent_registers -flatten_hierarchy none -gated_clock_conversion off -no_lc
 synth_design -top ${top_module} -part ${part} -flatten rebuilt
@@ -19,8 +19,8 @@ link_design -part ${part} -top ${top_module}
 #  opt_design
 opt_design -directive Explore
 #-directive ExploreSequentialArea 
-  
-#  power_opt_design*
+
+#  power_opt_design
 
 #  place_design
 place_design
@@ -48,4 +48,4 @@ write_vhdl -mode funcsim -force ./output/${top_module}_pr.vhd
 write_verilog -mode timesim -sdf_anno true -force ./output/${top_module}_pr.v
 write_sdf -force ./output/${top_module}_pr.sdf
 
-write_bitstream -bin_file -force ./output/${top_module}
+write_bitstream -bin_file -force $::env(ELEMENTS_BASE)/build/zibal/${top_module}

@@ -22,7 +22,7 @@ object Gpio {
     val io = new Bundle {
       val bus = slave(busType())
       val gpio = Io(p)
-      val interrupt = out(Bits(p.width bits))
+      val interrupt = out(Bool)
     }
 
     val ctrl = GpioCtrl(p)

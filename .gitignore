@@ -15,6 +15,7 @@ eda/OSS/sim/build
 eda/Xilinx/sim/vivado*.str
 eda/Xilinx/sim/.Xil
 eda/Xilinx/sim/xsim.dir
+eda/Xilinx/sim/*.wcfg
 eda/Xilinx/syn/.Xil
 eda/Xilinx/syn/*.txt
 eda/Xilinx/syn/usage*
