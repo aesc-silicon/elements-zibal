@@ -20,6 +20,9 @@ eda/Xilinx/syn/.Xil
 eda/Xilinx/syn/*.txt
 eda/Xilinx/syn/usage*
 eda/Xilinx/syn/output/*
+!eda/Xilinx/syn/output/logs/
+eda/Xilinx/syn/output/logs/*
+!eda/Xilinx/syn/output/logs/.keep
 *log
 *jou
 *pb
