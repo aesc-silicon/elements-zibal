@@ -25,3 +25,4 @@ eda/Xilinx/syn/output/*
 *pb
 *wdb
 .vscode
+.metals
