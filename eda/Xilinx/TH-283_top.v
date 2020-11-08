@@ -42,22 +42,22 @@ IOBUF#(
 );
 
 Hydrogen1 SOC (
-	.io_clock(io_clock),
-	.io_reset(reset),
-	.io_sysReset_out(io_sysReset_out),
-	.io_jtag_tms(io_jtag_tms),
-	.io_jtag_tdi(io_jtag_tdi),
-	.io_jtag_tdo(io_jtag_tdo),
-	.io_jtag_tck(io_jtag_tck),
-	.io_uartStd_txd(io_uartStd_txd),
-	.io_uartStd_rxd(io_uartStd_rxd),
-	.io_gpioStatus_pins_read(gpioStatus_rd),
-	.io_gpioStatus_pins_write(gpioStatus_wr),
-	.io_gpioStatus_pins_writeEnable(gpioStatus_wrEn),
-	.io_spi0_ss(io_spi0_ss),
-	.io_spi0_sclk(io_spi0_sclk),
-	.io_spi0_mosi(io_spi0_mosi),
-	.io_spi0_miso(io_spi0_miso)
+	.io_sys_clock(io_clock),
+	.io_sys_reset(reset),
+	.io_sys_sysReset_out(io_sysReset_out),
+	.io_sys_jtag_tms(io_jtag_tms),
+	.io_sys_jtag_tdi(io_jtag_tdi),
+	.io_sys_jtag_tdo(io_jtag_tdo),
+	.io_sys_jtag_tck(io_jtag_tck),
+	.io_per_uartStd_txd(io_uartStd_txd),
+	.io_per_uartStd_rxd(io_uartStd_rxd),
+	.io_per_gpioStatus_pins_read(gpioStatus_rd),
+	.io_per_gpioStatus_pins_write(gpioStatus_wr),
+	.io_per_gpioStatus_pins_writeEnable(gpioStatus_wrEn),
+	.io_per_spi0_ss(io_spi0_ss),
+	.io_per_spi0_sclk(io_spi0_sclk),
+	.io_per_spi0_mosi(io_spi0_mosi),
+	.io_per_spi0_miso(io_spi0_miso)
 );
 
 endmodule
