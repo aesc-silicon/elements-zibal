@@ -96,7 +96,7 @@ IOBUF#(
 	.T(~gpio3_wrEn)
 );
 
-Hydrogen1 SOC (
+Hydrogen2 SOC (
 	.io_sys_clock(io_clock),
 	.io_sys_reset(reset),
 	.io_sys_sysReset_out(io_sysReset_out),
