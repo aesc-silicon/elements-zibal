@@ -50,7 +50,7 @@ object Hydrogen1 {
     def default = Hydrogen.Parameter.default(
       Peripherals(
         uartStd = UartCtrl.Parameter.default,
-        gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 3), List(), List()),
+        gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
         spi0 = SpiCtrl.Parameter.default
       ),
       4

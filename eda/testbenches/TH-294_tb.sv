@@ -14,7 +14,7 @@ wire  io_jtag_tdo;
 bit   io_jtag_tck;
 wire  io_uartStd_txd;
 bit   io_uartStd_rxd;
-wire  [2:0] io_gpioStatus;
+wire  [3:0] io_gpioStatus;
 wire  io_spi0_sclk;
 wire  io_spi0_ss;
 wire  io_spi0_mosi;

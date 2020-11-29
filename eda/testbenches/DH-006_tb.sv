@@ -1,7 +1,7 @@
 `include "lib/clock.sv"
 `include "lib/reset.sv"
 
-module TH283_tb;
+module DH006_tb;
 
 
 bit io_clock;
@@ -21,7 +21,7 @@ wire  io_spi0_mosi;
 bit   io_spi0_miso;
 
 
-TH283_top TOP (
+DH006_top TOP (
 	.io_clock(io_clock),
 	.io_sysReset_out(io_sysReset_out),
 	.io_jtag_tms(io_jtag_tms),

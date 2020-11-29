@@ -1,6 +1,6 @@
 `define GPIO_STATUS_NO		4
 
-module TH283_top (
+module DH006_top (
 	input  io_clock,
 	output io_sysReset_out,
 	input  io_jtag_tms,

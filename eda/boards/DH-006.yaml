@@ -1,7 +1,7 @@
 common:
   SOC: Hydrogen1
-  top: TH-283_top
-  testbench: TH-283_tb
+  top: DH-006_top
+  testbench: DH-006_tb
 xilinx:
   part: XC7A35TFTG256-1
 destinations:
