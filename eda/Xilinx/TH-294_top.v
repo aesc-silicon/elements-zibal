@@ -1,4 +1,4 @@
-`define GPIO_STATUS_NO		4
+`define GPIO_STATUS_NO		3
 `define GPIO_1_NO		32
 `define GPIO_2_NO		32
 `define GPIO_3_NO		2

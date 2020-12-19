@@ -3,14 +3,24 @@
 ## Clock
 set_property -dict { PACKAGE_PIN E12  IOSTANDARD LVCMOS33 } [get_ports { io_clock }];
 
+## Reset
+set_property -dict { PACKAGE_PIN L5   IOSTANDARD LVCMOS33 } [get_ports { io_sysReset_out }];
+
 ## Status
 set_property -dict { PACKAGE_PIN K12  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[0] }];
 set_property -dict { PACKAGE_PIN L13  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[1] }];
 set_property -dict { PACKAGE_PIN K13  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[2] }];
+set_property -dict { PACKAGE_PIN L5   IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[3] }];
 
 ## Stdout
 set_property -dict { PACKAGE_PIN R1   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_rxd }];
 set_property -dict { PACKAGE_PIN R2   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_txd }];
+
+## JTAG
+set_property -dict { PACKAGE_PIN R13  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tms }];
+set_property -dict { PACKAGE_PIN N13  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tdi }];
+set_property -dict { PACKAGE_PIN P13  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tdo }];
+set_property -dict { PACKAGE_PIN N14  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tck }];
 
 ## SPI FLASH
  # SPI1_CLK L13P_14 -> SCK
@@ -119,9 +129,3 @@ set_property -dict { PACKAGE_PIN J3   IOSTANDARD LVCMOS33 } [get_ports { io_gpio
 ## GPIO 3 - GPIO22
 set_property -dict { PACKAGE_PIN H1   IOSTANDARD LVCMOS33 } [get_ports { io_gpio3[0] }];
 set_property -dict { PACKAGE_PIN H2   IOSTANDARD LVCMOS33 } [get_ports { io_gpio3[1] }];
-
-## JTAG
-set_property -dict { PACKAGE_PIN R13  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tms }];
-set_property -dict { PACKAGE_PIN N13  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tdi }];
-set_property -dict { PACKAGE_PIN P13  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tdo }];
-set_property -dict { PACKAGE_PIN N14  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tck }];
