@@ -4,7 +4,7 @@
 set_property -dict { PACKAGE_PIN E12 IOSTANDARD LVCMOS33 } [get_ports { io_clock }];
 
 ## Reset
-set_property -dict { PACKAGE_PIN E5   IOSTANDARD LVCMOS33 } [get_ports { io_sysReset_out }];
+set_property -dict { PACKAGE_PIN L5   IOSTANDARD LVCMOS33 } [get_ports { io_sysReset_out }];
 
 ## Status
 set_property -dict { PACKAGE_PIN K12  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[0] }];
