@@ -2,12 +2,12 @@
  * Copyright (c) 2020 Phytec Messtechnik GmbH
  */
 
-package zibal.platform
+package zibal.soc
 
 import spinal.core._
 import spinal.lib._
 
-import zibal.arch.Carbon
+import zibal.platform.Carbon
 
 import zibal.misc.BinTools
 import scala.collection.mutable
