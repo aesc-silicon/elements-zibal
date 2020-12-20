@@ -59,7 +59,7 @@ object Hydrogen2 {
         gpio2 = GpioCtrl.Parameter.default,
         gpio3 = GpioCtrl.Parameter(2, 2, null, null, null)
       ),
-      7
+      6
     )
   }
 
@@ -86,25 +86,25 @@ object Hydrogen2 {
       gpioStatusCtrl.io.gpio <> io_per.gpioStatus
       system.plicCtrl.io.sources(2) := gpioStatusCtrl.io.interrupt
 
-      val spiMaster0Ctrl = Apb3SpiMaster(peripherals.spi0)
-      system.apbMapping += spiMaster0Ctrl.io.bus -> (0x40000, 4 kB)
-      spiMaster0Ctrl.io.spi <> io_per.spi0
-      system.plicCtrl.io.sources(3) := spiMaster0Ctrl.io.interrupt
-
       val gpio1Ctrl = Apb3Gpio(peripherals.gpio1)
       system.apbMapping += gpio1Ctrl.io.bus -> (0x11000, 4 kB)
       gpio1Ctrl.io.gpio <> io_per.gpio1
-      system.plicCtrl.io.sources(4) := gpio1Ctrl.io.interrupt
+      system.plicCtrl.io.sources(3) := gpio1Ctrl.io.interrupt
 
       val gpio2Ctrl = Apb3Gpio(peripherals.gpio2)
       system.apbMapping += gpio2Ctrl.io.bus -> (0x12000, 4 kB)
       gpio2Ctrl.io.gpio <> io_per.gpio2
-      system.plicCtrl.io.sources(5) := gpio2Ctrl.io.interrupt
+      system.plicCtrl.io.sources(4) := gpio2Ctrl.io.interrupt
 
       val gpio3Ctrl = Apb3Gpio(peripherals.gpio3)
       system.apbMapping += gpio3Ctrl.io.bus -> (0x13000, 4 kB)
       gpio3Ctrl.io.gpio <> io_per.gpio3
-      system.plicCtrl.io.sources(6) := gpio3Ctrl.io.interrupt
+      system.plicCtrl.io.sources(5) := gpio3Ctrl.io.interrupt
+
+      val spiMaster0Ctrl = Apb3SpiMaster(peripherals.spi0)
+      system.apbMapping += spiMaster0Ctrl.io.bus -> (0x40000, 4 kB)
+      spiMaster0Ctrl.io.spi <> io_per.spi0
+      system.plicCtrl.io.sources(6) := spiMaster0Ctrl.io.interrupt
 
       val apbDecoder = Apb3Decoder(
         master = system.apbBridge.io.apb,

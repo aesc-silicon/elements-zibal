@@ -43,7 +43,8 @@ object Hydrogen1 {
   case class Peripherals (
     uartStd: UartCtrl.Parameter,
     gpioStatus: GpioCtrl.Parameter,
-    spi0: SpiCtrl.Parameter
+    spi0: SpiCtrl.Parameter,
+    gpio1: GpioCtrl.Parameter
   ) {}
 
   object Peripherals {
@@ -51,7 +52,8 @@ object Hydrogen1 {
       Peripherals(
         uartStd = UartCtrl.Parameter.full,
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
-        spi0 = SpiCtrl.Parameter.default
+        spi0 = SpiCtrl.Parameter.default,
+        gpio1 = GpioCtrl.Parameter(16, 2, null, null, null)
       ),
       4
     )
@@ -63,6 +65,7 @@ object Hydrogen1 {
       val uartStd = master(Uart.Io(peripherals.uartStd))
       val gpioStatus = Gpio.Io(peripherals.gpioStatus)
       val spi0 = master(Spi.Io(peripherals.spi0))
+      val gpio1 = Gpio.Io(peripherals.gpio1)
     }
 
     val pers = new ClockingArea(clocks.systemClockDomain) {
@@ -77,10 +80,15 @@ object Hydrogen1 {
       gpioStatusCtrl.io.gpio <> io_per.gpioStatus
       system.plicCtrl.io.sources(2) := gpioStatusCtrl.io.interrupt
 
+      val gpio1Ctrl = Apb3Gpio(peripherals.gpio1)
+      system.apbMapping += gpio1Ctrl.io.bus -> (0x11000, 4 kB)
+      gpio1Ctrl.io.gpio <> io_per.gpio1
+      system.plicCtrl.io.sources(3) := gpio1Ctrl.io.interrupt
+
       val spiMaster0Ctrl = Apb3SpiMaster(peripherals.spi0)
       system.apbMapping += spiMaster0Ctrl.io.bus -> (0x40000, 4 kB)
       spiMaster0Ctrl.io.spi <> io_per.spi0
-      system.plicCtrl.io.sources(3) := spiMaster0Ctrl.io.interrupt
+      system.plicCtrl.io.sources(4) := spiMaster0Ctrl.io.interrupt
 
       val apbDecoder = Apb3Decoder(
         master = system.apbBridge.io.apb,
