@@ -1,0 +1,9 @@
+common:
+  SOC: HydrogenTest
+  top: TH-283_top
+  testbench: TH-283_tb
+xilinx:
+  part: XC7A35TFTG256-1
+destinations:
+  fpga: xc7
+  spi: spi_xc7a35t
