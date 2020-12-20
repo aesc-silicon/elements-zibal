@@ -19,6 +19,7 @@ wire  io_spi0_sclk;
 wire  io_spi0_ss;
 wire  io_spi0_mosi;
 bit   io_spi0_miso;
+wire  [14:0] io_gpio1;
 
 
 DH006_top TOP (
@@ -34,7 +35,8 @@ DH006_top TOP (
 	.io_spi0_sclk(io_spi0_sclk),
 	.io_spi0_ss(io_spi0_ss),
 	.io_spi0_mosi(io_spi0_mosi),
-	.io_spi0_miso(io_spi0_miso)
+	.io_spi0_miso(io_spi0_miso),
+	.io_gpio1(io_gpio1)
 );
 
 endmodule

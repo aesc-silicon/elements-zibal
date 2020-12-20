@@ -1,4 +1,5 @@
 `define GPIO_STATUS_NO		4
+`define GPIO_1_NO		15
 
 module DH006_top (
 	input  io_clock,
@@ -16,7 +17,8 @@ module DH006_top (
 	input  io_spi0_miso,
 	output io_spi0_rst,
 	output io_spi0_wp,
-	output io_spi0_hold
+	output io_spi0_hold,
+	inout  [`GPIO_1_NO - 1:0] io_gpio1
 );
 
 assign reset = 1'b0;
@@ -41,6 +43,23 @@ IOBUF#(
 	.T(!gpioStatus_wrEn)
 );
 
+wire [`GPIO_1_NO - 1:0] gpio1_rd;
+wire [`GPIO_1_NO - 1:0] gpio1_wr;
+wire [`GPIO_1_NO - 1:0] gpio1_wrEn;
+
+IOBUF#(
+	.DRIVE(12),
+	.IBUF_LOW_PWR("TRUE"),
+	.IOSTANDARD("DEFAULT"),
+	.SLEW("SLOW")
+) IOBUF_gpio1[`GPIO_1_NO - 1:0] (
+	.O(gpio1_rd),
+	.IO(io_gpio1),
+	.I(gpio1_wr),
+	// high = input, low = output
+	.T(!gpio1_wrEn)
+);
+
 Hydrogen1 SOC (
 	.io_sys_clock(io_clock),
 	.io_sys_reset(reset),
@@ -57,7 +76,10 @@ Hydrogen1 SOC (
 	.io_per_spi0_ss(io_spi0_ss),
 	.io_per_spi0_sclk(io_spi0_sclk),
 	.io_per_spi0_mosi(io_spi0_mosi),
-	.io_per_spi0_miso(io_spi0_miso)
+	.io_per_spi0_miso(io_spi0_miso),
+	.io_per_gpio1_pins_read(gpio1_rd),
+	.io_per_gpio1_pins_write(gpio1_wr),
+	.io_per_gpio1_pins_writeEnable(gpio1_wrEn)
 );
 
 endmodule

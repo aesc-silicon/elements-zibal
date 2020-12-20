@@ -10,7 +10,7 @@ set_property -dict { PACKAGE_PIN L5   IOSTANDARD LVCMOS33 } [get_ports { io_sysR
 set_property -dict { PACKAGE_PIN K12  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[0] }];
 set_property -dict { PACKAGE_PIN L13  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[1] }];
 set_property -dict { PACKAGE_PIN K13  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[2] }];
-set_property -dict { PACKAGE_PIN K5   IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[3] }];
+set_property -dict { PACKAGE_PIN G11  IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[3] }];
 
 ## Stdout
 set_property -dict { PACKAGE_PIN M4   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_txd }];
@@ -37,3 +37,21 @@ set_property -dict { PACKAGE_PIN P9  IOSTANDARD LVCMOS33 } [get_ports { io_spi0_
 set_property -dict { PACKAGE_PIN P8  IOSTANDARD LVCMOS33 } [get_ports { io_spi0_wp }];
  # SPI1_D03 L20N_14 -> DQ3/HOLD#/RST# --> HOLD
 set_property -dict { PACKAGE_PIN R8  IOSTANDARD LVCMOS33 } [get_ports { io_spi0_hold }];
+
+## GPIO1
+set_property -dict { PACKAGE_PIN M16 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[0] }];
+set_property -dict { PACKAGE_PIN N16 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[1] }];
+set_property -dict { PACKAGE_PIN P16 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[2] }];
+set_property -dict { PACKAGE_PIN P15 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[3] }];
+set_property -dict { PACKAGE_PIN R16 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[4] }];
+set_property -dict { PACKAGE_PIN R15 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[5] }];
+set_property -dict { PACKAGE_PIN T15 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[6] }];
+set_property -dict { PACKAGE_PIN T14 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[7] }];
+
+set_property -dict { PACKAGE_PIN K5  IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[8] }];
+set_property -dict { PACKAGE_PIN M5  IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[9] }];
+set_property -dict { PACKAGE_PIN N4  IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[10] }];
+set_property -dict { PACKAGE_PIN P5  IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[11] }];
+set_property -dict { PACKAGE_PIN P6  IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[12] }];
+set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[13] }];
+set_property -dict { PACKAGE_PIN J16 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[14] }];
