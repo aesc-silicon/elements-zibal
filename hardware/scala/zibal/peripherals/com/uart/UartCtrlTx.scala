@@ -20,7 +20,7 @@ object UartCtrlTx {
   case class UartCtrlTx(p: UartCtrl.Parameter) extends Component {
     val io = Io(p)
     val txEnable = RegInit(True)
-    
+
     val txCtrl = new ClockEnableArea(txEnable) {
 
       val clockDivider = new Area {

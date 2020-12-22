@@ -173,7 +173,7 @@ object SpiMasterCtrl {
       )
       busCtrl.read(fifoOccupancy, address = 0x04, 0)
     }
-    
+
     val interruptCtrl = new Area {
       val irqCtrl = new InterruptCtrl(2)
       irqCtrl.driveFrom(busCtrl, 0x1C)
