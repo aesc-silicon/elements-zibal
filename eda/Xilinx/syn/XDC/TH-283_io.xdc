@@ -37,3 +37,7 @@ set_property -dict { PACKAGE_PIN P9  IOSTANDARD LVCMOS33 } [get_ports { io_spi0_
 set_property -dict { PACKAGE_PIN P8  IOSTANDARD LVCMOS33 } [get_ports { io_spi0_wp }];
  # SPI1_D03 L20N_14 -> DQ3/HOLD#/RST# --> HOLD
 set_property -dict { PACKAGE_PIN R8  IOSTANDARD LVCMOS33 } [get_ports { io_spi0_hold }];
+
+## I2C
+set_property -dict { PACKAGE_PIN G14  IOSTANDARD LVCMOS33 } [get_ports { io_i2c0_scl }];
+set_property -dict { PACKAGE_PIN F14  IOSTANDARD LVCMOS33 } [get_ports { io_i2c0_sda }];

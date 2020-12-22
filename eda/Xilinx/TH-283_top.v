@@ -17,7 +17,9 @@ module TH283_top (
 	input  io_spi0_miso,
 	output io_spi0_rst,
 	output io_spi0_wp,
-	output io_spi0_hold
+	output io_spi0_hold,
+	inout  io_i2c0_scl,
+	inout  io_i2c0_sda
 );
 
 assign reset = 1'b0;
@@ -59,6 +61,44 @@ generate
 	end
 endgenerate
 
+
+wire i2c0_scl_read;
+wire i2c0_sda_read;
+wire i2c0_scl_write;
+wire i2c0_sda_write;
+
+PULLUP PU_i2c0_scl (
+	.O(io_i2c0_scl)
+);
+PULLUP PU_i2c0_sda (
+	.O(io_i2c0_sda)
+);
+
+IBUF IBUF_i2c0_scl_read (
+	.O(i2c0_scl_read),
+	.I(io_i2c0_scl)
+);
+IBUF IBUF_i2c0_sda_read (
+	.O(i2c0_sda_read),
+	.I(io_i2c0_sda)
+);
+
+OBUFT OBUFT_i2c0_scl_write (
+	.O(io_i2c0_scl),
+	.I(1'b0),
+	.T(!i2c0_scl_write)
+);
+OBUFT OBUFT_i2c0_sda_write (
+	.O(io_i2c0_sda),
+	.I(1'b0),
+	.T(!i2c0_sda_write)
+);
+
+//assign i2c0_scl_read = io_i2c0_scl;
+//assign i2c0_sda_read = io_i2c0_sda;
+//assign io_i2c0_scl = i2c0_scl_write ? 1'b0 : 1'bZ;
+//assign io_i2c0_sda = i2c0_sda_write ? 1'b0 : 1'bZ;
+
 HydrogenTest SOC (
 	.io_sys_clock(io_clock),
 	.io_sys_reset(reset),
@@ -72,13 +112,17 @@ HydrogenTest SOC (
 	.io_per_gpioStatus_pins_read(gpioStatus_rd),
 	.io_per_gpioStatus_pins_write(gpioStatus_wr),
 	.io_per_gpioStatus_pins_writeEnable(gpioStatus_wrEn),
+	.io_per_gpio1_pins_read(gpio1_rd),
+	.io_per_gpio1_pins_write(gpio1_wr),
+	.io_per_gpio1_pins_writeEnable(gpio1_wrEn),
 	.io_per_spi0_ss(io_spi0_ss),
 	.io_per_spi0_sclk(io_spi0_sclk),
 	.io_per_spi0_mosi(io_spi0_mosi),
 	.io_per_spi0_miso(io_spi0_miso),
-	.io_per_gpio1_pins_read(gpio1_rd),
-	.io_per_gpio1_pins_write(gpio1_wr),
-	.io_per_gpio1_pins_writeEnable(gpio1_wrEn)
+	.io_per_i2c0_scl_write(i2c0_scl_write),
+	.io_per_i2c0_scl_read(i2c0_scl_read),
+	.io_per_i2c0_sda_write(i2c0_sda_write),
+	.io_per_i2c0_sda_read(i2c0_sda_read)
 );
 
 endmodule

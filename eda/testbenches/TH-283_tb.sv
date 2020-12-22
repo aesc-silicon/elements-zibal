@@ -19,6 +19,8 @@ wire  io_spi0_sclk;
 wire  io_spi0_ss;
 wire  io_spi0_mosi;
 bit   io_spi0_miso;
+wire  io_i2c0_scl;
+wire  io_i2c0_sda;
 
 
 TH283_top TOP (
@@ -34,7 +36,9 @@ TH283_top TOP (
 	.io_spi0_sclk(io_spi0_sclk),
 	.io_spi0_ss(io_spi0_ss),
 	.io_spi0_mosi(io_spi0_mosi),
-	.io_spi0_miso(io_spi0_miso)
+	.io_spi0_miso(io_spi0_miso),
+	.io_i2c0_scl(io_i2c0_scl),
+	.io_i2c0_sda(io_i2c0_sda)
 );
 
 endmodule
