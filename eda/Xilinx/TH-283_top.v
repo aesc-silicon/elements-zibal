@@ -94,11 +94,6 @@ OBUFT OBUFT_i2c0_sda_write (
 	.T(!i2c0_sda_write)
 );
 
-//assign i2c0_scl_read = io_i2c0_scl;
-//assign i2c0_sda_read = io_i2c0_sda;
-//assign io_i2c0_scl = i2c0_scl_write ? 1'b0 : 1'bZ;
-//assign io_i2c0_sda = i2c0_sda_write ? 1'b0 : 1'bZ;
-
 HydrogenTest SOC (
 	.io_sys_clock(io_clock),
 	.io_sys_reset(reset),
