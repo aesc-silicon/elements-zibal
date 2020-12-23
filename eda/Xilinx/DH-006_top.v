@@ -11,6 +11,7 @@ module DH006_top (
 	output io_uartStd_txd,
 	input  io_uartStd_rxd,
 	inout  [`GPIO_STATUS_NO - 1:0] io_gpioStatus,
+	inout  [`GPIO_1_NO - 1:0] io_gpio1,
 	output io_spi0_sclk,
 	output [0:0] io_spi0_ss,
 	output io_spi0_mosi,
@@ -18,13 +19,16 @@ module DH006_top (
 	output io_spi0_rst,
 	output io_spi0_wp,
 	output io_spi0_hold,
-	inout  [`GPIO_1_NO - 1:0] io_gpio1
+	inout  io_i2c0_scl,
+	inout  io_i2c0_sda
 );
+
 
 assign reset = 1'b0;
 assign io_spi0_hold = 1'b1;
 assign io_spi0_wp = 1'b1;
 assign io_spi0_rst = 1'b1;
+
 
 wire [`GPIO_STATUS_NO - 1:0] gpioStatus_rd;
 wire [`GPIO_STATUS_NO - 1:0] gpioStatus_wr;
@@ -43,6 +47,7 @@ IOBUF#(
 	.T(!gpioStatus_wrEn)
 );
 
+
 wire [`GPIO_1_NO - 1:0] gpio1_rd;
 wire [`GPIO_1_NO - 1:0] gpio1_wr;
 wire [`GPIO_1_NO - 1:0] gpio1_wrEn;
@@ -60,6 +65,39 @@ IOBUF#(
 	.T(!gpio1_wrEn)
 );
 
+
+wire i2c0_scl_read;
+wire i2c0_sda_read;
+wire i2c0_scl_write;
+wire i2c0_sda_write;
+
+PULLUP PU_i2c0_scl (
+	.O(io_i2c0_scl)
+);
+PULLUP PU_i2c0_sda (
+	.O(io_i2c0_sda)
+);
+
+IBUF IBUF_i2c0_scl_read (
+	.O(i2c0_scl_read),
+	.I(io_i2c0_scl)
+);
+IBUF IBUF_i2c0_sda_read (
+	.O(i2c0_sda_read),
+	.I(io_i2c0_sda)
+);
+
+OBUFT OBUFT_i2c0_scl_write (
+	.O(io_i2c0_scl),
+	.I(1'b0),
+	.T(!i2c0_scl_write)
+);
+OBUFT OBUFT_i2c0_sda_write (
+	.O(io_i2c0_sda),
+	.I(1'b0),
+	.T(!i2c0_sda_write)
+);
+
 Hydrogen1 SOC (
 	.io_sys_clock(io_clock),
 	.io_sys_reset(reset),
@@ -73,13 +111,17 @@ Hydrogen1 SOC (
 	.io_per_gpioStatus_pins_read(gpioStatus_rd),
 	.io_per_gpioStatus_pins_write(gpioStatus_wr),
 	.io_per_gpioStatus_pins_writeEnable(gpioStatus_wrEn),
+	.io_per_gpio1_pins_read(gpio1_rd),
+	.io_per_gpio1_pins_write(gpio1_wr),
+	.io_per_gpio1_pins_writeEnable(gpio1_wrEn),
 	.io_per_spi0_ss(io_spi0_ss),
 	.io_per_spi0_sclk(io_spi0_sclk),
 	.io_per_spi0_mosi(io_spi0_mosi),
 	.io_per_spi0_miso(io_spi0_miso),
-	.io_per_gpio1_pins_read(gpio1_rd),
-	.io_per_gpio1_pins_write(gpio1_wr),
-	.io_per_gpio1_pins_writeEnable(gpio1_wrEn)
+	.io_per_i2c0_scl_write(i2c0_scl_write),
+	.io_per_i2c0_scl_read(i2c0_scl_read),
+	.io_per_i2c0_sda_write(i2c0_sda_write),
+	.io_per_i2c0_sda_read(i2c0_sda_read)
 );
 
 endmodule

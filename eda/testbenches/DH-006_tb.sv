@@ -15,11 +15,13 @@ bit   io_jtag_tck;
 wire  io_uartStd_txd;
 bit   io_uartStd_rxd;
 wire  [3:0] io_gpioStatus;
+wire  [14:0] io_gpio1;
 wire  io_spi0_sclk;
 wire  io_spi0_ss;
 wire  io_spi0_mosi;
 bit   io_spi0_miso;
-wire  [14:0] io_gpio1;
+wire  io_i2c0_scl;
+wire  io_i2c0_sda;
 
 
 DH006_top TOP (
@@ -32,11 +34,13 @@ DH006_top TOP (
 	.io_uartStd_txd(io_uartStd_txd),
 	.io_uartStd_rxd(io_uartStd_rxd),
 	.io_gpioStatus(io_gpioStatus),
+	.io_gpio1(io_gpio1),
 	.io_spi0_sclk(io_spi0_sclk),
 	.io_spi0_ss(io_spi0_ss),
 	.io_spi0_mosi(io_spi0_mosi),
 	.io_spi0_miso(io_spi0_miso),
-	.io_gpio1(io_gpio1)
+	.io_i2c0_scl(io_i2c0_scl),
+	.io_i2c0_sda(io_i2c0_sda)
 );
 
 endmodule

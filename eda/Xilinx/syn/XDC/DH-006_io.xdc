@@ -55,3 +55,7 @@ set_property -dict { PACKAGE_PIN P5  IOSTANDARD LVCMOS33 } [get_ports { io_gpio1
 set_property -dict { PACKAGE_PIN P6  IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[12] }];
 set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[13] }];
 set_property -dict { PACKAGE_PIN J16 IOSTANDARD LVCMOS33 } [get_ports { io_gpio1[14] }];
+
+## I2C
+set_property -dict { PACKAGE_PIN G15  IOSTANDARD LVCMOS33 } [get_ports { io_i2c0_scl }];
+set_property -dict { PACKAGE_PIN H14  IOSTANDARD LVCMOS33 } [get_ports { io_i2c0_sda }];
