@@ -52,3 +52,5 @@ write_verilog -mode timesim -sdf_anno true -force ./output/${top_module_name}_pr
 write_sdf -force ./output/${top_module_name}_pr.sdf
 
 write_bitstream -bin_file -force $::env(ELEMENTS_BASE)/build/zibal/${top_module_name}
+
+exit
