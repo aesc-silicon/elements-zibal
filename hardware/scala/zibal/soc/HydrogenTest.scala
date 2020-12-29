@@ -46,7 +46,7 @@ object HydrogenTest {
   object Peripherals {
     def default = Hydrogen.Parameter.default(
       Peripherals(
-        uartStd = UartCtrl.Parameter.full,
+        uartStd = UartCtrl.Parameter.default,
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
         gpio1 = GpioCtrl.Parameter(4, 2, null, null, null),
         spi0 = SpiCtrl.Parameter.default,
