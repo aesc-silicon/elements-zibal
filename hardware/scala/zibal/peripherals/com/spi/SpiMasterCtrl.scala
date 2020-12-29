@@ -123,12 +123,23 @@ object SpiMasterCtrl {
       val cfg = Reg(ctrl.config)
       cfg.ss.activeHigh init(0)
       val modeCfg = Reg(ctrl.modeConfig)
-      modeCfg.cpol init(False)
-      modeCfg.cpha init(False)
+      if (p.init != null) {
+        modeCfg.cpol init(p.init.cpol)
+        modeCfg.cpha init(p.init.cpha)
+      } else {
+        modeCfg.cpol init(False)
+        modeCfg.cpha init(False)
+      }
 
-      busCtrl.readAndWrite(modeCfg, address = 0x08)
+      if (p.permission.busCanWriteModeConfig)
+        busCtrl.readAndWrite(modeCfg, address = 0x08)
+      else
+        modeCfg.allowUnsetRegToAvoidLatch
       busCtrl.readAndWrite(cfg.ss.activeHigh, address = 0x08, bitOffset = 4)
-      busCtrl.drive(cfg.clockDivider, address = 0x0C)
+      if (p.permission.busCanWriteClockDividerConfig)
+        busCtrl.writeMultiWord(cfg.clockDivider, address = 0x0C)
+      else
+        cfg.allowUnsetRegToAvoidLatch
       busCtrl.drive(cfg.ss.setup, address = 0x10)
       busCtrl.drive(cfg.ss.hold, address = 0x14)
       busCtrl.drive(cfg.ss.disable, address = 0x18)
@@ -158,13 +169,13 @@ object SpiMasterCtrl {
 
       busCtrl.createAndDriveFlow(SpiMaster.Cmd(p), address = 0x00).toStream
       val (stream, fifoAvailability) =
-        streamUnbuffered.queueWithAvailability(p.cmdFifoDepth)
+        streamUnbuffered.queueWithAvailability(p.memory.cmdFifoDepth)
       ctrl.cmd << stream
       busCtrl.read(fifoAvailability, address = 0x04, 16)
     }
 
     val rspLogic = new Area {
-      val (stream, fifoOccupancy) = ctrl.rsp.queueWithOccupancy(p.rspFifoDepth)
+      val (stream, fifoOccupancy) = ctrl.rsp.queueWithOccupancy(p.memory.rspFifoDepth)
       busCtrl.readStreamNonBlocking(
         stream,
         address = 0x00,
