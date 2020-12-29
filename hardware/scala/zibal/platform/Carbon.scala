@@ -38,13 +38,13 @@ object Carbon {
   ) {}
 
   object Parameter {
-    def default(peripherals: Any, interrupts: Int = 1) = Parameter(
+    def default(peripherals: Any, interrupts: Int = 0) = Parameter(
       sysFrequency = 100 MHz,
       dbgFrequency = 10 MHz,
       onChipRamSize = 8 kB,
       onChipRomSize = 4 kB,
       mtimer = MachineTimerCtrl.Parameter.default,
-      plic = PlicCtrl.Parameter.default(interrupts),
+      plic = PlicCtrl.Parameter.default(interrupts + 1),
       core = VexRiscvCoreParameter.default(0x80000000L).plugins,
       peripherals = peripherals
     )

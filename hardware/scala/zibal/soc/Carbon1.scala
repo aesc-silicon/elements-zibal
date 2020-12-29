@@ -20,13 +20,7 @@ import spinal.lib.bus.amba4.axi._
 import zibal.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
 import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
-import zibal.peripherals.com.spi.{
-  Apb3SpiMaster,
-  Spi,
-  SpiCtrl,
-  SpiMaster,
-  SpiMasterCtrl
-}
+import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 
 
 object Carbon1 {
@@ -50,10 +44,10 @@ object Carbon1 {
     def default = Carbon.Parameter.default(
       Peripherals(
         uartStd = UartCtrl.Parameter.default,
-        gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 3), List(), List()),
+        gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
         spi0 = SpiCtrl.Parameter.default
       ),
-      4
+      3
     )
   }
 
