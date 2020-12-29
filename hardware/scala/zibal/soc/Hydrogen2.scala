@@ -20,13 +20,7 @@ import spinal.lib.bus.amba4.axi._
 import zibal.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
 import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
-import zibal.peripherals.com.spi.{
-  Apb3SpiMaster,
-  Spi,
-  SpiCtrl,
-  SpiMaster,
-  SpiMasterCtrl
-}
+import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 
 
 object Hydrogen2 {
@@ -43,10 +37,10 @@ object Hydrogen2 {
   case class Peripherals (
     uartStd: UartCtrl.Parameter,
     gpioStatus: GpioCtrl.Parameter,
-    spi0: SpiCtrl.Parameter,
     gpio1: GpioCtrl.Parameter,
     gpio2: GpioCtrl.Parameter,
-    gpio3: GpioCtrl.Parameter
+    gpio3: GpioCtrl.Parameter,
+    spi0: SpiCtrl.Parameter
   ) {}
 
   object Peripherals {
@@ -54,10 +48,10 @@ object Hydrogen2 {
       Peripherals(
         uartStd = UartCtrl.Parameter.full,
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
-        spi0 = SpiCtrl.Parameter.default,
         gpio1 = GpioCtrl.Parameter.default,
         gpio2 = GpioCtrl.Parameter.default,
-        gpio3 = GpioCtrl.Parameter(2, 2, null, null, null)
+        gpio3 = GpioCtrl.Parameter(2, 2, null, null, null),
+        spi0 = SpiCtrl.Parameter.default
       ),
       6
     )
@@ -68,10 +62,10 @@ object Hydrogen2 {
     val io_per = new Bundle {
       val uartStd = master(Uart.Io(peripherals.uartStd))
       val gpioStatus = Gpio.Io(peripherals.gpioStatus)
-      val spi0 = master(Spi.Io(peripherals.spi0))
       val gpio1 = Gpio.Io(peripherals.gpio1)
       val gpio2 = Gpio.Io(peripherals.gpio2)
       val gpio3 = Gpio.Io(peripherals.gpio3)
+      val spi0 = master(Spi.Io(peripherals.spi0))
     }
 
     val pers = new ClockingArea(clocks.systemClockDomain) {
