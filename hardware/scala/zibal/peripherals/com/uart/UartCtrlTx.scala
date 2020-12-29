@@ -15,6 +15,7 @@ object UartCtrlTx {
     val samplingTick = in(Bool)
     val write = slave(Stream(Bits(p.dataWidthMax bits)))
     val txd = out(Bool)
+    val cts = in(Bool)
   }
 
   case class UartCtrlTx(p: UartCtrl.Parameter) extends Component {
@@ -51,7 +52,7 @@ object UartCtrlTx {
         io.write.ready := False
         switch(state) {
           is(State.IDLE){
-            when(io.write.valid && clockDivider.tick){
+            when(io.write.valid && clockDivider.tick && io.cts){
               state := State.START
             }
           }

@@ -57,7 +57,8 @@ object UartCtrl {
     preSamplingSize: Int = 1,
     samplingSize: Int = 5,
     postSamplingSize: Int = 2,
-    interrupt: Boolean = true /* TODO: Disable interrupt */
+    interrupt: Boolean = true, /* TODO: make interrupts optional */
+    flowControl: Boolean = true
   ) {
     require(dataWidthMax < 10 && dataWidthMax > 4)
     require(dataWidthMin < 10 && dataWidthMin > 4)
@@ -74,14 +75,14 @@ object UartCtrl {
   }
   object Parameter {
     def default = Parameter(
-      PermissionParameter.full,
-      MemoryMappedParameter.default,
-      InitParameter.default(115200)
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.default,
+      init = InitParameter.default(115200)
     )
     def full = Parameter(
-      PermissionParameter.full,
-      MemoryMappedParameter.full,
-      InitParameter.default(115200)
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.full,
+      init = InitParameter.default(115200)
     )
   }
 
@@ -102,6 +103,7 @@ object UartCtrl {
     val pendingInterrupts = in(Bits(2 bits))
     val write = slave(Stream(Bits(p.dataWidthMax bits)))
     val read = master(Stream(Bits(p.dataWidthMax bits)))
+    val readIsFull = in(Bool)
   }
 
   case class UartCtrl(p: Parameter) extends Component {
@@ -131,6 +133,14 @@ object UartCtrl {
     rx.io.samplingTick := clockDivider.tick
     io.read << rx.io.read
     io.uart.rxd <> rx.io.rxd
+
+    if (p.flowControl) {
+      io.uart.rts := io.readIsFull
+      tx.io.cts := !io.uart.cts
+    } else {
+      io.uart.rts := False
+      tx.io.cts := False
+    }
   }
 
   case class Mapper(
@@ -192,6 +202,7 @@ object UartCtrl {
     val rx = new Area {
       val (stream, fifoOccupancy) =
         ctrl.read.queueWithOccupancy(p.memory.rxFifoDepth)
+      ctrl.readIsFull := fifoOccupancy >= p.memory.rxFifoDepth - 1
       busCtrl.readStreamNonBlocking(
         stream,
         address = 0x0,
@@ -206,7 +217,6 @@ object UartCtrl {
       val irqCtrl = new InterruptCtrl(2)
       irqCtrl.driveFrom(busCtrl, 0x10)
       irqCtrl.io.inputs(0) := !ctrl.write.valid
-//      irqCtrl.io.inputs(0) := False
       irqCtrl.io.inputs(1) := ctrl.read.valid
       ctrl.pendingInterrupts := irqCtrl.io.pendings
 

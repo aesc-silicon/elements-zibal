@@ -11,14 +11,20 @@ object Uart {
   case class Io(p: UartCtrl.Parameter) extends Bundle with IMasterSlave {
     val txd = Bool
     val rxd = Bool
+    val cts = Bool
+    val rts = Bool
 
     override def asMaster(): Unit = {
       out(txd)
       in(rxd)
+      in(cts)
+      out(rts)
     }
     override def asSlave(): Unit = {
       in(txd)
       out(rxd)
+      out(cts)
+      in(rts)
     }
   }
 
