@@ -246,7 +246,11 @@ object I2cControllerCtrl {
       val cfg = Reg(ctrl.config)
 
       busCtrl.drive(cfg.config, address = 0x08)
-      busCtrl.drive(cfg.clockDivider, address = 0x0C)
+
+      if (p.permission.busCanWriteClockDividerConfig)
+        busCtrl.writeMultiWord(cfg.clockDivider, address = 0x0C)
+      else
+        cfg.allowUnsetRegToAvoidLatch
 
       ctrl.config <> cfg
     }
@@ -261,13 +265,13 @@ object I2cControllerCtrl {
       busCtrl.nonStopWrite(streamUnbuffered.ack, bitOffset = 11)
 
       //busCtrl.createAndDriveFlow(I2cController.Cmd(p), address = 0x00).toStream
-      val (stream, fifoAvailability) = streamUnbuffered.queueWithAvailability(p.cmdFifoDepth)
+      val (stream, fifoAvailability) = streamUnbuffered.queueWithAvailability(p.memory.cmdFifoDepth)
       ctrl.cmd << stream
       busCtrl.read(fifoAvailability, address = 0x04, 16)
     }
 
     val rspLogic = new Area {
-      val (stream, fifoOccupancy) = ctrl.rsp.queueWithOccupancy(p.rspFifoDepth)
+      val (stream, fifoOccupancy) = ctrl.rsp.queueWithOccupancy(p.memory.rspFifoDepth)
       busCtrl.readStreamNonBlocking(
         stream,
         address = 0x00,
