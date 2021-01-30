@@ -4,6 +4,9 @@ common:
   testbench: TH-283_tb
 xilinx:
   part: XC7A35TFTG256-1
+cadence:
+  process: 350.0
+  pdk: C35B4C3
 destinations:
   fpga: xc7
   spi: spi_xc7a35t
