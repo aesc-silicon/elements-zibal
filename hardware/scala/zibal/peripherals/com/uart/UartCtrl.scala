@@ -139,7 +139,7 @@ object UartCtrl {
       tx.io.cts := !io.uart.cts
     } else {
       io.uart.rts := False
-      tx.io.cts := False
+      tx.io.cts := True
     }
   }
 
