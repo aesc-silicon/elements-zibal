@@ -46,7 +46,12 @@ object Hydrogen2 {
   object Peripherals {
     def default = Hydrogen.Parameter.default(
       Peripherals(
-        uartStd = UartCtrl.Parameter.full,
+        uartStd = UartCtrl.Parameter(
+          permission = UartCtrl.PermissionParameter.full,
+          memory = UartCtrl.MemoryMappedParameter.default,
+          init = UartCtrl.InitParameter.default(115200),
+          flowControl = false
+        ),
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
         gpio1 = GpioCtrl.Parameter.default,
         gpio2 = GpioCtrl.Parameter.default,
