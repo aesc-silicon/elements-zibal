@@ -13,10 +13,10 @@ set_property -dict { PACKAGE_PIN K13  IOSTANDARD LVCMOS33 } [get_ports { io_gpio
 set_property -dict { PACKAGE_PIN L5   IOSTANDARD LVCMOS33 } [get_ports { io_gpioStatus[3] }];
 
 ## Stdout
-set_property -dict { PACKAGE_PIN R1   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_rxd }];
-set_property -dict { PACKAGE_PIN R2   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_txd }];
-set_property -dict { PACKAGE_PIN R3   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_rts }];
-set_property -dict { PACKAGE_PIN T2   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_cts }];
+set_property -dict { PACKAGE_PIN R3   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_rxd }];
+set_property -dict { PACKAGE_PIN T2   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_txd }];
+set_property -dict { PACKAGE_PIN R1   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_rts }];
+set_property -dict { PACKAGE_PIN R2   IOSTANDARD LVCMOS33 } [get_ports { io_uartStd_cts }];
 
 ## JTAG
 set_property -dict { PACKAGE_PIN R13  IOSTANDARD LVCMOS33 } [get_ports { io_jtag_tms }];
