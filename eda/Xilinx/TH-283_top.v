@@ -21,7 +21,8 @@ module TH283_top (
 	output io_spi0_wp,
 	output io_spi0_hold,
 	inout  io_i2c0_scl,
-	inout  io_i2c0_sda
+	inout  io_i2c0_sda,
+	input  io_freqCounter0_clock
 );
 
 assign reset = 1'b0;
@@ -121,7 +122,8 @@ HydrogenTest SOC (
 	.io_per_i2c0_scl_write(i2c0_scl_write),
 	.io_per_i2c0_scl_read(i2c0_scl_read),
 	.io_per_i2c0_sda_write(i2c0_sda_write),
-	.io_per_i2c0_sda_read(i2c0_sda_read)
+	.io_per_i2c0_sda_read(i2c0_sda_read),
+	.io_per_freqCounter0_clock(io_freqCounter0_clock)
 );
 
 endmodule

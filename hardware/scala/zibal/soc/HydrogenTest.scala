@@ -22,6 +22,7 @@ import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 import zibal.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
+import zibal.peripherals.misc.frequencycounter.{Apb3FrequencyCounter, FrequencyCounter, FrequencyCounterCtrl}
 
 
 object HydrogenTest {
@@ -40,7 +41,8 @@ object HydrogenTest {
     gpioStatus: GpioCtrl.Parameter,
     gpio1: GpioCtrl.Parameter,
     spi0: SpiCtrl.Parameter,
-    i2c0: I2cCtrl.Parameter
+    i2c0: I2cCtrl.Parameter,
+    freqCounter0: FrequencyCounterCtrl.Parameter
   ) {}
 
   object Peripherals {
@@ -50,7 +52,8 @@ object HydrogenTest {
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
         gpio1 = GpioCtrl.Parameter(4, 2, null, null, null),
         spi0 = SpiCtrl.Parameter.default,
-        i2c0 = I2cCtrl.Parameter.default
+        i2c0 = I2cCtrl.Parameter.default,
+        freqCounter0 = FrequencyCounterCtrl.Parameter.default
       ),
       5
     )
@@ -64,6 +67,7 @@ object HydrogenTest {
       val gpio1 = Gpio.Io(peripherals.gpio1)
       val spi0 = master(Spi.Io(peripherals.spi0))
       val i2c0 = master(I2c.Io(peripherals.i2c0))
+      val freqCounter0 = FrequencyCounter.Io(peripherals.freqCounter0)
     }
 
     val pers = new ClockingArea(clocks.systemClockDomain) {
@@ -92,6 +96,10 @@ object HydrogenTest {
       system.apbMapping += i2cController0Ctrl.io.bus -> (0x50000, 4 kB)
       i2cController0Ctrl.io.i2c <> io_per.i2c0
       system.plicCtrl.io.sources(5) := i2cController0Ctrl.io.interrupt
+
+      val frequencyCounter0Ctrl = Apb3FrequencyCounter(peripherals.freqCounter0)
+      system.apbMapping += frequencyCounter0Ctrl.io.bus -> (0x60000, 4 kB)
+      frequencyCounter0Ctrl.io.clock <> io_per.freqCounter0
 
       val apbDecoder = Apb3Decoder(
         master = system.apbBridge.io.apb,

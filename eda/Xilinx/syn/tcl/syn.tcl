@@ -4,7 +4,6 @@ source ../common/board.tcl
 source tcl/sources.tcl
 
 read_xdc XDC/${board}_clk.xdc
-#synth_design -top ${top_module} -part ${part} -keep_equivalent_registers -flatten_hierarchy none -gated_clock_conversion off -no_lc
 synth_design -top ${top_module_name} -part ${part} -flatten rebuilt
 
 write_checkpoint -force ./output/post_synth.dcp
@@ -46,6 +45,8 @@ report_timing_summary -file ./output/logs/post_route_timing.rpt
 
 #  write_bitstream
 write_checkpoint -force ./output/post_route.dcp 
+
+report_timing_summary
 
 write_vhdl -mode funcsim -force ./output/${top_module_name}_pr.vhd
 write_verilog -mode timesim -sdf_anno true -force ./output/${top_module_name}_pr.v
