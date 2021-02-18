@@ -144,7 +144,7 @@ class Apb3GpioTest extends FunSuite {
       }
       dut.clockDomain.waitFallingEdge()
       assert(
-        dut.io.interrupt.toBigInt == BigInt("800000A9", 16),
+        dut.io.interrupt.toBigInt == 1,
         f"Interrupt not pending (0x${dut.io.interrupt.toBigInt}%08x)"
       )
       apb.write(BigInt("1C", 16), BigInt("00000000", 16))
@@ -167,7 +167,7 @@ class Apb3GpioTest extends FunSuite {
         dut.clockDomain.waitFallingEdge()
       }
       assert(
-        dut.io.interrupt.toBigInt == BigInt("800000A9", 16),
+        dut.io.interrupt.toBigInt == 1,
         f"Interrupt not pending (0x${dut.io.interrupt.toBigInt}%08x)"
       )
       apb.write(BigInt("24", 16), BigInt("00000000", 16))
@@ -195,7 +195,7 @@ class Apb3GpioTest extends FunSuite {
         dut.clockDomain.waitFallingEdge()
       }
       assert(
-        dut.io.interrupt.toBigInt == BigInt("800000A9", 16),
+        dut.io.interrupt.toBigInt == 1,
         f"Interrupt not pending (0x${dut.io.interrupt.toBigInt}%08x)"
       )
       apb.write(BigInt("2C", 16), BigInt("00000000", 16))
