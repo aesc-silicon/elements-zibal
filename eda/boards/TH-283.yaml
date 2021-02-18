@@ -8,5 +8,6 @@ cadence:
   process: 350.0
   pdk: C35B4C3
 destinations:
+  transport: jlink
   fpga: xc7
   spi: spi_xc7a35t
