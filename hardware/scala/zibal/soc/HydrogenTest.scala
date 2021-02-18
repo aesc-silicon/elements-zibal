@@ -18,7 +18,6 @@ import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
 import zibal.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
-import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 import zibal.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
