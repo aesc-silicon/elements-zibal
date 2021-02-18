@@ -2,6 +2,7 @@
 source ../common/general.tcl
 source ../common/board.tcl
 
+exec xvlog $::env(VIVADO_PATH)/../data/verilog/src/glbl.v
 exec xvhdl -work work ./output/${top_module_name}_pr.vhd
 exec xvlog -sv -work work ../../testbenches/${test_bench}.sv \
      -log ./output/logs/${test_bench}_xvhdl.log
