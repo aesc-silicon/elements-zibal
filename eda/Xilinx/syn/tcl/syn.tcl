@@ -3,7 +3,7 @@ source ../common/general.tcl
 source ../common/board.tcl
 source tcl/sources.tcl
 
-read_xdc XDC/${board}_clk.xdc
+read_xdc XDC/${board}.xdc
 synth_design -top ${top_module_name} -part ${part} -flatten rebuilt
 
 write_checkpoint -force ./output/post_synth.dcp
@@ -11,8 +11,6 @@ write_edif -force ./output/${top_module_name}.edf
 report_utilization -file ./output/logs/post_synth_utilization.txt
 report_timing > ./output/logs/post_synth_timing.txt
 report_timing_summary -file ./output/logs/post_synth_timing.rpt 
-
-read_xdc XDC/${board}_io.xdc
 
 # Implemenation
 read_edif output/${top_module_name}.edf
