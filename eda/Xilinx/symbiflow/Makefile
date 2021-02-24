@@ -2,7 +2,7 @@ mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 BUILDDIR := ${current_dir}/../../../../build/symbiflow/
 ZIBALDIR := ${current_dir}/../../../../build/zibal/
-XDCDIR := ${current_dir}/../syn/XDC/
+XDCDIR := ${current_dir}/../XDC/
 
 # Set variables with elements
 board := Nexys4-DDR
