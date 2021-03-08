@@ -36,6 +36,7 @@ class Apb3UartTest extends FunSuite {
 
       val apb = new Apb3Driver(dut.io.bus, dut.clockDomain)
       dut.io.uart.rxd #= true
+      dut.io.uart.cts #= false
 
       /* Init IP-Core */
       apb.write(BigInt("08", 16), BigInt("0000006B", 16))
@@ -66,8 +67,9 @@ class Apb3UartTest extends FunSuite {
       }
 
       val apb = new Apb3Driver(dut.io.bus, dut.clockDomain)
-
       dut.io.uart.rxd #= true
+      dut.io.uart.cts #= false
+
       /* Init IP-Core */
       apb.write(BigInt("08", 16), BigInt("0000006B", 16))
       apb.write(BigInt("0C", 16), BigInt("00000007", 16))
@@ -90,7 +92,6 @@ class Apb3UartTest extends FunSuite {
       apb.write(BigInt("10", 16), BigInt("00000002", 16))
       apb.write(BigInt("14", 16), BigInt("00000002", 16))
       assert(dut.io.interrupt.toBoolean == false, "UART interrupt isn't pending")
-
 
     }
   }
