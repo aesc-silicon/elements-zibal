@@ -24,11 +24,12 @@ import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 
 object Hydrogen2 {
   def main(args: Array[String]) {
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = "./../build/zibal/")
+    val config = SpinalConfig(noRandBoot = false,
+                              targetDirectory = "./../build/"+System.getenv("BOARD")+"/zibal/")
     config.generateVerilog({
       val toplevel = Hydrogen2(Peripherals.default)
-      BinTools
-        .initRam(toplevel.system.onChipRam.ram, "../build/zephyr/zephyr/zephyr.bin")
+      BinTools.initRam(toplevel.system.onChipRam.ram,
+                       "../build/"+System.getenv("BOARD")+"/zephyr/zephyr/zephyr.bin")
       toplevel
     })
   }

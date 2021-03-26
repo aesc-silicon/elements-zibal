@@ -28,11 +28,12 @@ import zibal.multimedia.framebuffer.Apb3SlowFramebuffer
 
 object Hydrogen3 {
   def main(args: Array[String]) {
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = "./../build/zibal/")
+    val config = SpinalConfig(noRandBoot = false,
+                              targetDirectory = "./../build/"+System.getenv("BOARD")+"/zibal/")
     config.generateVerilog({
       val toplevel = Hydrogen3(Peripherals.default)
-      BinTools
-        .initRam(toplevel.system.onChipRam.ram, "../build/zephyr/zephyr/zephyr.bin")
+      BinTools.initRam(toplevel.system.onChipRam.ram,
+                       "../build/"+System.getenv("BOARD")+"/zephyr/zephyr/zephyr.bin")
       toplevel
     })
   }

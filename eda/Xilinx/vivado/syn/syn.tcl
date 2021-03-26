@@ -1,6 +1,6 @@
 # Synthesize
-source $::env(TCL_PATH)/../../common/general.tcl
 source $::env(TCL_PATH)/../../common/board.tcl
+source $::env(TCL_PATH)/../../common/general.tcl
 source $::env(TCL_PATH)/sources.tcl
 
 read_xdc $::env(TCL_PATH)/../../XDC/${board}.xdc
@@ -50,6 +50,6 @@ write_vhdl -mode funcsim -force ./${top_module_name}_pr.vhd
 write_verilog -mode timesim -sdf_anno true -force ./${top_module_name}_pr.v
 write_sdf -force ./${top_module_name}_pr.sdf
 
-write_bitstream -bin_file -force $::env(ELEMENTS_BASE)/build/zibal/${top_module_name}
+write_bitstream -bin_file -force ${path}/build/${board}/vivado/syn/${top_module_name}
 
 exit

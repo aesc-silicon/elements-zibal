@@ -25,11 +25,12 @@ import zibal.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
 
 object Hydrogen1 {
   def main(args: Array[String]) {
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = "./../build/zibal/")
+    val config = SpinalConfig(noRandBoot = false,
+                              targetDirectory = "./../build/"+System.getenv("BOARD")+"/zibal/")
     config.generateVerilog({
       val toplevel = Hydrogen1(Peripherals.default)
-      BinTools
-        .initRam(toplevel.system.onChipRam.ram, "../build/zephyr/zephyr/zephyr.bin")
+      BinTools.initRam(toplevel.system.onChipRam.ram,
+                       "../build/"+System.getenv("BOARD")+"/zephyr/zephyr/zephyr.bin")
       toplevel
     })
   }

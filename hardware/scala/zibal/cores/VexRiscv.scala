@@ -81,7 +81,7 @@ object VexRiscvCoreParameter {
         earlyBranch = true,
         catchAddressMisaligned = true
       ),
-      new YamlPlugin("../build/zibal/VexRiscv.yaml")
+      new YamlPlugin("../build/"+System.getenv("BOARD")+"/zibal/VexRiscv.yaml")
     )
   )
 }

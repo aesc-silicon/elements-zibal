@@ -26,11 +26,12 @@ import zibal.peripherals.misc.frequencycounter.{Apb3FrequencyCounter, FrequencyC
 
 object HydrogenTest {
   def main(args: Array[String]) {
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = "./../build/zibal/")
+    val config = SpinalConfig(noRandBoot = false,
+                              targetDirectory = "./../build/"+System.getenv("BOARD")+"/zibal/")
     config.generateVerilog({
       val toplevel = HydrogenTest(Peripherals.default)
-      BinTools
-        .initRam(toplevel.system.onChipRam.ram, "../build/zephyr/zephyr/zephyr.bin")
+      BinTools.initRam(toplevel.system.onChipRam.ram,
+                       "../build/"+System.getenv("BOARD")+"/zephyr/zephyr/zephyr.bin")
       toplevel
     })
   }

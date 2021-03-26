@@ -1,5 +1,5 @@
-source $::env(TCL_PATH)/../../common/general.tcl
 source $::env(TCL_PATH)/../../common/board.tcl
+source $::env(TCL_PATH)/../../common/general.tcl
 source $::env(TCL_PATH)/sources.tcl
 
 exec xvlog -sv -work work $::env(TCL_PATH)/../../../testbenches/${test_bench}.sv \

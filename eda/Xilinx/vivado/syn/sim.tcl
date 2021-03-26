@@ -1,6 +1,6 @@
 #Start post-synthesize simulation
-source $::env(TCL_PATH)/../../common/general.tcl
 source $::env(TCL_PATH)/../../common/board.tcl
+source $::env(TCL_PATH)/../../common/general.tcl
 
 exec xvlog $::env(VIVADO_PATH)/../data/verilog/src/glbl.v
 exec xvhdl -work work ./${top_module_name}_pr.vhd
