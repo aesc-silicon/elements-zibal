@@ -1,10 +1,11 @@
-common:
-  SOC: Hydrogen3
-  top: Nexys4-DDR_top
-  testbench: Nexys4-DDR_tb
-xilinx:
-  part: XC7A100TCSG324-1
-destinations:
+top: Nexys4-DDR_top
+testbench: Nexys4-DDR_tb
+debug_bridge:
   transport: ftdi
   fpga: xc7
   spi: spi_xc7a100t
+boot_source: memory
+SOC:
+  name: Hydrogen3
+xilinx:
+  part: XC7A100TCSG324-1

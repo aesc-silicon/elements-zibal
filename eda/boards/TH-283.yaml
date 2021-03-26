@@ -1,13 +1,14 @@
-common:
-  SOC: HydrogenTest
-  top: TH-283_top
-  testbench: TH-283_tb
+top: TH-283_top
+testbench: TH-283_tb
+debug_bridge:
+  transport: jlink
+  fpga: xc7
+  spi: spi_xc7a35t
+boot_source: memory
+SOC:
+  name: HydrogenTest
 xilinx:
   part: XC7A35TFTG256-1
 cadence:
   process: 350.0
   pdk: C35B4C3
-destinations:
-  transport: jlink
-  fpga: xc7
-  spi: spi_xc7a35t
