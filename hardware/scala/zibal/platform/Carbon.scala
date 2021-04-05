@@ -39,15 +39,26 @@ object Carbon {
 
   object Parameter {
     def default(peripherals: Any, interrupts: Int = 0) = Parameter(
-      sysFrequency = 100 MHz,
+      sysFrequency = 50 MHz,
       dbgFrequency = 10 MHz,
-      onChipRamSize = 8 kB,
+      onChipRamSize = 512 Byte,
       onChipRomSize = 4 kB,
       mtimer = MachineTimerCtrl.Parameter.default,
       plic = PlicCtrl.Parameter.default(interrupts + 1),
       core = VexRiscvCoreParameter.default(0x80000000L).plugins,
       peripherals = peripherals
     )
+    def light(peripherals: Any, interrupts: Int = 0) = Parameter(
+      sysFrequency = 50 MHz,
+      dbgFrequency = 10 MHz,
+      onChipRamSize = 512 Byte,
+      onChipRomSize = 4 kB,
+      mtimer = MachineTimerCtrl.Parameter.default,
+      plic = PlicCtrl.Parameter.default(interrupts + 1),
+      core = VexRiscvCoreParameter.default(0x80000000L).plugins,
+      peripherals = peripherals
+    )
+
   }
 
   class Carbon(p: Parameter) extends Component {

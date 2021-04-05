@@ -25,11 +25,10 @@ import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 
 object Carbon1 {
   def main(args: Array[String]) {
-    val config = SpinalConfig(noRandBoot = true, targetDirectory = "./../build/zibal/")
+    val config = SpinalConfig(noRandBoot = true,
+                              targetDirectory = "./../build/"+System.getenv("BOARD")+"/zibal/")
     config.generateVerilog({
       val toplevel = Carbon1(Peripherals.default)
-      BinTools
-        .initRam(toplevel.system.onChipRam.ram, "../build/zephyr/zephyr/zephyr.bin")
       toplevel
     })
   }
@@ -41,7 +40,7 @@ object Carbon1 {
   ) {}
 
   object Peripherals {
-    def default = Carbon.Parameter.default(
+    def default = Carbon.Parameter.light(
       Peripherals(
         uartStd = UartCtrl.Parameter.default,
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
