@@ -1,4 +1,4 @@
-set TOOL "genus"
+set TOOL "map"
 
 source common/board.tcl
 source common/pathes.tcl
@@ -11,7 +11,7 @@ set_db syn_opt_effort ${effort}
 set_db hdl_track_filename_row_col true
 set_db hdl_zero_replicate_is_null true
 
-set_db design_mode_process ${process}
+set_db design_process_node ${process}
 
 if {![file exists ${PATH_RTL}]} {
 	puts "No RTL directoy found!"

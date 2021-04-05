@@ -1,0 +1,14 @@
+top: Carbon1_top
+testbench: DH-012_tb
+debug_bridge:
+  transport: jlink
+  fpga: xc7
+  spi: spi_xc7a35t
+boot_source: spi
+SOC:
+  name: Carbon1
+xilinx:
+  part: XC7A35TFTG256-1
+cadence:
+  process: 130
+  pdk: SG13S

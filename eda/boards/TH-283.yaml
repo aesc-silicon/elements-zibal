@@ -9,6 +9,3 @@ SOC:
   name: HydrogenTest
 xilinx:
   part: XC7A35TFTG256-1
-cadence:
-  process: 350.0
-  pdk: C35B4C3

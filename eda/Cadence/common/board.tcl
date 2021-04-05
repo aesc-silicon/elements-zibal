@@ -1,3 +1,5 @@
+set board $::env(BOARD)
+set board_name $::env(BOARD_NAME)
 set SOC $::env(SOC)
 set top_module $::env(TOP)
 set top_module_name $::env(TOP_NAME)
