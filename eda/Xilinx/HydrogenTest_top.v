@@ -1,7 +1,7 @@
 `define GPIO_STATUS_NO		4
-`define GPIO_1_NO		5
+`define GPIO_1_NO		4
 
-module Nexys4DDR_top (
+module HydrogenTest_top (
 	input  io_clock,
 	output io_sysReset_out,
 	input  io_jtag_tms,
@@ -13,15 +13,22 @@ module Nexys4DDR_top (
 	output io_uartStd_rts,
 	input  io_uartStd_cts,
 	inout  [`GPIO_STATUS_NO - 1:0] io_gpioStatus,
-	inout  [`GPIO_1_NO - 1:0] io_gpio1,
-	output [2:0] io_vga0_pixels_r,
-	output [2:0] io_vga0_pixels_g,
-	output [1:0] io_vga0_pixels_b,
-	output io_vga0_hSync,
-	output io_vga0_vSync
+	output io_spi0_sclk,
+	output [0:0] io_spi0_ss,
+	output io_spi0_mosi,
+	input  io_spi0_miso,
+	output io_spi0_rst,
+	output io_spi0_wp,
+	output io_spi0_hold,
+	inout  io_i2c0_scl,
+	inout  io_i2c0_sda,
+	input  io_freqCounter0_clock
 );
 
 assign reset = 1'b0;
+assign io_spi0_hold = 1'b1;
+assign io_spi0_wp = 1'b1;
+assign io_spi0_rst = 1'b1;
 
 wire [`GPIO_STATUS_NO - 1:0] gpioStatus_rd;
 wire [`GPIO_STATUS_NO - 1:0] gpioStatus_wr;
@@ -44,20 +51,53 @@ wire [`GPIO_1_NO - 1:0] gpio1_rd;
 wire [`GPIO_1_NO - 1:0] gpio1_wr;
 wire [`GPIO_1_NO - 1:0] gpio1_wrEn;
 
-IOBUF#(
-	.DRIVE(12),
-	.IBUF_LOW_PWR("TRUE"),
-	.IOSTANDARD("DEFAULT"),
-	.SLEW("SLOW")
-) IOBUF_gpio1[`GPIO_1_NO - 1:0] (
-	.O(gpio1_rd),
-	.IO(io_gpio1),
-	.I(gpio1_wr),
-	// high = input, low = output
-	.T(!gpio1_wrEn)
+wire [`GPIO_STATUS_NO - 1:0] gpio1;
+
+assign gpio1[0] = gpio1[1];
+assign gpio1[2] = gpio1[3];
+
+generate
+	genvar i;
+	for (i = 0; i < 4; i = i + 1) begin
+		assign gpio1[i] = gpio1_wrEn[i] ? gpio1_wr[i] : 1'bZ;
+		assign gpio1_rd[i] = gpio1[i];
+	end
+endgenerate
+
+
+wire i2c0_scl_read;
+wire i2c0_sda_read;
+wire i2c0_scl_write;
+wire i2c0_sda_write;
+
+PULLUP PU_i2c0_scl (
+	.O(io_i2c0_scl)
+);
+PULLUP PU_i2c0_sda (
+	.O(io_i2c0_sda)
 );
 
-Hydrogen3 SOC (
+IBUF IBUF_i2c0_scl_read (
+	.O(i2c0_scl_read),
+	.I(io_i2c0_scl)
+);
+IBUF IBUF_i2c0_sda_read (
+	.O(i2c0_sda_read),
+	.I(io_i2c0_sda)
+);
+
+OBUFT OBUFT_i2c0_scl_write (
+	.O(io_i2c0_scl),
+	.I(1'b0),
+	.T(!i2c0_scl_write)
+);
+OBUFT OBUFT_i2c0_sda_write (
+	.O(io_i2c0_sda),
+	.I(1'b0),
+	.T(!i2c0_sda_write)
+);
+
+HydrogenTest SOC (
 	.io_sys_clock(io_clock),
 	.io_sys_reset(reset),
 	.io_sys_sysReset_out(io_sysReset_out),
@@ -75,11 +115,15 @@ Hydrogen3 SOC (
 	.io_per_gpio1_pins_read(gpio1_rd),
 	.io_per_gpio1_pins_write(gpio1_wr),
 	.io_per_gpio1_pins_writeEnable(gpio1_wrEn),
-	.io_per_vga0_pixels_r(io_vga0_pixels_r),
-	.io_per_vga0_pixels_g(io_vga0_pixels_g),
-	.io_per_vga0_pixels_b(io_vga0_pixels_b),
-	.io_per_vga0_hSync(io_vga0_hSync),
-	.io_per_vga0_vSync(io_vga0_vSync)
+	.io_per_spi0_ss(io_spi0_ss),
+	.io_per_spi0_sclk(io_spi0_sclk),
+	.io_per_spi0_mosi(io_spi0_mosi),
+	.io_per_spi0_miso(io_spi0_miso),
+	.io_per_i2c0_scl_write(i2c0_scl_write),
+	.io_per_i2c0_scl_read(i2c0_scl_read),
+	.io_per_i2c0_sda_write(i2c0_sda_write),
+	.io_per_i2c0_sda_read(i2c0_sda_read),
+	.io_per_freqCounter0_clock(io_freqCounter0_clock)
 );
 
 endmodule

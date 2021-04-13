@@ -1,4 +1,3 @@
-top: Nexys4-DDR_top
 testbench: Nexys4-DDR_tb
 debug_bridge:
   transport: ftdi
@@ -7,5 +6,6 @@ debug_bridge:
 boot_source: memory
 SOC:
   name: Hydrogen3
+  top: Hydrogen3_top
 xilinx:
   part: XC7A100TCSG324-1

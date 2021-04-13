@@ -1,4 +1,3 @@
-top: Carbon1_top
 testbench: DH-012_tb
 debug_bridge:
   transport: jlink
@@ -7,6 +6,7 @@ debug_bridge:
 boot_source: spi
 SOC:
   name: Carbon1
+  top: Carbon1_top
 xilinx:
   part: XC7A35TFTG256-1
 cadence:
