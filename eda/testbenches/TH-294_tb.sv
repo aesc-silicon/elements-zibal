@@ -26,7 +26,7 @@ wire  [31:0] io_gpio2;
 wire  [1:0] io_gpio3;
 
 
-TH294_top TOP (
+Hydrogen2_top TOP (
 	.io_clock(io_clock),
 	.io_sysReset_out(io_sysReset_out),
 	.io_jtag_tms(io_jtag_tms),

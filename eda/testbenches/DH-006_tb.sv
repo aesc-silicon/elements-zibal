@@ -26,7 +26,7 @@ wire  io_i2c0_scl;
 wire  io_i2c0_sda;
 
 
-DH006_top TOP (
+Hydrogen1_top TOP (
 	.io_clock(io_clock),
 	.io_sysReset_out(io_sysReset_out),
 	.io_jtag_tms(io_jtag_tms),

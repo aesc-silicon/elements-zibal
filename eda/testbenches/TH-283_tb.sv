@@ -26,7 +26,7 @@ wire  io_i2c0_sda;
 bit   io_freqCounter0_clock;
 clock #(.CLK_PERIOD(2)) gen_io_freqCOunter0_clock (io_freqCounter0_clock);
 
-TH283_top TOP (
+HydrogenTest_top TOP (
 	.io_clock(io_clock),
 	.io_sysReset_out(io_sysReset_out),
 	.io_jtag_tms(io_jtag_tms),

@@ -25,7 +25,7 @@ wire  io_vga0_hSync;
 wire  io_vga0_vSync;
 
 
-Nexys4DDR_top TOP (
+Hydrogen3_top TOP (
 	.io_clock(io_clock),
 	.io_sysReset_out(io_sysReset_out),
 	.io_jtag_tms(io_jtag_tms),
