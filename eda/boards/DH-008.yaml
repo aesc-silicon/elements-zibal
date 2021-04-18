@@ -1,0 +1,11 @@
+testbench: DH-008_tb
+debug_bridge:
+  transport: jlink
+  fpga: xc7
+  spi: spi_xc7a35t
+boot_source: memory
+SOC:
+  name: Hydrogen4
+  top: Hydrogen4_top
+xilinx:
+  part: XC7A35TFTG256-1
