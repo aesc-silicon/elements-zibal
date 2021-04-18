@@ -21,6 +21,11 @@ object MultimediaConfig {
     TimingsConfig.set800x600x72h(),
     TimingsConfig.set800x600x72v()
   )
+  def full() = MultimediaConfig(
+    RgbConfig.set12bit(),
+    TimingsConfig.set800x600x72h(),
+    TimingsConfig.set800x600x72v()
+  )
 }
 
 object MultimediaStream {

@@ -14,6 +14,7 @@ object VgaCtrl {
   ) {}
   object Parameter {
     def default = Parameter(MultimediaConfig.default())
+    def full = Parameter(MultimediaConfig.full())
   }
 
   case class Io(p: Parameter) extends Bundle {
