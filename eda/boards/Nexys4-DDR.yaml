@@ -9,3 +9,4 @@ SOC:
   top: Hydrogen3_top
 xilinx:
   part: XC7A100TCSG324-1
+  device: xc7a100t

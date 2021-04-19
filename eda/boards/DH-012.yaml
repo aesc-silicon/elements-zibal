@@ -9,6 +9,7 @@ SOC:
   top: Carbon1_top
 xilinx:
   part: XC7A35TFTG256-1
+  device: xc50t
 cadence:
   process: 130
   pdk: SG13S

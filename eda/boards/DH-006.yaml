@@ -9,3 +9,4 @@ SOC:
   top: Hydrogen1_top
 xilinx:
   part: XC7A35TFTG256-1
+  device: xc50t
