@@ -14,9 +14,9 @@ module Hydrogen3_top (
 	input  io_uartStd_cts,
 	inout  [`GPIO_STATUS_NO - 1:0] io_gpioStatus,
 	inout  [`GPIO_1_NO - 1:0] io_gpio1,
-	output [2:0] io_vga0_pixels_r,
-	output [2:0] io_vga0_pixels_g,
-	output [1:0] io_vga0_pixels_b,
+	output [3:0] io_vga0_pixels_r,
+	output [3:0] io_vga0_pixels_g,
+	output [3:0] io_vga0_pixels_b,
 	output io_vga0_hSync,
 	output io_vga0_vSync
 );
