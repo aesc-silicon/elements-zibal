@@ -71,7 +71,7 @@ proc elements_opt_design {state} {
 		optDesign -postRoute -hold -outdir ${PATH_REPORT}
 	}
 	"signOff" {
-		optDesign -signoff -outdir ${PATH_REPORT}
+		signoffOptDesign -hold -outdir ${PATH_REPORT}
 	}
 	}
 }

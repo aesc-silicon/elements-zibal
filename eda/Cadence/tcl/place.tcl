@@ -5,7 +5,7 @@ source common/pathes.tcl
 source pdks/${PDK}.tcl
 source tcl/flow/sourcer.tcl
 
-setMultiCpuUsage -localCpu 8
+setMultiCpuUsage -localCpu 8 -remoteHost 1 -cpuPerRemoteHost 8
 
 set defHierChar {/}
 set init_design_settop 1
@@ -55,6 +55,9 @@ elements_opt_design postRoute
 elements_opt_design postRouteHold
 elements_analysis_timing postRoute true
 elements_filler metal
+
+elements_opt_design signOff
+elements_analysis_timing signOff true
 
 elements_verify
 elements_save final
