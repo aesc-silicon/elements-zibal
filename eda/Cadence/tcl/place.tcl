@@ -38,13 +38,11 @@ elements_connect_PG core
 elements_power_route {{VDDCORE 20} {VSSCORE 20}}
 elements_check_design power
 
-# TODO scan chain
 elements_place ntd
 elements_check_design pastPlace
 elements_check_design floorplan
 elements_opt_design preCTS
 elements_analysis_timing preCTS true
-# TODO warnings
 elements_cts
 elements_opt_design postCTS
 elements_analysis_timing postCTS true
