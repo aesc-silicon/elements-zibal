@@ -74,6 +74,11 @@ object UartCtrl {
     }
   }
   object Parameter {
+    def lightweight = Parameter(
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.lightweight,
+      init = InitParameter.default(115200)
+    )
     def default = Parameter(
       permission = PermissionParameter.full,
       memory = MemoryMappedParameter.default,

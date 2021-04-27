@@ -48,9 +48,19 @@ object SpiCtrl {
   }
 
   object Parameter {
+    def lightweight = Parameter(
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.lightweight,
+      init = InitParameter.default
+    )
     def default = Parameter(
       permission = PermissionParameter.full,
       memory = MemoryMappedParameter.default,
+      init = InitParameter.default
+    )
+    def full = Parameter(
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.full,
       init = InitParameter.default
     )
   }
