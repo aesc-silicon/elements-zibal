@@ -42,9 +42,9 @@ object Carbon1 {
   object Peripherals {
     def default = Carbon.Parameter.light(
       Peripherals(
-        uartStd = UartCtrl.Parameter.default,
+        uartStd = UartCtrl.Parameter.lightweight,
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
-        spi0 = SpiCtrl.Parameter.default
+        spi0 = SpiCtrl.Parameter.lightweight
       ),
       3
     )
