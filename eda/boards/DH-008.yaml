@@ -1,5 +1,5 @@
 testbench: DH-008_tb
-debug_bridge:
+flash_bridge:
   transport: jlink
   fpga: xc7
   spi: spi_xc7a35t

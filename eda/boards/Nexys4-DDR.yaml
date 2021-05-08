@@ -1,6 +1,6 @@
 testbench: Nexys4-DDR_tb
-debug_bridge:
-  transport: ftdi
+flash_bridge:
+  transport: ftdi_nexys4-ddr
   fpga: xc7
   spi: spi_xc7a100t
 boot_source: memory

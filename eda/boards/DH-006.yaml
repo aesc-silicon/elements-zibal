@@ -1,6 +1,6 @@
 testbench: DH-006_tb
-debug_bridge:
-  transport: jlink
+flash_bridge:
+  transport: ftdi_dh006
   fpga: xc7
   spi: spi_xc7a35t
 boot_source: memory
