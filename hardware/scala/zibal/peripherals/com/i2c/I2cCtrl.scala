@@ -35,9 +35,17 @@ object I2cCtrl {
   }
 
   object Parameter {
+    def lightweight = Parameter(
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.lightweight
+    )
     def default = Parameter(
       permission = PermissionParameter.full,
       memory = MemoryMappedParameter.default
+    )
+    def full = Parameter(
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.full
     )
   }
 }
