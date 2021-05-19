@@ -14,6 +14,7 @@ bit   io_jtag_tms;
 bit   io_jtag_tdi;
 wire  io_jtag_tdo;
 bit   io_jtag_tck;
+clock #(.CLK_PERIOD(100)) gen_io_jtag_tck (io_jtag_tck);
 wire  io_uartStd_txd;
 bit   io_uartStd_rxd;
 wire  io_uartStd_rts;
@@ -23,8 +24,11 @@ wire  io_spi0_ss;
 wire  io_spi0_sclk;
 wire  io_spi0_mosi;
 bit   io_spi0_miso;
+wire  io_i2c0_scl;
+wire  io_i2c0_sda;
 
 assign io_uartStd_rxd = 1'b1;
+assign io_gpioStatus = 0;
 
 initial begin
 	#300000 $finish;
@@ -46,7 +50,9 @@ Carbon1_top TOP (
 	.io_spi0_sclk(io_spi0_sclk),
 	.io_spi0_ss(io_spi0_ss),
 	.io_spi0_mosi(io_spi0_mosi),
-	.io_spi0_miso(io_spi0_miso)
+	.io_spi0_miso(io_spi0_miso),
+	.io_i2c0_scl(io_i2c0_scl),
+	.io_i2c0_sda(io_i2c0_sda)
 );
 
 endmodule

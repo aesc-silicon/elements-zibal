@@ -14,7 +14,9 @@ module Carbon1_top (
 	output [0:0] io_spi0_ss,
 	output io_spi0_sclk,
 	output io_spi0_mosi,
-	input  io_spi0_miso
+	input  io_spi0_miso,
+	inout  io_i2c0_scl,
+	inout  io_i2c0_sda
 );
 
 wire not_connected;
@@ -150,6 +152,20 @@ ixc013_b16m per_spi0_miso_pad (
 	.DIN(not_connected)
 );
 
+ixc013_b16mpup per_i2c0_scl_pad (
+	.PAD(io_i2c0_scl),
+	.DOUT(per_i2c0_scl_read),
+	.OEN(per_i2c0_scl_write),
+	.DIN(1'b0)
+);
+
+ixc013_b16mpup per_i2c0_sda_pad (
+	.PAD(io_i2c0_sda),
+	.DOUT(per_i2c0_sda_read),
+	.OEN(per_i2c0_sda_write),
+	.DIN(1'b0)
+);
+
 Carbon1 SOC (
 	.io_sys_clock(sys_clock),
 	.io_sys_reset(sys_reset),
@@ -168,7 +184,11 @@ Carbon1 SOC (
 	.io_per_spi0_ss(per_spi0_ss),
 	.io_per_spi0_sclk(per_spi0_sclk),
 	.io_per_spi0_mosi(per_spi0_mosi),
-	.io_per_spi0_miso(per_spi0_miso)
+	.io_per_spi0_miso(per_spi0_miso),
+	.io_per_i2c0_scl_write(per_i2c0_scl_write),
+	.io_per_i2c0_scl_read(per_i2c0_scl_read),
+	.io_per_i2c0_sda_write(per_i2c0_sda_write),
+	.io_per_i2c0_sda_read(per_i2c0_sda_read)
 );
 
 endmodule
