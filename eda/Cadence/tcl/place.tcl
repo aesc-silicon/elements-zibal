@@ -4,6 +4,7 @@ source common/board.tcl
 source common/pathes.tcl
 source pdks/${PDK}.tcl
 source tcl/flow/sourcer.tcl
+source constraints/${SOC}/${SOC}.flow.tcl
 
 setMultiCpuUsage -localCpu 8 -remoteHost 1 -cpuPerRemoteHost 8
 
@@ -28,38 +29,19 @@ foreach {suppress_message} [get_suppress_messages] {
 
 elements_load_design
 
-elements_check_design all
-elements_analysis_timing prePlace true
-elements_check_design place
-elements_floorplan core 0.8 50
-elements_filler per
-elements_connect_PG per
-elements_connect_PG core
-elements_power_route {{VDDCORE 20} {VSSCORE 20}}
-elements_check_design power
+setMaxRouteLayer [get_max_route_layer]
 
-elements_place ntd
-elements_check_design pastPlace
-elements_check_design floorplan
-elements_opt_design preCTS
-elements_analysis_timing preCTS true
-elements_cts
-elements_opt_design postCTS
-elements_analysis_timing postCTS true
-
-elements_filler core
-elements_route nano
-elements_opt_design postRoute
-elements_opt_design postRouteHold
-elements_analysis_timing postRoute true
-elements_filler metal
-
-elements_opt_design signOff
-elements_analysis_timing signOff true
-
-elements_verify
-elements_save final
-elements_write final
+set stages {floorplan place cts route signoff verify save}
+if {$::env(STAGE) != "init"} {
+	foreach stage $stages {
+		puts $stage
+		puts $::env(STAGE)
+		[$stage]
+		if {$stage == $::env(STAGE)} {
+			break
+		}
+	}
+}
 
 uiSet main -title "Innovus - ${SOC}"
 win

@@ -11,26 +11,10 @@ create_library_set -name libset_min \
 ## rc_corner
 create_rc_corner -name rc_corner_max \
 	-T 125.0 \
-	-cap_table ${PATH_PDK}/stdcell/lef/captable/SG13.captable \
-	-qx_tech_file ${PATH_PDK}/tech/Assura_SG13/qrc/qrcTechFile \
-	-preRoute_res 1.0 \
-	-preRoute_cap 1.0 \
-	-postRoute_res {1.0 1.0 1.0} \
-	-postRoute_cap {1.0 1.0 1.0} \
-	-postRoute_xcap {1.0 1.0 1.0} \
-	-postRoute_clkres {1.0 1.0 1.0} \
-	-postRoute_clkcap {1.0 1.0 1.0}
+	-qx_tech_file ${PATH_PDK}/tech/Assura_SG13/qrc/qrcTechFile
 create_rc_corner -name rc_corner_min \
 	-T -40.0 \
-	-cap_table ${PATH_PDK}/stdcell/lef/captable/SG13.captable \
-	-qx_tech_file ${PATH_PDK}/tech/Assura_SG13/qrc/qrcTechFile \
-	-preRoute_res 1.0 \
-	-preRoute_cap 1.0 \
-	-postRoute_res {1.0 1.0 1.0} \
-	-postRoute_cap {1.0 1.0 1.0} \
-	-postRoute_xcap {1.0 1.0 1.0} \
-	-postRoute_clkres {1.0 1.0 1.0} \
-	-postRoute_clkcap {1.0 1.0 1.0}
+	-qx_tech_file ${PATH_PDK}/tech/Assura_SG13/qrc/qrcTechFile
 
 ## delay_corner
 create_delay_corner -name delay_corner_std_max \

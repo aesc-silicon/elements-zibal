@@ -7,5 +7,4 @@ set_units -time 1000ps
 current_design ${SOC}
 
 create_clock -period 20.0 -name "top_clock"  -waveform {0.0 10.0} [get_ports io_sys_clock]
-set_clock_gating_check -setup 0.0
 create_clock -period 100.0 -name "top_jtag_tck" -waveform {0.0 50.0} [get_ports io_sys_jtag_tck]

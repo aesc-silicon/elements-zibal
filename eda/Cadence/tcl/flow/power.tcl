@@ -16,10 +16,15 @@ proc elements_connect_PG type {
 	foreach gnet $globalNetsList {
 		set net [lindex $gnet 0]
 		set pin_type [lindex $gnet 1]
-		set pin [lindex $gnet 2]
-		set inst [lindex $gnet 3]
-		globalNetConnect $net -type $pin_type -pin $pin -inst $inst -module {}
-		print "Info: GlobalConnect all $pin pins ($pin_type) of instance $inst to net $net"
+		if {[llength $gnet] == 2} {
+			globalNetConnect $net -type $pin_type
+			print "Info: GlobalConnect net $net to $pin_type"
+		} else {
+			set pin [lindex $gnet 2]
+			set inst [lindex $gnet 3]
+			globalNetConnect $net -type $pin_type -pin $pin -inst $inst -module {}
+			print "Info: GlobalConnect all $pin pins ($pin_type) of instance $inst to net $net"
+		}
 	}
 }
 

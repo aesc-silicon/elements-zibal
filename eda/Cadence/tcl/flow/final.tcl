@@ -6,10 +6,16 @@ proc elements_verify {} {
 
 	verify_drc -report ${PATH_REPORT}/${top_module_name}.drc.rpt
 	verifyConnectivity -report ${PATH_REPORT}/${top_module_name}.con.rpt
-	verifyEndCap -report ${PATH_REPORT}/${top_module_name}.endcap.rpt
 
 	verifyMetalDensity -report ${PATH_REPORT}/${top_module_name}.denstiy.rpt
 	verifyPowerVia -report ${PATH_REPORT}/${top_module_name}.power.rpt
+}
+
+proc elements_verify_endcap {} {
+	global top_module_name
+	global PATH_REPORT
+
+	verifyEndCap -report ${PATH_REPORT}/${top_module_name}.endcap.rpt
 }
 
 proc elements_save postfix {

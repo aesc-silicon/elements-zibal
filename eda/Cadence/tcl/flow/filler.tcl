@@ -18,7 +18,6 @@ proc elements_filler {type} {
 	"endcaps" {
 		setEndCapMode -rightEdge ENDCAPL
 		setEndCapMode -leftEdge ENDCAPR
-		addEndCap
 	}
 	}
 

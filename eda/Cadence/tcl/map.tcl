@@ -13,6 +13,8 @@ set_db hdl_zero_replicate_is_null true
 
 set_db design_process_node ${process}
 
+set_db auto_ungroup none
+
 if {![file exists ${PATH_RTL}]} {
 	puts "No RTL directoy found!"
 	exit

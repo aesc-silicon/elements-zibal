@@ -38,8 +38,12 @@ proc get_ground_nets {} {
 	return {VSSCORE VSSPAD}
 }
 
+proc get_max_route_layer {} {
+	return 7;
+}
+
 proc get_suppress_messages {} {
-	return {IMPLF-200 IMPVL-159 IMPFP-3961 TCLCMD-1403 IMPCK-8086 IMPTS-282}
+	return {IMPLF-200 IMPVL-159 IMPFP-3961 TCLCMD-1403 IMPCK-8086 IMPTS-282 IMPDC-1629 IMPFP-325 IMPSR-1253 IMPSR-1254 IMPSP-9531 IMPOPT-6118 IMPSR-4302 IMPREPO-231}
 }
 
 proc get_global_core_nets {} {
@@ -60,8 +64,8 @@ proc get_global_per_nets {} {
 
 proc get_global_tie_nets {} {
 	return {
-		{vdd! tiehi vdd! *}
-		{vss! tielo vss! *}
+		{VDDCORE tiehi}
+		{VSSCORE tielo}
 	}
 }
 
@@ -70,7 +74,7 @@ proc get_buffer_cells {} {
 }
 
 proc get_inverter_cells {} {
-	return {INJILTX1 INVJILTX1 INJILTX2 INVJILTX2 INJILTX4 INVJILTX4 INJILTX8 INVJILTX8 INJILTX12 INVJILTX12 INJILTX16 INVJILTX16 INJILTX20 INVJILTX20}
+	return {INJILTX1 INVJILTX1 INJILTX2 INVJILTX2 INJILTX4 INVJILTX4 INJILTX8 INVJILTX8 INJILTX12 INVJILTX12}
 }
 
 proc get_clock_gating_cells {} {
