@@ -34,10 +34,10 @@ setMaxRouteLayer [get_max_route_layer]
 set stages {floorplan place cts route signoff verify save}
 if {$::env(STAGE) != "init"} {
 	foreach stage $stages {
-		puts $stage
-		puts $::env(STAGE)
-		[$stage]
+		puts "Call $stage"
+		$stage
 		if {$stage == $::env(STAGE)} {
+			puts "Leave because $::env(STAGE) is set as last stage"
 			break
 		}
 	}
