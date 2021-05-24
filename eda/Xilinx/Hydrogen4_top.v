@@ -59,6 +59,10 @@ wire [`GPIO_CONTROLLER_NO - 1:0] gpioController_rd;
 wire [`GPIO_CONTROLLER_NO - 1:0] gpioController_wr;
 wire [`GPIO_CONTROLLER_NO - 1:0] gpioController_wrEn;
 
+PULLDOWN PD_gpioController[`GPIO_CONTROLLER_NO - 1:0] (
+	.O(io_gpioController)
+);
+
 IOBUF#(
 	.DRIVE(12),
 	.IBUF_LOW_PWR("TRUE"),
