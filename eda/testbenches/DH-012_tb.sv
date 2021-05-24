@@ -1,5 +1,6 @@
 `include "lib/clock.sv"
 `include "lib/reset.sv"
+`include "lib/MT25Q.sv"
 
 module DH012_tb;
 
@@ -20,10 +21,10 @@ bit   io_uartStd_rxd;
 wire  io_uartStd_rts;
 bit   io_uartStd_cts;
 wire  [3:0] io_gpioStatus;
-wire  io_spi0_ss;
-wire  io_spi0_sclk;
-wire  io_spi0_mosi;
-bit   io_spi0_miso;
+wire  io_spiXip_ss;
+wire  io_spiXip_sclk;
+wire  io_spiXip_mosi;
+wire  io_spiXip_miso;
 wire  io_i2c0_scl;
 wire  io_i2c0_sda;
 
@@ -36,7 +37,7 @@ end
 
 Carbon1_top TOP (
 	.io_clock(io_clock),
-	.io_reset(io_reset),
+//	.io_reset(io_reset),
 	.io_sysReset_out(io_sysReset_out),
 	.io_jtag_tms(io_jtag_tms),
 	.io_jtag_tdi(io_jtag_tdi),
@@ -47,12 +48,20 @@ Carbon1_top TOP (
 	.io_uartStd_rts(io_uartStd_rts),
 	.io_uartStd_cts(io_uartStd_cts),
 	.io_gpioStatus(io_gpioStatus),
-	.io_spi0_sclk(io_spi0_sclk),
-	.io_spi0_ss(io_spi0_ss),
-	.io_spi0_mosi(io_spi0_mosi),
-	.io_spi0_miso(io_spi0_miso),
+	.io_spiXip_sclk(io_spiXip_sclk),
+	.io_spiXip_ss(io_spiXip_ss),
+	.io_spiXip_mosi(io_spiXip_mosi),
+	.io_spiXip_miso(io_spiXip_miso),
 	.io_i2c0_scl(io_i2c0_scl),
 	.io_i2c0_sda(io_i2c0_sda)
+);
+
+MT25Q SpiNor (
+	.io_rst_n(io_rset),
+	.io_spi_sclk(io_spiXip_sclk),
+	.io_spi_mosi(io_spiXip_mosi),
+	.io_spi_miso(io_spiXip_miso),
+	.io_spi_ss(io_spiXip_ss)
 );
 
 endmodule
