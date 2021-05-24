@@ -103,7 +103,6 @@ object SpiMasterCtrl {
       timer.reset := True
     }
 
-
     io.spi.ss := fsm.ss ^ io.config.ss.activeHigh
     io.spi.sclk := RegNext(((io.cmd.valid && io.cmd.isData) &&
                              (fsm.counter.lsb ^ io.modeConfig.cpha)) ^
@@ -122,6 +121,19 @@ object SpiMasterCtrl {
     val config = new Area {
       val cfg = Reg(ctrl.config)
       cfg.ss.activeHigh init(0)
+      if (p.init.clockDivider > 0) {
+        val clock = U(ClockDomain.current.frequency.getValue.toLong / p.init.clockDivider / 2,
+                      p.timerWidth bits)
+        cfg.clockDivider init(clock)
+        cfg.ss.setup init(clock)
+        cfg.ss.hold init(clock)
+        cfg.ss.disable init(clock)
+      } else {
+        cfg.ss.setup init(0)
+        cfg.ss.hold init(0)
+        cfg.ss.disable init(0)
+      }
+
       val modeCfg = Reg(ctrl.modeConfig)
       if (p.init != null) {
         modeCfg.cpol init(p.init.cpol)
@@ -136,17 +148,27 @@ object SpiMasterCtrl {
       else
         modeCfg.allowUnsetRegToAvoidLatch
       busCtrl.readAndWrite(cfg.ss.activeHigh, address = 0x08, bitOffset = 4)
-      if (p.permission.busCanWriteClockDividerConfig)
+      if (p.permission.busCanWriteClockDividerConfig) {
         busCtrl.writeMultiWord(cfg.clockDivider, address = 0x0C)
-      else
+        busCtrl.readAndWrite(cfg.ss.setup, address = 0x10)
+        busCtrl.readAndWrite(cfg.ss.hold, address = 0x14)
+        busCtrl.readAndWrite(cfg.ss.disable, address = 0x18)
+      } else {
         cfg.allowUnsetRegToAvoidLatch
-      busCtrl.drive(cfg.ss.setup, address = 0x10)
-      busCtrl.drive(cfg.ss.hold, address = 0x14)
-      busCtrl.drive(cfg.ss.disable, address = 0x18)
+        cfg.ss.allowUnsetRegToAvoidLatch
+      }
 
       ctrl.config <> cfg
       ctrl.modeConfig <> modeCfg
     }
+
+  }
+
+  case class StreamMapper(
+    busCtrl: BusSlaveFactory,
+    ctrl: Io,
+    p: SpiCtrl.Parameter
+  ) extends Area {
 
     val cmdLogic = new Area {
       val streamUnbuffered = Stream(SpiMaster.Cmd(p))

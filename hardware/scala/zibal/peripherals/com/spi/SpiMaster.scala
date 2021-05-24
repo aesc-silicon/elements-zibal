@@ -54,7 +54,9 @@ object SpiMaster {
     spiMasterCtrl.io.spi <> io.spi
     io.interrupt := spiMasterCtrl.io.interrupt
 
-    val mapper = SpiMasterCtrl.Mapper(factory(io.bus), spiMasterCtrl.io, p)
+    val busFactory =  factory(io.bus)
+    SpiMasterCtrl.Mapper(busFactory, spiMasterCtrl.io, p)
+    SpiMasterCtrl.StreamMapper(busFactory, spiMasterCtrl.io, p)
   }
 }
 

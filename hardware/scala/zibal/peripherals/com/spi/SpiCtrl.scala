@@ -3,10 +3,12 @@ package zibal.peripherals.com.spi
 object SpiCtrl {
   case class InitParameter(
     cpol: Boolean = false,
-    cpha: Boolean = false
+    cpha: Boolean = false,
+    clockDivider: Int = 0
   )
   object InitParameter {
-    def default = InitParameter(false, false)
+    def default = InitParameter(false, false, 0)
+    def xip = InitParameter(false, false, 1000000)
   }
 
   case class PermissionParameter(
@@ -57,6 +59,11 @@ object SpiCtrl {
       permission = PermissionParameter.full,
       memory = MemoryMappedParameter.default,
       init = InitParameter.default
+    )
+    def xip = Parameter(
+      permission = PermissionParameter.full,
+      memory = MemoryMappedParameter.default,
+      init = InitParameter.xip
     )
     def full = Parameter(
       permission = PermissionParameter.full,
