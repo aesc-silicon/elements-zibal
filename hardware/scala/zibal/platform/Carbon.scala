@@ -19,6 +19,7 @@ import spinal.lib.bus.misc.SizeMapping
 
 import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import zibal.peripherals.misc.plic.{Apb3Plic, Plic, PlicCtrl}
+import zibal.peripherals.com.spi.{AmbaSpiXipMaster, Spi, SpiCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv.{plugin, _}
@@ -33,6 +34,7 @@ object Carbon {
     onChipRomSize: BigInt,
     mtimer: MachineTimerCtrl.Parameter,
     plic: PlicCtrl.Parameter,
+    spiXip: SpiCtrl.Parameter,
     core: ArrayBuffer[Plugin[VexRiscv]],
     peripherals: Any
   ) {}
@@ -44,8 +46,9 @@ object Carbon {
       onChipRamSize = 512 Byte,
       onChipRomSize = 4 kB,
       mtimer = MachineTimerCtrl.Parameter.default,
-      plic = PlicCtrl.Parameter.default(interrupts + 1),
-      core = VexRiscvCoreParameter.default(0x80000000L).plugins,
+      plic = PlicCtrl.Parameter.default(interrupts + 2),
+      spiXip = SpiCtrl.Parameter.default,
+      core = VexRiscvCoreParameter.default(0xA0000000L).plugins,
       peripherals = peripherals
     )
     def light(peripherals: Any, interrupts: Int = 0) = Parameter(
@@ -54,11 +57,11 @@ object Carbon {
       onChipRamSize = 512 Byte,
       onChipRomSize = 4 kB,
       mtimer = MachineTimerCtrl.Parameter.default,
-      plic = PlicCtrl.Parameter.default(interrupts + 1),
-      core = VexRiscvCoreParameter.default(0x80000000L).plugins,
+      plic = PlicCtrl.Parameter.default(interrupts + 2),
+      spiXip = SpiCtrl.Parameter.xip,
+      core = VexRiscvCoreParameter.default(0xA0000000L).plugins,
       peripherals = peripherals
     )
-
   }
 
   class Carbon(p: Parameter) extends Component {
@@ -67,6 +70,7 @@ object Carbon {
       val reset = in(Bool)
       val sysReset_out = out(Bool)
       val jtag = slave(Jtag())
+      val spiXip = master(Spi.Io(p.spiXip))
     }
 
     val resetCtrlClockDomain = ClockDomain(
@@ -147,17 +151,20 @@ object Carbon {
         idWidth = 4
       )
 
+      val spiXipMasterCtrl = AmbaSpiXipMaster(p.spiXip, Axi4Config(20, 32, 4))
+
       val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()
 
       /* Generate AXI Crossbar */
 
       axiCrossbar.addSlaves(
         onChipRam.io.axi -> (0x80000000L, p.onChipRamSize),
+        spiXipMasterCtrl.io.dataBus -> (0xA0000000L, p.onChipRomSize),
         apbBridge.io.axi -> (0xF0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
-        core.iBus -> List(onChipRam.io.axi),
+        core.iBus -> List(spiXipMasterCtrl.io.dataBus),
         core.dBus -> List(onChipRam.io.axi, apbBridge.io.axi)
       )
 
@@ -169,6 +176,13 @@ object Carbon {
       })
 
       axiCrossbar.addPipelining(onChipRam.io.axi)((crossbar, ctrl) => {
+        crossbar.sharedCmd.halfPipe() >> ctrl.sharedCmd
+        crossbar.writeData >/-> ctrl.writeData
+        crossbar.writeRsp << ctrl.writeRsp
+        crossbar.readRsp << ctrl.readRsp
+      })
+
+      axiCrossbar.addPipelining(spiXipMasterCtrl.io.dataBus)((crossbar, ctrl) => {
         crossbar.sharedCmd.halfPipe() >> ctrl.sharedCmd
         crossbar.writeData >/-> ctrl.writeData
         crossbar.writeRsp << ctrl.writeRsp
@@ -193,6 +207,11 @@ object Carbon {
       apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       core.globalInterrupt := plicCtrl.io.interrupt
       plicCtrl.io.sources(0) := False
+
+      apbMapping += spiXipMasterCtrl.io.bus -> (0x40000, 4 kB)
+      spiXipMasterCtrl.io.spi <> io_sys.spiXip
+      plicCtrl.io.sources(1) := spiXipMasterCtrl.io.interrupt
+
     }
   }
 }

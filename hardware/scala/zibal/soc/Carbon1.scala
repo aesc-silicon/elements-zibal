@@ -37,7 +37,6 @@ object Carbon1 {
   case class Peripherals (
     uartStd: UartCtrl.Parameter,
     gpioStatus: GpioCtrl.Parameter,
-    spi0: SpiCtrl.Parameter,
     i2c0: I2cCtrl.Parameter
   ) {}
 
@@ -46,10 +45,9 @@ object Carbon1 {
       Peripherals(
         uartStd = UartCtrl.Parameter.default,
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
-        spi0 = SpiCtrl.Parameter.default,
         i2c0 = I2cCtrl.Parameter.default
       ),
-      4
+      3
     )
   }
 
@@ -58,7 +56,6 @@ object Carbon1 {
     val io_per = new Bundle {
       val uartStd = master(Uart.Io(peripherals.uartStd))
       val gpioStatus = Gpio.Io(peripherals.gpioStatus)
-      val spi0 = master(Spi.Io(peripherals.spi0))
       val i2c0 = master(I2c.Io(peripherals.i2c0))
     }
 
@@ -67,17 +64,12 @@ object Carbon1 {
       val uartStdCtrl = Apb3Uart(peripherals.uartStd)
       system.apbMapping += uartStdCtrl.io.bus -> (0x00000, 4 kB)
       uartStdCtrl.io.uart <> io_per.uartStd
-      system.plicCtrl.io.sources(1) := uartStdCtrl.io.interrupt
+      system.plicCtrl.io.sources(2) := uartStdCtrl.io.interrupt
 
       val gpioStatusCtrl = Apb3Gpio(peripherals.gpioStatus)
       system.apbMapping += gpioStatusCtrl.io.bus -> (0x10000, 4 kB)
       gpioStatusCtrl.io.gpio <> io_per.gpioStatus
-      system.plicCtrl.io.sources(2) := gpioStatusCtrl.io.interrupt
-
-      val spiMaster0Ctrl = Apb3SpiMaster(peripherals.spi0)
-      system.apbMapping += spiMaster0Ctrl.io.bus -> (0x40000, 4 kB)
-      spiMaster0Ctrl.io.spi <> io_per.spi0
-      system.plicCtrl.io.sources(3) := spiMaster0Ctrl.io.interrupt
+      system.plicCtrl.io.sources(3) := gpioStatusCtrl.io.interrupt
 
       val i2cController0Ctrl = Apb3I2cController(peripherals.i2c0)
       system.apbMapping += i2cController0Ctrl.io.bus -> (0x50000, 4 kB)
