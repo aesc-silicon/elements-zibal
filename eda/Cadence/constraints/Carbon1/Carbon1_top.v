@@ -12,10 +12,10 @@ module Carbon1_top (
 	output io_uartStd_rts,
 	inout  [3:0] io_gpioStatus,
 	inout  [6:0] io_gpio1,
-	output [0:0] io_spi0_ss,
-	output io_spi0_sclk,
-	output io_spi0_mosi,
-	input  io_spi0_miso,
+	output [0:0] io_spiXip_ss,
+	output io_spiXip_sclk,
+	output io_spiXip_mosi,
+	input  io_spiXip_miso,
 	inout  io_i2c0_scl,
 	inout  io_i2c0_sda
 );
@@ -125,30 +125,30 @@ ixc013_b16m per_gpioStatus3_pad (
 	.DIN(per_gpioStatus_pins_write[3])
 );
 
-ixc013_b16m per_spi0_ss_pad (
-	.PAD(io_spi0_ss),
+ixc013_b16m per_spiXip_ss_pad (
+	.PAD(io_spiXip_ss),
 	.DOUT(not_connected),
 	.OEN(1'b0),
-	.DIN(per_spi0_ss)
+	.DIN(per_spiXip_ss)
 );
 
-ixc013_b16m per_spi0_sclk_pad (
-	.PAD(io_spi0_sclk),
+ixc013_b16m per_spiXip_sclk_pad (
+	.PAD(io_spiXip_sclk),
 	.DOUT(not_connected),
 	.OEN(1'b0),
-	.DIN(per_spi0_sclk)
+	.DIN(per_spiXip_sclk)
 );
 
-ixc013_b16m per_spi0_mosi_pad (
-	.PAD(io_spi0_mosi),
+ixc013_b16m per_spiXip_mosi_pad (
+	.PAD(io_spiXip_mosi),
 	.DOUT(not_connected),
 	.OEN(1'b0),
-	.DIN(per_spi0_mosi)
+	.DIN(per_spiXip_mosi)
 );
 
-ixc013_b16m per_spi0_miso_pad (
-	.PAD(io_spi0_miso),
-	.DOUT(per_spi0_miso),
+ixc013_b16m per_spiXip_miso_pad (
+	.PAD(io_spiXip_miso),
+	.DOUT(per_spiXip_miso),
 	.OEN(1'b1),
 	.DIN(not_connected)
 );
@@ -175,6 +175,10 @@ Carbon1 SOC (
 	.io_sys_jtag_tdi(sys_jtag_tdi),
 	.io_sys_jtag_tdo(sys_jtag_tdo),
 	.io_sys_jtag_tck(sys_jtag_tck),
+	.io_sys_spiXip_ss(per_spiXip_ss),
+	.io_sys_spiXip_sclk(per_spiXip_sclk),
+	.io_sys_spiXip_mosi(per_spiXip_mosi),
+	.io_sys_spiXip_miso(per_spiXip_miso),
 	.io_per_uartStd_txd(per_uartStd_txd),
 	.io_per_uartStd_rxd(per_uartStd_rxd),
 	.io_per_uartStd_cts(per_uartStd_cts),
@@ -182,10 +186,6 @@ Carbon1 SOC (
 	.io_per_gpioStatus_pins_read(per_gpioStatus_pins_read),
 	.io_per_gpioStatus_pins_write(per_gpioStatus_pins_write),
 	.io_per_gpioStatus_pins_writeEnable(per_gpioStatus_pins_writeEnable),
-	.io_per_spi0_ss(per_spi0_ss),
-	.io_per_spi0_sclk(per_spi0_sclk),
-	.io_per_spi0_mosi(per_spi0_mosi),
-	.io_per_spi0_miso(per_spi0_miso),
 	.io_per_i2c0_scl_write(per_i2c0_scl_write),
 	.io_per_i2c0_scl_read(per_i2c0_scl_read),
 	.io_per_i2c0_sda_write(per_i2c0_sda_write),
