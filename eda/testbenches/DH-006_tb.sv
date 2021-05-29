@@ -1,5 +1,6 @@
 `include "lib/clock.sv"
 `include "lib/reset.sv"
+`include "lib/MT25Q.sv"
 
 module DH006_tb;
 
@@ -21,7 +22,7 @@ wire  [14:0] io_gpio1;
 wire  io_spi0_sclk;
 wire  io_spi0_ss;
 wire  io_spi0_mosi;
-bit   io_spi0_miso;
+wire  io_spi0_miso;
 wire  io_i2c0_scl;
 wire  io_i2c0_sda;
 
@@ -45,6 +46,14 @@ Hydrogen1_top TOP (
 	.io_spi0_miso(io_spi0_miso),
 	.io_i2c0_scl(io_i2c0_scl),
 	.io_i2c0_sda(io_i2c0_sda)
+);
+
+MT25Q SpiNor (
+	.io_rst_n(io_sysReset_out),
+	.io_spi_sclk(io_spi0_sclk),
+	.io_spi_mosi(io_spi0_mosi),
+	.io_spi_miso(io_spi0_miso),
+	.io_spi_ss(io_spi0_ss)
 );
 
 endmodule
