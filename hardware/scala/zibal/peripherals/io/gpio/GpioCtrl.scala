@@ -96,8 +96,10 @@ object GpioCtrl {
       if (p.output.contains(i) && p.input.contains(i)) {
         busCtrl.driveAndRead(ctrl.config.direction(i), 0x08, i) init(False)
       } else {
-        busCtrl.read(Bool(p.output.contains(i)), 0x08, i)
-        ctrl.config.direction(i) := Bool(p.output.contains(i))
+        val direction = RegInit(Bool(p.output.contains(i)))
+        direction.allowUnsetRegToAvoidLatch
+        busCtrl.read(direction, 0x08, i)
+        ctrl.config.direction(i) := direction
       }
     }
 
