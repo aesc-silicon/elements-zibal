@@ -11,7 +11,7 @@
 		(inst name="vddcore_0" cell="vddcore")
 		(inst name="gndpad_0" cell="gndpad")
 		(inst name="vddpad_0" cell="vddpad")
-		(inst name="sys_sysReset_pad" cell="ixc013_b16m")
+		(inst name="sys_sysReset_out_pad" cell="ixc013_b16m")
 		(inst name="per_gpio1_0_pad" cell="ixc013_b16m")
 		(inst name="per_gpio1_1_pad" cell="ixc013_b16m")
 		(inst name="per_gpio1_2_pad" cell="ixc013_b16m")
