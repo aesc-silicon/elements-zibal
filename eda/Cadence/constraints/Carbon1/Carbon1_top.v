@@ -99,30 +99,83 @@ wire [3:0] per_gpioStatus_pins_write;
 
 ixc013_b16m per_gpioStatus0_pad (
 	.PAD(io_gpioStatus[0]),
-	.DOUT(per_gpioStatus_pins_read[0]),
+	.DOUT(per_gpioStatus_pins_write[0]),
 	.OEN(per_gpioStatus_pins_writeEnable[0]),
-	.DIN(per_gpioStatus_pins_write[0])
+	.DIN(per_gpioStatus_pins_read[0])
 );
 
 ixc013_b16m per_gpioStatus1_pad (
 	.PAD(io_gpioStatus[1]),
-	.DOUT(per_gpioStatus_pins_read[1]),
+	.DOUT(per_gpioStatus_pins_write[1]),
 	.OEN(per_gpioStatus_pins_writeEnable[1]),
-	.DIN(per_gpioStatus_pins_write[1])
+	.DIN(per_gpioStatus_pins_read[1])
 );
 
 ixc013_b16m per_gpioStatus2_pad (
 	.PAD(io_gpioStatus[2]),
-	.DOUT(per_gpioStatus_pins_read[2]),
+	.DOUT(per_gpioStatus_pins_write[2]),
 	.OEN(per_gpioStatus_pins_writeEnable[2]),
-	.DIN(per_gpioStatus_pins_write[2])
+	.DIN(per_gpioStatus_pins_read[2])
 );
 
 ixc013_b16m per_gpioStatus3_pad (
 	.PAD(io_gpioStatus[3]),
-	.DOUT(per_gpioStatus_pins_read[3]),
+	.DOUT(per_gpioStatus_pins_write[3]),
 	.OEN(per_gpioStatus_pins_writeEnable[3]),
-	.DIN(per_gpioStatus_pins_write[3])
+	.DIN(per_gpioStatus_pins_read[3])
+);
+
+wire [6:0] per_gpio1_pins_read;
+wire [6:0] per_gpio1_pins_writeEnable;
+wire [6:0] per_gpio1_pins_write;
+
+ixc013_b16m per_gpio1_0_pad (
+	.PAD(io_gpio1[0]),
+	.DOUT(per_gpio1_pins_write[0]),
+	.OEN(per_gpio1_pins_writeEnable[0]),
+	.DIN(per_gpio1_pins_read[0])
+);
+
+ixc013_b16m per_gpio1_1_pad (
+	.PAD(io_gpio1[1]),
+	.DOUT(per_gpio1_pins_write[1]),
+	.OEN(per_gpio1_pins_writeEnable[1]),
+	.DIN(per_gpio1_pins_read[1])
+);
+
+ixc013_b16m per_gpio1_2_pad (
+	.PAD(io_gpio1[2]),
+	.DOUT(per_gpio1_pins_write[2]),
+	.OEN(per_gpio1_pins_writeEnable[2]),
+	.DIN(per_gpio1_pins_read[2])
+);
+
+ixc013_b16m per_gpio1_3_pad (
+	.PAD(io_gpio1[3]),
+	.DOUT(per_gpio1_pins_write[3]),
+	.OEN(per_gpio1_pins_writeEnable[3]),
+	.DIN(per_gpio1_pins_read[3])
+);
+
+ixc013_b16m per_gpio1_4_pad (
+	.PAD(io_gpio1[4]),
+	.DOUT(per_gpio1_pins_write[4]),
+	.OEN(per_gpio1_pins_writeEnable[4]),
+	.DIN(per_gpio1_pins_read[4])
+);
+
+ixc013_b16m per_gpio1_5_pad (
+	.PAD(io_gpio1[5]),
+	.DOUT(per_gpio1_pins_write[5]),
+	.OEN(per_gpio1_pins_writeEnable[5]),
+	.DIN(per_gpio1_pins_read[5])
+);
+
+ixc013_b16m per_gpio1_6_pad (
+	.PAD(io_gpio1[6]),
+	.DOUT(per_gpio1_pins_write[6]),
+	.OEN(per_gpio1_pins_writeEnable[6]),
+	.DIN(per_gpio1_pins_read[6])
 );
 
 ixc013_b16m per_spiXip_ss_pad (
@@ -186,6 +239,9 @@ Carbon1 SOC (
 	.io_per_gpioStatus_pins_read(per_gpioStatus_pins_read),
 	.io_per_gpioStatus_pins_write(per_gpioStatus_pins_write),
 	.io_per_gpioStatus_pins_writeEnable(per_gpioStatus_pins_writeEnable),
+	.io_per_gpio1_pins_read(per_gpio1_pins_read),
+	.io_per_gpio1_pins_write(per_gpio1_pins_write),
+	.io_per_gpio1_pins_writeEnable(per_gpio1_pins_writeEnable),
 	.io_per_i2c0_scl_write(per_i2c0_scl_write),
 	.io_per_i2c0_scl_read(per_i2c0_scl_read),
 	.io_per_i2c0_sda_write(per_i2c0_sda_write),
