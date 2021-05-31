@@ -12,6 +12,10 @@
 		(inst name="gndpad_0" cell="gndpad")
 		(inst name="vddpad_0" cell="vddpad")
 		(inst name="sys_sysReset_pad" cell="ixc013_b16m")
+		(inst name="per_gpio1_0_pad" cell="ixc013_b16m")
+		(inst name="per_gpio1_1_pad" cell="ixc013_b16m")
+		(inst name="per_gpio1_2_pad" cell="ixc013_b16m")
+		(inst name="per_gpio1_3_pad" cell="ixc013_b16m")
 	)
 	(topright
 		(inst name="CORNER1" cell="corner" orientation=R90)
@@ -27,6 +31,7 @@
 		(inst name="vddpad_1" cell="vddpad")
 		(inst name="per_gpioStatus0_pad" cell="ixc013_b16m")
 		(inst name="per_gpioStatus1_pad" cell="ixc013_b16m")
+		(inst name="per_gpio1_4_pad" cell="ixc013_b16m")
 	)
 	(bottomright
 		(inst name="CORNER2" cell="corner" orientation=R0)
@@ -42,6 +47,7 @@
 		(inst name="per_uartStd_rxd_pad" cell="ixc013_b16m")
 		(inst name="per_uartStd_cts_pad" cell="ixc013_b16m")
 		(inst name="per_uartStd_rts_pad" cell="ixc013_b16m")
+		(inst name="per_gpio1_5_pad" cell="ixc013_b16m")
 	)
 	(bottomleft
 		(inst name="CORNER3" cell="corner" orientation=R270)
@@ -57,6 +63,7 @@
 		(inst name="vddpad_3" cell="vddpad")
 		(inst name="per_i2c0_scl_pad" cell="ixc013_b16mpup")
 		(inst name="per_i2c0_sda_pad" cell="ixc013_b16mpup")
+		(inst name="per_gpio1_6_pad" cell="ixc013_b16m")
 	)
 	(topleft
 		(inst name="CORNER4" cell="corner" orientation=R180)

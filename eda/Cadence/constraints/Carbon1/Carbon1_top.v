@@ -11,6 +11,7 @@ module Carbon1_top (
 	input  io_uartStd_cts,
 	output io_uartStd_rts,
 	inout  [3:0] io_gpioStatus,
+	inout  [6:0] io_gpio1,
 	output [0:0] io_spi0_ss,
 	output io_spi0_sclk,
 	output io_spi0_mosi,
