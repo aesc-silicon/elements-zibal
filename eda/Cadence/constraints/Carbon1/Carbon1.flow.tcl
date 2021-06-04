@@ -1,15 +1,16 @@
 proc floorplan {} {
 	elements_analysis_timing prePlace true
 	elements_check_design place
-	elements_floorplan core 0.8 70
+	# This design has two power stripes. Use only 70% density to archive 80% with stripes.
+	elements_floorplan core 0.7 70
 
 	elements_filler per
 	elements_connect_PG per
 	elements_connect_PG core
 	elements_connect_PG tie
 
-	elements_power_strip 550 {{VSSCORE 20} {VDDCORE 20}}
-	elements_power_strip 800 {{VSSCORE 20} {VDDCORE 20}}
+	elements_power_strip  600 {{VSSCORE 20} {VDDCORE 20}}
+	elements_power_strip 1000 {{VSSCORE 20} {VDDCORE 20}}
 
 	elements_power_route {{VDDCORE 30} {VSSCORE 30}}
 	elements_check_design power
@@ -30,11 +31,11 @@ proc cts {} {
 }
 
 proc route {} {
-	elements_filler core
 	elements_route nano
 	elements_opt_design postRoute
 	elements_opt_design postRouteHold
 	elements_analysis_timing postRoute true
+	elements_filler core
 	elements_filler metal
 }
 
