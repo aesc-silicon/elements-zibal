@@ -1,5 +1,5 @@
 puts "Hostname : [info hostname]"
-set DATE [clock format [clock seconds] -format "%b%d-%T"]
+set DATE $::env(DATETIME)
 
 set PATH $::env(ELEMENTS_BASE)
 set PATH_PDK $::env(PDK_BASE)
@@ -22,4 +22,3 @@ createDirectory ${PATH_BUILD}
 createDirectory ${PATH_LATEST}
 createDirectory ${PATH_OUTPUT}
 createDirectory ${PATH_REPORT}
-createDirectory ${PATH_LOG}

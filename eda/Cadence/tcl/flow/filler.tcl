@@ -5,8 +5,9 @@ proc elements_filler {type} {
 
 	switch ${type} {
 	"core" {
-		addFiller -cell ${fillerCapList} -prefix CORE_FILLER_CAP
-		addFiller -cell ${fillerCellList} -prefix CORE_FILLER
+		addFiller -cell ${fillerCapList} -prefix CORE_FILLER_CAP -util 0.95
+		addFiller -cell ${fillerCellList} -prefix CORE_FILLER -util 0.95
+		ecoRoute -target
 	}
 	"per"  {
 		addIoFiller -cell ${fillerIOList} -prefix PER_FILLER

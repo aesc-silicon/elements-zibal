@@ -6,7 +6,7 @@ source pdks/${PDK}.tcl
 source tcl/flow/sourcer.tcl
 source constraints/${SOC}/${SOC}.flow.tcl
 
-setMultiCpuUsage -localCpu 8 -remoteHost 1 -cpuPerRemoteHost 8
+setMultiCpuUsage -localCpu 2 -remoteHost 1 -cpuPerRemoteHost 8
 
 set defHierChar {/}
 set init_design_settop 1
