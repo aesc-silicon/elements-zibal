@@ -3,13 +3,13 @@
  */
 package zibal.peripherals.misc.mtimer
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import spinal.sim._
 import spinal.core._
 import spinal.core.sim._
 
-class MachineTimerCtrlTest extends FunSuite {
+class MachineTimerCtrlTest extends AnyFunSuite {
   test("basic") {
     val compiled = SimConfig.withWave.compile(
       MachineTimerCtrl(MachineTimerCtrl.Parameter.default)

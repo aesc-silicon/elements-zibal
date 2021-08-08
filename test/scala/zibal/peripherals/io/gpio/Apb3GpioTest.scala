@@ -3,14 +3,14 @@
  */
 package zibal.peripherals.io.gpio
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import spinal.sim._
 import spinal.core._
 import spinal.core.sim._
 import spinal.lib.bus.amba3.apb.sim.Apb3Driver
 
-class Apb3GpioTest extends FunSuite {
+class Apb3GpioTest extends AnyFunSuite {
   test("basic") {
     val compiled = SimConfig.withWave.compile {
       val dut = Apb3Gpio(GpioCtrl.Parameter(

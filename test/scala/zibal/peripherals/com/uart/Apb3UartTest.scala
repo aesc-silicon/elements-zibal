@@ -3,7 +3,7 @@
  */
 package zibal.peripherals.com.uart
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import spinal.sim._
 import spinal.core._
@@ -11,7 +11,7 @@ import spinal.core.sim._
 import spinal.lib.bus.amba3.apb.sim.Apb3Driver
 
 
-class Apb3UartTest extends FunSuite {
+class Apb3UartTest extends AnyFunSuite {
   test("basic") {
     val compiled = SimConfig.withWave.compile {
       /* TODO: InitParameter will throwe an exception because no ClockDomain is defined */
