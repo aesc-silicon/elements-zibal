@@ -37,6 +37,29 @@ object I2cController {
     io.interrupt := i2cControllerCtrl.io.interrupt
 
     val mapper = I2cControllerCtrl.Mapper(factory(io.bus), i2cControllerCtrl.io, p)
+
+    def deviceTree(name: String, address: BigInt, size: BigInt, clockDomain: ClockDomain,
+                   irqNumber: Int = -1) = {
+      val clockSpeed = clockDomain.frequency.getValue.toInt
+      val baseAddress = "%08x".format(address.toInt)
+      val regSize = "%04x".format(size.toInt)
+      var dt = s"""
+\t\t$name: $name@$baseAddress {
+\t\t\tcompatible = "elements,i2c";
+\t\t\treg = <0x$baseAddress 0x$regSize>;
+\t\t\tstatus = "okay";
+\t\t\tlabel = "$name";"""
+      if (irqNumber > 0) {
+        dt += s"""
+\t\t\tinterrupt-parent = <&plic>;
+\t\t\tinterrupts = <$irqNumber 1>;"""
+      }
+      dt += s"""
+\t\t\tinput-frequency = <$clockSpeed>;
+\t\t\tclock-frequency = <100000>;
+\t\t};"""
+      dt
+    }
   }
 }
 

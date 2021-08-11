@@ -10,3 +10,4 @@ tmp/
 *wdb
 .vscode
 .metals
+.bsp/

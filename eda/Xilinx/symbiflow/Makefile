@@ -1,14 +1,15 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
-BUILDDIR := ${current_dir}/../../../../build/${BOARD}/symbiflow/
+BUILDDIR := ${current_dir}/../../../../build/${SOC}/${BOARD}/symbiflow/
 LOGDIR := ${BUILDDIR}/logs/
-ZIBALDIR := ${current_dir}/../../../../build/${BOARD}/zibal/
-XDCDIR := ${current_dir}/../XDC/
+ZIBALDIR := ${current_dir}/../../../../build/${SOC}/${BOARD}/zibal/
+XDCDIR := ${ZIBALDIR}
 
 # Set variables with elements
+TOP := ${BOARD}Top
 BITSTREAM_DEVICE := artix7
-VERILOG:=${ZIBALDIR}/${SOC}.v ${current_dir}/../${TOP}.v
-XDC:=${XDCDIR}/${BOARD}.xdc
+VERILOG:=${ZIBALDIR}/${TOP}.v
+XDC:=${XDCDIR}/${TOP}.xdc
 
 all: ${BUILDDIR}/${TOP}.bit
 
@@ -34,4 +35,5 @@ ${BUILDDIR}/${TOP}.bit: ${BUILDDIR}/${TOP}.fasm
 	cd ${BUILDDIR} && symbiflow_write_bitstream -d ${BITSTREAM_DEVICE} -f ${TOP}.fasm -p ${PART} -b ${TOP}.bit 2>&1 > ${LOGDIR}/symbiflow_write_bitstream.log
 
 clean:
-	rm -rf ${BUILDDIR}
+	rm -rf ${BUILDDIR}/*
+	mkdir ${BUILDDIR}logs

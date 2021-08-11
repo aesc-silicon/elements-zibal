@@ -47,6 +47,7 @@ object GpioCtrl {
     val gpio = Gpio.Io(p)
     val config = in(Config(p))
     val value = out(Bits(p.width bits))
+    /* TODO: enable is unused */
     val enable = in(EnableConfig(p))
     val interrupt = out(Bool)
     val irqHigh = InterruptConfig(p)

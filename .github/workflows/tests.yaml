@@ -1,0 +1,24 @@
+# This workflow runs all zibal test cases
+
+name: Zibal Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Compile
+      run: |
+        sbt compile
+
+    - name: Run tests
+      run: |
+        sbt test

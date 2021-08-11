@@ -4,19 +4,18 @@ source common/board.tcl
 source common/pathes.tcl
 source pdks/${PDK}.tcl
 source tcl/flow/sourcer.tcl
-source constraints/${SOC}/${SOC}.flow.tcl
+source flows/${SOC}.tcl
 
 setMultiCpuUsage -localCpu 2 -remoteHost 1 -cpuPerRemoteHost 8
 
 set defHierChar {/}
 set init_design_settop 1
-set init_top_cell ${top_module}
+set init_top_cell ${TOP}
 
-set init_mmmc_file constraints/${SOC}/mmmc.tcl
-set init_verilog ${PATH_BUILD_ROOT}/map/${SOC}.v
-lappend init_verilog constraints/${SOC}/${top_module}.v
+set init_mmmc_file pdks/${PDK}.mmmc.tcl
+set init_verilog ${PATH_BUILD_ROOT}/map/${TOP}.v
 
-set init_io_file constraints/${SOC}/${SOC}.io
+set init_io_file ${PATH_RTL}/${TOP}.io
 
 set init_lef_file [get_lef_files]
 
@@ -43,5 +42,5 @@ if {$::env(STAGE) != "init"} {
 	}
 }
 
-uiSet main -title "Innovus - ${SOC}"
+uiSet main -title "Innovus - ${TOP}"
 win

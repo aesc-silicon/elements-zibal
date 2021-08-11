@@ -7,6 +7,6 @@ written, designs for multiple boards and architectures.
 License
 #######
 
-Copyright (c) 2020 PHYTEC Messtechnik GmbH. Released under the `MIT license`_.
+Copyright (c) 2021 PHYTEC Messtechnik GmbH. Released under the `MIT license`_.
 
 .. _MIT license: COPYING.MIT

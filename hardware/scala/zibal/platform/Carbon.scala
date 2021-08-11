@@ -41,10 +41,10 @@ object Carbon {
 
   object Parameter {
     def default(peripherals: Any, interrupts: Int = 0) = Parameter(
-      sysFrequency = 50 MHz,
+      sysFrequency = 100 MHz,
       dbgFrequency = 10 MHz,
-      onChipRamSize = 512 Byte,
-      onChipRomSize = 4 kB,
+      onChipRamSize = 4 kB,
+      onChipRomSize = 4 MB,
       mtimer = MachineTimerCtrl.Parameter.default,
       plic = PlicCtrl.Parameter.default(interrupts + 2),
       spiXip = SpiCtrl.Parameter.default,
@@ -55,7 +55,7 @@ object Carbon {
       sysFrequency = 50 MHz,
       dbgFrequency = 10 MHz,
       onChipRamSize = 512 Byte,
-      onChipRomSize = 4 kB,
+      onChipRomSize = 4 MB,
       mtimer = MachineTimerCtrl.Parameter.default,
       plic = PlicCtrl.Parameter.default(interrupts + 2),
       spiXip = SpiCtrl.Parameter.xip,
@@ -64,13 +64,26 @@ object Carbon {
     )
   }
 
+  case class Io(p: Parameter) extends Bundle {
+    val clock = in(Bool)
+    val reset = in(Bool)
+    val sysReset_out = out(Bool)
+    val jtag = slave(Jtag())
+    val spiXip = master(Spi.Io(p.spiXip))
+  }
+
   class Carbon(p: Parameter) extends Component {
-    val io_sys = new Bundle {
-      val clock = in(Bool)
-      val reset = in(Bool)
-      val sysReset_out = out(Bool)
-      val jtag = slave(Jtag())
-      val spiXip = master(Spi.Io(p.spiXip))
+    val io_sys = Io(p)
+
+    def connectPeripherals() = {
+      val apbDecoder = Apb3Decoder(
+        master = system.apbBridge.io.apb,
+        slaves = system.apbMapping
+      )
+
+      for ((index, interrupt) <- system.irqMapping) {
+        system.plicCtrl.io.sources(index) := interrupt
+      }
     }
 
     val resetCtrlClockDomain = ClockDomain(
@@ -154,6 +167,7 @@ object Carbon {
       val spiXipMasterCtrl = AmbaSpiXipMaster(p.spiXip, Axi4Config(20, 32, 4))
 
       val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()
+      val irqMapping = ArrayBuffer[(Int, Bool)]()
 
       /* Generate AXI Crossbar */
 
@@ -206,12 +220,11 @@ object Carbon {
       val plicCtrl = Apb3Plic(p.plic)
       apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       core.globalInterrupt := plicCtrl.io.interrupt
-      plicCtrl.io.sources(0) := False
+      irqMapping += 0 -> False
 
       apbMapping += spiXipMasterCtrl.io.bus -> (0x40000, 4 kB)
       spiXipMasterCtrl.io.spi <> io_sys.spiXip
-      plicCtrl.io.sources(1) := spiXipMasterCtrl.io.interrupt
-
+      irqMapping += 1 -> spiXipMasterCtrl.io.interrupt
     }
   }
 }

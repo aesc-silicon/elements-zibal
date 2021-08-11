@@ -14,7 +14,11 @@ object UartCtrl {
     dataLength: Int = 0,
     parity: Uart.ParityType.E = null,
     stop: Uart.StopType.E = null
-  )
+  ) {
+    def getBaudPeriod() = {
+      1000000000 / baudrate
+    }
+  }
   object InitParameter {
     def default(baudrate: Int) =
       InitParameter(baudrate, 7, Uart.ParityType.NONE, Uart.StopType.ONE)

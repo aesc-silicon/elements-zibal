@@ -53,6 +53,30 @@ object Uart {
     io.interrupt := ctrl.io.interrupt
 
     val mapper = UartCtrl.Mapper(factory(io.bus), ctrl.io, p)
+
+    def deviceTree(name: String, address: BigInt, size: BigInt, clockDomain: ClockDomain,
+                   irqNumber: Int = -1) = {
+      val clockSpeed = clockDomain.frequency.getValue.toInt
+      val baseAddress = "%08x".format(address.toInt)
+      val regSize = "%04x".format(size.toInt)
+      val baudrate = this.p.init.baudrate
+      var dt = s"""
+\t\t$name: $name@$baseAddress {
+\t\t\tcompatible = "elements,uart";
+\t\t\treg = <0x$baseAddress 0x$regSize>;
+\t\t\tstatus = "okay";
+\t\t\tlabel = "$name";"""
+      if (irqNumber > 0) {
+        dt += s"""
+\t\t\tinterrupt-parent = <&plic>;
+\t\t\tinterrupts = <$irqNumber 1>;"""
+      }
+      dt += s"""
+\t\t\tclock-frequency = <$clockSpeed>;
+\t\t\tcurrent-speed = <$baudrate>;
+\t\t};"""
+      dt
+    }
   }
 }
 

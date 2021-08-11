@@ -3,18 +3,18 @@ source $::env(TCL_PATH)/../../common/board.tcl
 source $::env(TCL_PATH)/../../common/general.tcl
 source $::env(TCL_PATH)/sources.tcl
 
-read_xdc $::env(TCL_PATH)/../../XDC/${board}.xdc
-synth_design -top ${top_module_name} -part ${part} -flatten rebuilt
+read_xdc ${path_rtl}/${TOP}.xdc
+synth_design -top ${TOP} -part ${PART} -flatten rebuilt
 
 write_checkpoint -force ./post_synth.dcp
-write_edif -force ./${top_module_name}.edf
+write_edif -force ./${TOP}.edf
 report_utilization -file ./logs/post_synth_utilization.txt
 report_timing > ./logs/post_synth_timing.txt
 report_timing_summary -file ./logs/post_synth_timing.rpt 
 
 # Implemenation
-read_edif ${top_module_name}.edf
-link_design -part ${part} -top ${top_module_name}
+read_edif ${TOP}.edf
+link_design -part ${PART} -top ${TOP}
 
 #  opt_design
 opt_design -directive Explore
@@ -46,10 +46,10 @@ write_checkpoint -force ./post_route.dcp
 
 report_timing_summary
 
-write_vhdl -mode funcsim -force ./${top_module_name}_pr.vhd
-write_verilog -mode timesim -sdf_anno true -force ./${top_module_name}_pr.v
-write_sdf -force ./${top_module_name}_pr.sdf
+write_vhdl -mode funcsim -force ./${TOP}_pr.vhd
+write_verilog -mode timesim -sdf_anno true -force ./${TOP}_pr.v
+write_sdf -force ./${TOP}_pr.sdf
 
-write_bitstream -bin_file -force ${path}/build/${board}/vivado/syn/${top_module_name}
+write_bitstream -bin_file -force ${path_syn}/${TOP}
 
 exit

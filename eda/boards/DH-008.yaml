@@ -1,12 +1,9 @@
-testbench: DH-008_tb
+xilinx:
+  part: XC7A35TFTG256-1
+  device: xc7a50t
+firmwares:
+  - zephyr
 flash_bridge:
   transport: ftdi_dh006
   fpga: xc7
   spi: spi_xc7a35t
-boot_source: memory
-SOC:
-  name: Hydrogen4
-  top: Hydrogen4_top
-xilinx:
-  part: XC7A35TFTG256-1
-  device: xc50t

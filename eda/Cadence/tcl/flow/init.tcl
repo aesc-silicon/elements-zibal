@@ -1,9 +1,9 @@
 proc elements_load_design {} {
-	global process
+	global PROCESS
 
 	init_design
 
-	setDesignMode -process ${process}
+	setDesignMode -process ${PROCESS}
 
 	setPreference ConstraintUserXGrid 1.0
 	setPreference ConstraintUserYGrid 1.0

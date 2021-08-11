@@ -48,12 +48,25 @@ object Hydrogen {
     )
   }
 
+  case class Io() extends Bundle {
+    val clock = in(Bool)
+    val reset = in(Bool)
+    val sysReset_out = out(Bool)
+    val jtag = slave(Jtag())
+  }
+
   class Hydrogen(p: Parameter) extends Component {
-    val io_sys = new Bundle {
-      val clock = in(Bool)
-      val reset = in(Bool)
-      val sysReset_out = out(Bool)
-      val jtag = slave(Jtag())
+    val io_sys = Io()
+
+    def connectPeripherals() = {
+      val apbDecoder = Apb3Decoder(
+        master = system.apbBridge.io.apb,
+        slaves = system.apbMapping
+      )
+
+      for ((index, interrupt) <- system.irqMapping) {
+        system.plicCtrl.io.sources(index) := interrupt
+      }
     }
 
     val resetCtrlClockDomain = ClockDomain(
@@ -148,6 +161,7 @@ object Hydrogen {
       )
 
       val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()
+      val irqMapping = ArrayBuffer[(Int, Bool)]()
 
       /* Generate AXI Crossbar */
 
@@ -192,7 +206,7 @@ object Hydrogen {
       val plicCtrl = Apb3Plic(p.plic)
       apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       core.globalInterrupt := plicCtrl.io.interrupt
-      plicCtrl.io.sources(0) := False
+      irqMapping += 0 -> False
     }
   }
 }

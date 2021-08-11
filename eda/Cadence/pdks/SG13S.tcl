@@ -1,9 +1,10 @@
 proc setup_library {} {
-	set_db library stdcell/lib/ixc013_stdcell_typ_1p20V_25C.lib
+	set_db library "stdcell/lib/ixc013_stdcell_typ_1p20V_25C.lib iocell/lib/ixc013_iocell_typ_1p2V_3p3V_25C.lib"
 
 	set_db lef_library [list \
 		stdcell/lef/ixc013_tech.lef \
 		stdcell/lef/ixc013_stdcell_v5p7.lef \
+		iocell/lef/ixc013_iocell_v5p8.lef \
 	]
 
 	set_db cap_table_file stdcell/lef/captable/SG13.captable

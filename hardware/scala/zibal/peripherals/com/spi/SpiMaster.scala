@@ -57,6 +57,25 @@ object SpiMaster {
     val busFactory =  factory(io.bus)
     SpiMasterCtrl.Mapper(busFactory, spiMasterCtrl.io, p)
     SpiMasterCtrl.StreamMapper(busFactory, spiMasterCtrl.io, p)
+
+    def deviceTree(name: String, address: BigInt, size: BigInt, irqNumber: Int = -1) = {
+      val baseAddress = "%08x".format(address.toInt)
+      val regSize = "%04x".format(size.toInt)
+      var dt = s"""
+\t\t$name: $name@$baseAddress {
+\t\t\tcompatible = "elements,spi";
+\t\t\treg = <0x$baseAddress 0x$regSize>;
+\t\t\tstatus = "okay";
+\t\t\tlabel = "$name";"""
+      if (irqNumber > 0) {
+        dt += s"""
+\t\t\tinterrupt-parent = <&plic>;
+\t\t\tinterrupts = <$irqNumber 1>;"""
+      }
+      dt += s"""
+\t\t};"""
+      dt
+    }
   }
 }
 

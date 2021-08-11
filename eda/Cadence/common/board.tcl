@@ -1,11 +1,7 @@
-set board $::env(BOARD)
-set board_name $::env(BOARD_NAME)
+set BOARD $::env(BOARD)
 set SOC $::env(SOC)
-set top_module $::env(TOP)
-set top_module_name $::env(TOP_NAME)
-set test_bench $::env(TESTBENCH)
-set test_bench_name $::env(TESTBENCH_NAME)
+set TOP "$::env(BOARD)Top"
 
 set PDK $::env(PDK)
-set process $::env(PROCESS)
-set effort $::env(EFFORT)
+set PROCESS $::env(PROCESS)
+set EFFORT $::env(EFFORT)
