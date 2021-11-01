@@ -1,0 +1,9 @@
+xilinx:
+  part: XC7A100TFGG484-2
+  device: xc7a100t
+firmwares:
+  - zephyr
+flash_bridge:
+  #transport: ftdi_nexys4-ddr
+  fpga: xc7
+  spi: spi_xc7a100t
