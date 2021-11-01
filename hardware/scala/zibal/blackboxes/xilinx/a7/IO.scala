@@ -3,21 +3,26 @@ import spinal.core._
 import spinal.lib.io.TriState
 import spinal.lib.History
 
+
+abstract class XilinxIo(pin: String) extends Bundle {
+  val PAD = inout(Analog(Bool()))
+
+  var pinName = pin
+
+  var ioStandardName = ""
+  var clockSpeed: HertzNumber = 1 Hz
+  var comment_ = ""
+
+  def getPin() = this.pinName
+  def getIoStandard() = this.ioStandardName
+  def getClockSpeed() = this.clockSpeed
+}
+
 object XilinxCmosIo {
   def apply(pin: String) = new XilinxCmosIo(pin)
 
-  class XilinxCmosIo(pin: String) extends Bundle {
-    val PAD = inout(Analog(Bool()))
-
-    var pinName = pin
-    var ioStandardName = "LVCMOS33"
-    var clockSpeed: HertzNumber = 1 Hz
-    var comment_ = ""
-
-    def getPin() = this.pinName
-    def getIoStandard() = this.ioStandardName
-    def getClockSpeed() = this.clockSpeed
-
+  class XilinxCmosIo(pin: String) extends XilinxIo(pin) {
+    ioStandard("LVCMOS33")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard
       this
@@ -34,6 +39,41 @@ object XilinxCmosIo {
     def <>(that: IBUF.IBUF) = that.I := this.PAD
     def <>(that: OBUF.OBUF) = this.PAD := that.O
     def <>(that: OBUFT.OBUFT) = this.PAD := that.O
+  }
+}
+
+object XilinxLvdsIo {
+  case class Pos(pin: String) extends XilinxIo(pin) {
+    ioStandard("LVDS_25")
+    def ioStandard(ioStandard: String) = {
+      this.ioStandardName = ioStandard
+      this
+    }
+    def clock(speed: HertzNumber) = {
+      this.clockSpeed = speed
+      this
+    }
+    def comment(comment: String) = {
+      this.comment_ = comment
+      this
+    }
+    def <>(that: IBUFDS.IBUFDS) = that.I := this.PAD
+  }
+  case class Neg(pin: String) extends XilinxIo(pin) {
+    ioStandard("LVDS_25")
+    def ioStandard(ioStandard: String) = {
+      this.ioStandardName = ioStandard
+      this
+    }
+    def clock(speed: HertzNumber) = {
+      this.clockSpeed = speed
+      this
+    }
+    def comment(comment: String) = {
+      this.comment_ = comment
+      this
+    }
+    def <>(that: IBUFDS.IBUFDS) = that.IB := this.PAD
   }
 }
 
@@ -174,6 +214,37 @@ object PULLDOWN {
 
   case class PULLDOWN() extends BlackBox {
     val O = out Bool()
+
+    def withBool(pin: Bool) = {
+      pin := this.O
+      this
+    }
+  }
+}
+
+object IBUFDS {
+  def apply() = IBUFDS()
+  def apply(pin: Bool) = IBUFDS().withBool(pin)
+
+  case class IBUFDS(
+    CAPACITANCE: String = "DONT_CARE",
+    DIFF_TERM: String = "FALSE",
+    DQS_BIAS: String = "FALSE",
+    IBUF_DELAY_VALUE: Int = 0,
+    IBUF_LOW_PWR: String = "TRUE",
+    IFD_DELAY_VALUE: String = "AUTO",
+    IOSTANDARD: String = "DEFAULT"
+  ) extends BlackBox {
+    val I = in Bool()
+    val IB = in Bool()
+    val O = out Bool()
+
+    addGeneric("DIFF_TERM", DIFF_TERM)
+    addGeneric("DQS_BIAS", DQS_BIAS)
+    addGeneric("IBUF_LOW_PWR", IBUF_LOW_PWR)
+    addGeneric("IOSTANDARD", IOSTANDARD)
+
+    O := I
 
     def withBool(pin: Bool) = {
       pin := this.O

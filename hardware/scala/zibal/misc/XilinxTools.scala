@@ -18,7 +18,11 @@ object XilinxTools {
 
       io.component.getOrdredNodeIo.foreach { baseType =>
         val name = baseType.getName()
-        val instance = baseType.parent.asInstanceOf[XilinxCmosIo.XilinxCmosIo]
+        val instance = baseType.parent match {
+          case inst: XilinxCmosIo.XilinxCmosIo => inst.asInstanceOf[XilinxCmosIo.XilinxCmosIo]
+          case inst: XilinxLvdsIo.Pos => inst.asInstanceOf[XilinxLvdsIo.Pos]
+          case inst: XilinxLvdsIo.Neg => inst.asInstanceOf[XilinxLvdsIo.Neg]
+        }
         val pin = instance.getPin()
         val ioStandard = instance.getIoStandard()
         val clockSpeed = instance.getClockSpeed().toTime.toBigDecimal

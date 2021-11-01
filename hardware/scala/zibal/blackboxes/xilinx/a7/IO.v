@@ -77,3 +77,20 @@ module PULLDOWN (
 assign O = 1'b1;
 
 endmodule
+
+
+module IBUFDS (
+  output O,
+  input  I,
+  input  IB
+);
+
+parameter CAPACITANCE = "DONT_CARE";
+parameter IBUF_DELAY_VALUE = "0";
+parameter IBUF_LOW_PWR = "TRUE";
+parameter IFD_DELAY_VALUE = "AUTO";
+parameter IOSTANDARD = "DEFAULT";
+
+assign O = I;
+
+endmodule
