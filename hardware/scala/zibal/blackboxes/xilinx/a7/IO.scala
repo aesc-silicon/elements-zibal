@@ -39,6 +39,8 @@ object XilinxCmosIo {
     def <>(that: IBUF.IBUF) = that.I := this.PAD
     def <>(that: OBUF.OBUF) = this.PAD := that.O
     def <>(that: OBUFT.OBUFT) = this.PAD := that.O
+    def <>(that: PULLUP.PULLUP) = that.O := this.PAD
+    def <>(that: PULLDOWN.PULLDOWN) = that.O := this.PAD
   }
 }
 
@@ -197,28 +199,20 @@ object OBUFT {
 }
 
 object PULLUP {
-  def apply(pin: XilinxCmosIo.XilinxCmosIo) = PULLUP().withBool(pin.PAD)
+  def apply() = PULLUP()
 
   case class PULLUP() extends BlackBox {
-    val O = out Bool()
-
-    def withBool(pin: Bool) = {
-      pin := this.O
-      this
-    }
+    // Fake direction for SpinalHDL. Pin O is output!
+    val O = in Bool()
   }
 }
 
 object PULLDOWN {
-  def apply(pin: XilinxCmosIo.XilinxCmosIo) = PULLDOWN().withBool(pin.PAD)
+  def apply() = PULLDOWN()
 
   case class PULLDOWN() extends BlackBox {
+    // Fake direction for SpinalHDL. Pin O is output!
     val O = out Bool()
-
-    def withBool(pin: Bool) = {
-      pin := this.O
-      this
-    }
   }
 }
 
