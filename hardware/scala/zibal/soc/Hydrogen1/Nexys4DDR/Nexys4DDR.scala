@@ -52,7 +52,7 @@ object Nexys4DDRBoard {
 
     val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
     val compiled = SimConfig.withConfig(config).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
-      val parameter = Hydrogen1.Peripherals.default
+      val parameter = Hydrogen1.Peripherals.default()
       val peripherals = parameter.peripherals.asInstanceOf[Hydrogen1.Peripherals]
       baudPeriod = peripherals.uartStd.init.getBaudPeriod()
       clockPeriod = 1000000000 / parameter.sysFrequency.toInt

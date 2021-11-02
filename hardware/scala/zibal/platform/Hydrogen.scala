@@ -37,8 +37,8 @@ object Hydrogen {
   ) {}
 
   object Parameter {
-    def default(peripherals: Any, interrupts: Int = 0) = Parameter(
-      sysFrequency = 100 MHz,
+    def default(peripherals: Any, frequency: HertzNumber, interrupts: Int = 0) = Parameter(
+      sysFrequency = frequency,
       dbgFrequency = 10 MHz,
       onChipRamSize = 128 kB,
       mtimer = MachineTimerCtrl.Parameter.default,

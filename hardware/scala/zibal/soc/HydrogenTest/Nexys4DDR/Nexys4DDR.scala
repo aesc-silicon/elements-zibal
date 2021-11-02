@@ -98,7 +98,7 @@ object Nexys4DDRBoard {
 
     val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
     val compiled = SimConfig.withConfig(config).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
-      val parameter = HydrogenTest.Peripherals.default
+      val parameter = HydrogenTest.Peripherals.default()
       val peripherals = parameter.peripherals.asInstanceOf[HydrogenTest.Peripherals]
       baudPeriod = peripherals.uartStd.init.getBaudPeriod()
       clockPeriod = 1000000000 / parameter.sysFrequency.toInt
@@ -380,10 +380,10 @@ object Nexys4DDRTop {
 
     io.i2cA.scl <> IBUF(soc.io_per.i2cA.scl.read)
     io.i2cA.scl <> OBUFT(False, soc.io_per.i2cA.scl.write)
-    PULLUP(io.i2cA.scl)
+    io.i2cA.scl <> PULLUP()
     io.i2cA.sda <> IBUF(soc.io_per.i2cA.sda.read)
     io.i2cA.sda <> OBUFT(False, soc.io_per.i2cA.sda.write)
-    PULLUP(io.i2cA.sda)
+    io.i2cA.sda <> PULLUP()
 
     io.freqCounterA <> IBUF(soc.io_per.freqCounterA.clock)
 
