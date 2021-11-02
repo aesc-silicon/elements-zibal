@@ -17,23 +17,17 @@ import sys.process._
 
 object AX7101 {
   case class Io() extends Bundle {
-    val clock = XilinxCmosIo("E3").clock(200 MHz)
-    val jtag = new Bundle {
-      val tms = XilinxCmosIo("T13")
-      val tdi = XilinxCmosIo("R13")
-      val tdo = XilinxCmosIo("U13")
-      val tck = XilinxCmosIo("V12").clock(10 MHz).
-        comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
-    }
+    val clockPos = XilinxLvdsInput.Pos("R4").clock(200 MHz).ioStandard("DIFF_SSTL15")
+    val clockNeg = XilinxLvdsInput.Neg("T4").clock(200 MHz).ioStandard("DIFF_SSTL15")
     val uartStd = new Bundle {
       val txd = XilinxCmosIo("AB15")
       val rxd = XilinxCmosIo("AA15")
     }
     val gpioStatus = Vec(
-      XilinxCmosIo("W5"),
-      XilinxCmosIo("F16"),
+      XilinxCmosIo("W5").ioStandard("LVCMOS15"),
       XilinxCmosIo("E17"),
-      XilinxCmosIo("D16")
+      XilinxCmosIo("F16"),
+      XilinxCmosIo("T6").ioStandard("LVCMOS15")
     )
   }
 }
@@ -50,7 +44,7 @@ object AX7101Board {
 
     val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
     val compiled = SimConfig.withConfig(config).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
-      val parameter = Hydrogen1.Peripherals.default
+      val parameter = Hydrogen1.Peripherals.default()
       val peripherals = parameter.peripherals.asInstanceOf[Hydrogen1.Peripherals]
       baudPeriod = peripherals.uartStd.init.getBaudPeriod()
       clockPeriod = 1000000000 / parameter.sysFrequency.toInt
@@ -116,9 +110,6 @@ object AX7101Board {
   case class AX7101Board(source: String) extends Component {
     val io = new Bundle {
       val clock = inout(Analog(Bool))
-      val jtag = new Bundle {
-        val tdo = inout(Analog(Bool))
-      }
       val uartStd = new Bundle {
         val txd = inout(Analog(Bool))
         val rxd = inout(Analog(Bool))
@@ -131,12 +122,9 @@ object AX7101Board {
     val analogTrue = Analog(Bool)
     analogTrue := True
 
-    top.io.clock.PAD := io.clock
+    top.io.clockPos.PAD := io.clock
+    top.io.clockNeg.PAD := analogFalse
 
-    top.io.jtag.tms.PAD := analogFalse
-    top.io.jtag.tdi.PAD := analogFalse
-    io.jtag.tdo := top.io.jtag.tdo.PAD
-    top.io.jtag.tck.PAD := analogFalse
     top.io.uartStd.rxd.PAD := io.uartStd.rxd
     io.uartStd.txd := top.io.uartStd.txd.PAD
 
@@ -168,15 +156,16 @@ object AX7101Top {
   case class AX7101Top() extends Component {
     val io = AX7101.Io()
 
-    val soc = Hydrogen1()
+    val soc = Hydrogen1(Hydrogen1.Peripherals.default())
 
-    io.clock <> IBUF(soc.io_sys.clock)
+    val clock = IBUFDS(soc.io_sys.clock)
+    io.clockPos <> clock
+    io.clockNeg <> clock
     soc.io_sys.reset := False
 
-    io.jtag.tms <> IBUF(soc.io_sys.jtag.tms)
-    io.jtag.tdi <> IBUF(soc.io_sys.jtag.tdi)
-    io.jtag.tdo <> OBUF(soc.io_sys.jtag.tdo)
-    io.jtag.tck <> IBUF(soc.io_sys.jtag.tck)
+    soc.io_sys.jtag.tms := False
+    soc.io_sys.jtag.tdi := False
+    soc.io_sys.jtag.tck := False
 
     io.uartStd.txd <> OBUF(soc.io_per.uartStd.txd)
     io.uartStd.rxd <> IBUF(soc.io_per.uartStd.rxd)

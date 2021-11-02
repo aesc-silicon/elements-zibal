@@ -4,6 +4,6 @@ xilinx:
 firmwares:
   - zephyr
 flash_bridge:
-  #transport: ftdi_nexys4-ddr
+  transport: alinx
   fpga: xc7
   spi: spi_xc7a100t
