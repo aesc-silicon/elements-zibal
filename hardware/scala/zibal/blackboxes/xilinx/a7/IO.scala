@@ -5,7 +5,6 @@ import spinal.lib.History
 
 
 abstract class XilinxIo(pin: String) extends Bundle {
-  val PAD = inout(Analog(Bool()))
 
   var pinName = pin
 
@@ -22,6 +21,7 @@ object XilinxCmosIo {
   def apply(pin: String) = new XilinxCmosIo(pin)
 
   class XilinxCmosIo(pin: String) extends XilinxIo(pin) {
+    val PAD = inout(Analog(Bool()))
     ioStandard("LVCMOS33")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard
@@ -44,8 +44,9 @@ object XilinxCmosIo {
   }
 }
 
-object XilinxLvdsIo {
+object XilinxLvdsInput {
   case class Pos(pin: String) extends XilinxIo(pin) {
+    val PAD = in(Analog(Bool()))
     ioStandard("LVDS_25")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard
@@ -62,6 +63,44 @@ object XilinxLvdsIo {
     def <>(that: IBUFDS.IBUFDS) = that.I := this.PAD
   }
   case class Neg(pin: String) extends XilinxIo(pin) {
+    val PAD = in(Analog(Bool()))
+    ioStandard("LVDS_25")
+    def ioStandard(ioStandard: String) = {
+      this.ioStandardName = ioStandard
+      this
+    }
+    def clock(speed: HertzNumber) = {
+      this.clockSpeed = speed
+      this
+    }
+    def comment(comment: String) = {
+      this.comment_ = comment
+      this
+    }
+    def <>(that: IBUFDS.IBUFDS) = that.IB := this.PAD
+  }
+}
+
+object XilinxLvdsOutput {
+  case class Pos(pin: String) extends XilinxIo(pin) {
+    val PAD = out(Analog(Bool()))
+    ioStandard("LVDS_25")
+    def ioStandard(ioStandard: String) = {
+      this.ioStandardName = ioStandard
+      this
+    }
+    def clock(speed: HertzNumber) = {
+      this.clockSpeed = speed
+      this
+    }
+    def comment(comment: String) = {
+      this.comment_ = comment
+      this
+    }
+    def <>(that: IBUFDS.IBUFDS) = that.I := this.PAD
+  }
+  case class Neg(pin: String) extends XilinxIo(pin) {
+    val PAD = out(Analog(Bool()))
     ioStandard("LVDS_25")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard

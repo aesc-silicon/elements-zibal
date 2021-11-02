@@ -20,8 +20,10 @@ object XilinxTools {
         val name = baseType.getName()
         val instance = baseType.parent match {
           case inst: XilinxCmosIo.XilinxCmosIo => inst.asInstanceOf[XilinxCmosIo.XilinxCmosIo]
-          case inst: XilinxLvdsIo.Pos => inst.asInstanceOf[XilinxLvdsIo.Pos]
-          case inst: XilinxLvdsIo.Neg => inst.asInstanceOf[XilinxLvdsIo.Neg]
+          case inst: XilinxLvdsInput.Pos => inst.asInstanceOf[XilinxLvdsInput.Pos]
+          case inst: XilinxLvdsInput.Neg => inst.asInstanceOf[XilinxLvdsInput.Neg]
+          case inst: XilinxLvdsOutput.Pos => inst.asInstanceOf[XilinxLvdsOutput.Pos]
+          case inst: XilinxLvdsOutput.Neg => inst.asInstanceOf[XilinxLvdsOutput.Neg]
         }
         val pin = instance.getPin()
         val ioStandard = instance.getIoStandard()
