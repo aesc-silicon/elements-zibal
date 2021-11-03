@@ -346,13 +346,18 @@ object Nexys4DDRTop {
 
     val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
 
-    config.generateVerilog({
-      val top = Nexys4DDRTop()
-      val system = top.soc.system
-      BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-      XilinxTools.Xdc(elementsConfig).generate(top.io, className)
-      top
-    })
+    args(0) match {
+      case "prepare" =>
+        HydrogenTest.prepare(config, elementsConfig, 100 MHz)
+      case _ =>
+        config.generateVerilog({
+          val top = Nexys4DDRTop()
+          val system = top.soc.system
+          BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
+          XilinxTools.Xdc(elementsConfig).generate(top.io, className)
+          top
+        })
+    }
   }
 
   case class Nexys4DDRTop() extends Component {

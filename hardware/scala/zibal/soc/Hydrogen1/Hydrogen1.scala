@@ -22,12 +22,9 @@ import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 object Hydrogen1 {
   def apply(p: Hydrogen.Parameter = Peripherals.default()) = Hydrogen1(p)
 
-  def main(args: Array[String]) {
-    val elementsConfig = ElementsConfig()
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
-
+  def prepare(config: SpinalConfig, elementsConfig: ElementsConfig.ElementsConfig, clock: HertzNumber) {
     config.generateVerilog({
-      val soc = Hydrogen1(Peripherals.default())
+      val soc = Hydrogen1(Peripherals.default(clock))
       val dt = ZephyrTools.DeviceTree(elementsConfig)
       dt.generate("hydrogen", soc.clocks.systemClockDomain, soc.system.axiCrossbar.slavesConfigs,
                   soc.system.apbBridge.io.axi, soc.system.apbMapping, soc.system.irqMapping,
@@ -39,7 +36,7 @@ object Hydrogen1 {
       board.addKey("reset", soc.pers.gpioStatusCtrl, 3)
       board.generateDeviceTree(soc.pers.uartStdCtrl)
       board.generateKconfig()
-      board.generateDefconfig(soc.system.apbMapping)
+      board.generateDefconfig(soc.system.apbMapping, soc.clocks.systemClockDomain)
       soc
     })
   }

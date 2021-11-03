@@ -44,7 +44,7 @@ object AX7101Board {
 
     val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
     val compiled = SimConfig.withConfig(config).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
-      val parameter = Hydrogen1.Peripherals.default()
+      val parameter = Hydrogen1.Peripherals.default(200 MHz)
       val peripherals = parameter.peripherals.asInstanceOf[Hydrogen1.Peripherals]
       baudPeriod = peripherals.uartStd.init.getBaudPeriod()
       clockPeriod = 1000000000 / parameter.sysFrequency.toInt
@@ -144,19 +144,24 @@ object AX7101Top {
 
     val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
 
-    config.generateVerilog({
-      val top = AX7101Top()
-      val system = top.soc.system
-      BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-      XilinxTools.Xdc(elementsConfig).generate(top.io, className)
-      top
-    })
+    args(0) match {
+      case "prepare" =>
+        Hydrogen1.prepare(config, elementsConfig, 200 MHz)
+      case _ =>
+        config.generateVerilog({
+          val top = AX7101Top()
+          val system = top.soc.system
+          BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
+          XilinxTools.Xdc(elementsConfig).generate(top.io, className)
+          top
+        })
+    }
   }
 
   case class AX7101Top() extends Component {
     val io = AX7101.Io()
 
-    val soc = Hydrogen1(Hydrogen1.Peripherals.default())
+    val soc = Hydrogen1(Hydrogen1.Peripherals.default(200 MHz))
 
     val clock = IBUFDS(soc.io_sys.clock)
     io.clockPos <> clock
@@ -169,7 +174,7 @@ object AX7101Top {
 
     io.uartStd.txd <> OBUF(soc.io_per.uartStd.txd)
     io.uartStd.rxd <> IBUF(soc.io_per.uartStd.rxd)
-    soc.io_per.uartStd.cts := True
+    soc.io_per.uartStd.cts := False
 
     for (index <- 0 until 4) {
       io.gpioStatus(index) <> IOBUF(soc.io_per.gpioStatus.pins(index))

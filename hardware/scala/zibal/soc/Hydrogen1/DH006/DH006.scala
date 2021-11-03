@@ -157,13 +157,18 @@ object DH006Top {
 
     val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
 
-    config.generateVerilog({
-      val top = DH006Top()
-      val system = top.soc.system
-      BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-      XilinxTools.Xdc(elementsConfig).generate(top.io, className)
-      top
-    })
+    args(0) match {
+      case "prepare" =>
+        Hydrogen1.prepare(config, elementsConfig, 200 MHz)
+      case _ =>
+        config.generateVerilog({
+          val top = DH006Top()
+          val system = top.soc.system
+          BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
+          XilinxTools.Xdc(elementsConfig).generate(top.io, className)
+          top
+        })
+    }
   }
 
   case class DH006Top() extends Component {
