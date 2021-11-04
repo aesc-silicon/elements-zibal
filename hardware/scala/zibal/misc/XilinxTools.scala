@@ -12,10 +12,20 @@ import zibal.blackboxes.xilinx.a7._
 object XilinxTools {
 
   case class Xdc(config: ElementsConfig.ElementsConfig) {
-    def generate(io: Data, filename: String) = {
+    def generate(io: Data, filename: String, emitVoltage: Boolean = true, emitSpi: Boolean =  true) = {
       val file = s"${config.zibalBuildPath}${filename}.xdc"
       val writer = new PrintWriter(new File(file))
-
+      writer.write("# CONFIG\n")
+      if (emitVoltage) {
+        writer.write("set_property CFGBVS VCCO [current_design]\n")
+        writer.write("set_property CONFIG_VOLTAGE 3.3 [current_design]\n")
+      }
+      if (emitSpi) {
+        writer.write("set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]\n")
+        writer.write("set_property CONFIG_MODE SPIx4 [current_design]\n")
+        writer.write("set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]\n")
+      }
+      writer.write("# IOs\n")
       io.component.getOrdredNodeIo.foreach { baseType =>
         val name = baseType.getName()
         val instance = baseType.parent match {
