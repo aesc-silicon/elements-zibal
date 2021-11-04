@@ -84,7 +84,7 @@ object SimulationHelper {
   }
 
   def expectZephyrPrompt(rxd: Bool, baudPeriod: Int) = {
-    val pattern = "\\*\\*\\* Booting Zephyr OS build ([0-9a-z]{12})  \\*\\*\\*".r
+    val pattern = "\\*\\*\\* Booting Zephyr OS build v(.*)  \\*\\*\\*".r
     var log = ""
     fork {
       waitUntil(rxd.toBoolean == true)
@@ -105,7 +105,7 @@ object SimulationHelper {
 
         assert(rxd.toBoolean == true)
         if (buffer.toChar == '\n') {
-          assert(pattern.findFirstIn(log).toArray.length == 1)
+          assert(pattern.findFirstIn(log) != None)
         }
         log = log + buffer.toChar
       }
