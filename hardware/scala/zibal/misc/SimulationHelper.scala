@@ -8,10 +8,11 @@ import scala.util.matching.Regex
 
 object SimulationHelper {
 
-  def generateClock(clock: Bool, period: Int, duration: Int) = {
+  def generateClock(clock: Bool, period: Int, duration: Int, delay: Int = 0) = {
     val clockDuration = duration / period
     fork {
       clock #= true
+      sleep(delay)
       sleep(period/2)
       for (_ <- 0 to clockDuration * 2) {
         clock #= !clock.toBoolean
