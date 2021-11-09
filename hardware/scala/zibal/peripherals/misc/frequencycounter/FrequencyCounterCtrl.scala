@@ -13,8 +13,8 @@ object FrequencyCounterCtrl {
     sampleWidth: Int = 8,
     measureWidth: Int = 32
   ) {
-    require(divider > 1)
-    require(measureWidth >= sampleWidth * 4)
+    require(divider > 0, "Divider must be greater than 0.")
+    require(measureWidth >= sampleWidth * divider)
     require(measureWidth <= 64, "Only 64 bits allowed for measuring")
   }
 
@@ -88,9 +88,12 @@ object FrequencyCounterCtrl {
 
     val cfg = Reg(ctrl.config)
     cfg.enable init(True)
+    val divider = RegInit(U(p.divider * scala.math.pow(2, p.sampleWidth).toInt))
+    divider.allowUnsetRegToAvoidLatch
 
     busCtrl.readAndWrite(cfg.enable, address = 0x00)
-    busCtrl.readMultiWord(ctrl.count, address = 0x04)
+    busCtrl.read(divider, address = 0x04)
+    busCtrl.readMultiWord(ctrl.count, address = 0x08)
 
     ctrl.config <> cfg
   }
