@@ -109,7 +109,7 @@ object AX7101Board {
 
   case class AX7101Board(source: String) extends Component {
     val io = new Bundle {
-      val clock = inout(Analog(Bool))
+      val clock = in(Bool)
       val uartStd = new Bundle {
         val txd = inout(Analog(Bool))
         val rxd = inout(Analog(Bool))
@@ -123,7 +123,7 @@ object AX7101Board {
     analogTrue := True
 
     top.io.clockPos.PAD := io.clock
-    top.io.clockNeg.PAD := analogFalse
+    top.io.clockNeg.PAD := False
 
     top.io.uartStd.rxd.PAD := io.uartStd.rxd
     io.uartStd.txd := top.io.uartStd.txd.PAD

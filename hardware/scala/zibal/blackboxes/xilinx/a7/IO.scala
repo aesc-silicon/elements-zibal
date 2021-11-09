@@ -46,7 +46,7 @@ object XilinxCmosIo {
 
 object XilinxLvdsInput {
   case class Pos(pin: String) extends XilinxIo(pin) {
-    val PAD = in(Analog(Bool()))
+    val PAD = in(Bool())
     ioStandard("LVDS_25")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard
@@ -63,7 +63,7 @@ object XilinxLvdsInput {
     def <>(that: IBUFDS.IBUFDS) = that.I := this.PAD
   }
   case class Neg(pin: String) extends XilinxIo(pin) {
-    val PAD = in(Analog(Bool()))
+    val PAD = in(Bool())
     ioStandard("LVDS_25")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard
@@ -83,7 +83,7 @@ object XilinxLvdsInput {
 
 object XilinxLvdsOutput {
   case class Pos(pin: String) extends XilinxIo(pin) {
-    val PAD = out(Analog(Bool()))
+    val PAD = out(Bool())
     ioStandard("LVDS_25")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard
@@ -100,7 +100,7 @@ object XilinxLvdsOutput {
     def <>(that: IBUFDS.IBUFDS) = that.I := this.PAD
   }
   case class Neg(pin: String) extends XilinxIo(pin) {
-    val PAD = out(Analog(Bool()))
+    val PAD = out(Bool())
     ioStandard("LVDS_25")
     def ioStandard(ioStandard: String) = {
       this.ioStandardName = ioStandard
