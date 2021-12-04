@@ -205,11 +205,11 @@ object Nexys4DDRBoard {
             sleep(1000000)
             while (!stdout.contains("\n")) {
               SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                               clockPeriod, 100000)
+                                               clockPeriod, 1000000)
               val char = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
               stdout = stdout + char.toChar
             }
-            "100000\\d{3} Hz".r findFirstIn stdout match {
+            "100\\d{6} Hz".r findFirstIn stdout match {
               case Some(_) => simSuccess
               case None => assert(false, s"100MHz not found in $stdout")
             }
@@ -224,11 +224,11 @@ object Nexys4DDRBoard {
             sleep(1000000)
             while (!stdout.contains("\n")) {
               SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                               clockPeriod, 100000)
+                                               clockPeriod, 1000000)
               val char = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
               stdout = stdout + char.toChar
             }
-            "33000\\d{3} Hz".r findFirstIn stdout match {
+            "333\\d{5} Hz".r findFirstIn stdout match {
               case Some(_) => simSuccess
               case None => assert(false, s"33MHz not found in $stdout")
             }
@@ -243,11 +243,11 @@ object Nexys4DDRBoard {
             sleep(1000000)
             while (!stdout.contains("\n")) {
               SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                               clockPeriod, 100000)
+                                               clockPeriod, 1000000)
               val char = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
               stdout = stdout + char.toChar
             }
-            "20000\\d{3} Hz".r findFirstIn stdout match {
+            "20\\d{6} Hz".r findFirstIn stdout match {
               case Some(_) => simSuccess
               case None => assert(false, s"20MHz not found in $stdout")
             }
