@@ -4,21 +4,41 @@ name: Zibal Tests
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - '.github/workflows/tests.yaml'
+    branches:
+      - 'main'
   pull_request:
-    branches: [ main ]
+    branches:
+      - 'main'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: zibal
 
-    - name: Compile
-      run: |
-        sbt compile
+      - name: Checkout VexRiscv
+        uses: actions/checkout@v2
+        with:
+          repository: phytec-labs/elements-vexriscv
+          ref: stable
+          path: vexriscv
 
-    - name: Run tests
-      run: |
-        sbt test
+      - name: Compile
+        run: |
+          cd zibal
+          sbt compile
+
+      - name: Install verilator
+        run: |
+          sudo apt install -y verilator
+
+      - name: Run tests
+        run: |
+          cd zibal
+          sbt test
