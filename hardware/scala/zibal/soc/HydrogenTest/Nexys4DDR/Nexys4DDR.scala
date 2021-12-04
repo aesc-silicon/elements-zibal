@@ -383,12 +383,8 @@ object Nexys4DDRTop {
     io.spiA.mosi <> OBUF(soc.io_per.spiA.mosi)
     io.spiA.miso <> IBUF(soc.io_per.spiA.miso)
 
-    io.i2cA.scl <> IBUF(soc.io_per.i2cA.scl.read)
-    io.i2cA.scl <> OBUFT(False, soc.io_per.i2cA.scl.write)
-    io.i2cA.scl <> PULLUP()
-    io.i2cA.sda <> IBUF(soc.io_per.i2cA.sda.read)
-    io.i2cA.sda <> OBUFT(False, soc.io_per.i2cA.sda.write)
-    io.i2cA.sda <> PULLUP()
+    io.i2cA.scl <> IOBUF(soc.io_per.i2cA.scl.read, False, soc.io_per.i2cA.scl.write)
+    io.i2cA.sda <> IOBUF(soc.io_per.i2cA.sda.read, False, soc.io_per.i2cA.sda.write)
 
     io.freqCounterA <> IBUF(soc.io_per.freqCounterA.clock)
 

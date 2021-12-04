@@ -121,6 +121,7 @@ object XilinxLvdsOutput {
 object IOBUF {
   def apply() = IOBUF()
   def apply(pin: TriState[Bool]) = IOBUF().withTriState(pin)
+  def apply(in: Bool, out: Bool, en: Bool) = IOBUF().withBools(in, out, en)
 
   case class IOBUF(
     DRIVE: Int = 12,
@@ -148,6 +149,13 @@ object IOBUF {
       pin.read := this.O
       this
     }
+    def withBools(in: Bool, out: Bool, en: Bool) = {
+      this.I := out
+      this.T := !en
+      in := this.O
+      this
+    }
+
   }
 }
 
@@ -221,7 +229,6 @@ object OBUFT {
     val I, T = in Bool()
     val O = out Bool()
 
-    addGeneric("CAPACITANCE", CAPACITANCE)
     addGeneric("DRIVE", DRIVE)
     addGeneric("IOSTANDARD", IOSTANDARD)
 
