@@ -43,7 +43,7 @@ object Hydrogen {
       onChipRamSize = 128 kB,
       mtimer = MachineTimerCtrl.Parameter.default,
       plic = PlicCtrl.Parameter.default(interrupts + 1),
-      core = VexRiscvCoreParameter.default(0x80000000L).plugins,
+      core = VexRiscvCoreParameter.realtime(0x80000000L).plugins,
       peripherals = peripherals
     )
   }

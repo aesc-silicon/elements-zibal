@@ -48,7 +48,7 @@ object Carbon {
       mtimer = MachineTimerCtrl.Parameter.default,
       plic = PlicCtrl.Parameter.default(interrupts + 2),
       spiXip = SpiCtrl.Parameter.default,
-      core = VexRiscvCoreParameter.default(0xA0000000L).plugins,
+      core = VexRiscvCoreParameter.realtime(0xA0000000L).plugins,
       peripherals = peripherals
     )
     def light(peripherals: Any, interrupts: Int = 0) = Parameter(
@@ -59,7 +59,7 @@ object Carbon {
       mtimer = MachineTimerCtrl.Parameter.default,
       plic = PlicCtrl.Parameter.default(interrupts + 2),
       spiXip = SpiCtrl.Parameter.xip,
-      core = VexRiscvCoreParameter.default(0xA0000000L).plugins,
+      core = VexRiscvCoreParameter.realtime(0xA0000000L).plugins,
       peripherals = peripherals
     )
   }
