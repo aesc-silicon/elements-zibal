@@ -27,6 +27,7 @@ object ZephyrTools {
       val file = s"${config.zephyrBoardPath}/${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
       val writer = new PrintWriter(new File(file))
       writer.write(s"""CONFIG_SOC_SERIES_RISCV32_ELEMENTS=y
+CONFIG_SOC_RISCV32_ELEMENTS_ISA_C=y
 CONFIG_SOC_RISCV32_ELEMENTS=y
 CONFIG_BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}=y
 CONFIG_HEAP_MEM_POOL_SIZE=1024
