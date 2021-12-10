@@ -28,7 +28,7 @@ object ZephyrTools {
       val writer = new PrintWriter(new File(file))
       writer.write(s"""CONFIG_SOC_SERIES_RISCV32_ELEMENTS=y
 CONFIG_SOC_RISCV32_ELEMENTS=y
-CONFIG_BOARD_${config.boardName.toUpperCase()}_${config.boardName.toUpperCase()}=y
+CONFIG_BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}=y
 CONFIG_HEAP_MEM_POOL_SIZE=1024
 CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=${clockSpeed}
 """)
@@ -73,7 +73,7 @@ CONFIG_SPI_ELEMENTS=y
       var file = s"${config.zephyrBoardPath}/Kconfig.board"
       var writer = new PrintWriter(new File(file))
 
-      writer.write(s"""config BOARD_${config.boardName.toUpperCase()}_${config.boardName.toUpperCase()}
+      writer.write(s"""config BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
     bool "${config.socName} ${config.boardName} board"
     depends on SOC_RISCV32_ELEMENTS
     select HAS_DTS
@@ -85,7 +85,7 @@ CONFIG_SPI_ELEMENTS=y
       file = s"${config.zephyrBoardPath}/Kconfig.defconfig"
       writer = new PrintWriter(new File(file))
 
-      writer.write(s"""if BOARD_${config.boardName.toUpperCase()}_${config.boardName.toUpperCase()}
+      writer.write(s"""if BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
 config BOARD
     default "${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}"
 endif
