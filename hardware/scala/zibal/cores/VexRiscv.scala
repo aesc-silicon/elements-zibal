@@ -21,7 +21,7 @@ object VexRiscvCoreParameter {
         cmdForkPersistence = true,
         prediction = NONE,
         catchAccessFault = false,
-        compressedGen = false
+        compressedGen = true
       ),
       new DBusSimplePlugin(
         catchAddressMisaligned = false,
