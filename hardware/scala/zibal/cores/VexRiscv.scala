@@ -78,7 +78,7 @@ object VexRiscvCoreParameter {
         )
       ),
       new BranchPlugin(
-        earlyBranch = true,
+        earlyBranch = false,
         catchAddressMisaligned = true
       ),
       new YamlPlugin("../build/"+System.getenv("SOC")+"/"+System.getenv("BOARD")+
@@ -88,8 +88,9 @@ object VexRiscvCoreParameter {
   def mcu(resetAddress: BigInt) = VexRiscvCoreParameter(
     plugins = ArrayBuffer(
       new IBusCachedPlugin(
-        prediction = DYNAMIC_TARGET,
-        historyRamSizeLog2 = 8,
+        resetVector = resetAddress,
+        //prediction = DYNAMIC_TARGET,
+        prediction = NONE,
         compressedGen = true,
         config = InstructionCacheConfig(
           cacheSize = 4096,
@@ -105,10 +106,18 @@ object VexRiscvCoreParameter {
           twoCycleCache = true
         )
       ),
-      new DBusSimplePlugin(
-        catchAddressMisaligned = false,
-        catchAccessFault = false,
-        earlyInjection = false
+      new DBusCachedPlugin(
+        config = new DataCacheConfig(
+          cacheSize         = 4096,
+          bytePerLine       = 32,
+          wayCount          = 1,
+          addressWidth      = 32,
+          cpuDataWidth      = 32,
+          memDataWidth      = 32,
+          catchAccessError  = true,
+          catchIllegal      = true,
+          catchUnaligned    = true
+        )
       ),
       new StaticMemoryTranslatorPlugin(
         ioRange = _(31 downto 28) === 0xF
@@ -160,7 +169,7 @@ object VexRiscvCoreParameter {
         )
       ),
       new BranchPlugin(
-        earlyBranch = true,
+        earlyBranch = false,
         catchAddressMisaligned = true
       ),
       new YamlPlugin("../build/"+System.getenv("SOC")+"/"+System.getenv("BOARD")+
