@@ -90,7 +90,7 @@ object VexRiscvCoreParameter {
       new IBusCachedPlugin(
         resetVector = resetAddress,
         //prediction = DYNAMIC_TARGET,
-        prediction = NONE,
+        prediction = DYNAMIC,
         compressedGen = true,
         config = InstructionCacheConfig(
           cacheSize = 4096,
