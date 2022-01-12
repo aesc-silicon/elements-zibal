@@ -3,6 +3,8 @@ source $::env(TCL_PATH)/../../common/board.tcl
 source $::env(TCL_PATH)/../../common/general.tcl
 source $::env(TCL_PATH)/sources.tcl
 
+set_property IS_ENABLED 0 [get_drc_checks {REQP-1839}]
+
 read_xdc ${path_rtl}/${TOP}.xdc
 synth_design -top ${TOP} -part ${PART} -flatten rebuilt
 
