@@ -1,8 +1,8 @@
 module IOBUF (
-  output O,
-  inout  IO,
-  input  I,
-  input  T
+	output O,
+	inout  IO,
+	input  I,
+	input  T
 );
 
 parameter integer DRIVE = 12;
@@ -17,8 +17,8 @@ endmodule
 
 
 module IBUF (
-  output O,
-  input  I
+	output O,
+	input  I
 );
 
 parameter CAPACITANCE = "DONT_CARE";
@@ -33,8 +33,8 @@ endmodule
 
 
 module OBUF (
-  output O,
-  input  I
+	output O,
+	input  I
 );
 
 parameter CAPACITANCE = "DONT_CARE";
@@ -47,9 +47,9 @@ endmodule
 
 
 module OBUFT (
-  output O,
-  input  I,
-  input  T
+	output O,
+	input  I,
+	input  T
 );
 
 parameter CAPACITANCE = "DONT_CARE";
@@ -62,7 +62,7 @@ endmodule
 
 
 module PULLUP (
-  output O
+	output O
 );
 
 assign O = 1'b1;
@@ -71,7 +71,7 @@ endmodule
 
 
 module PULLDOWN (
-  output O
+	output O
 );
 
 assign O = 1'b1;
@@ -80,9 +80,9 @@ endmodule
 
 
 module IBUFDS (
-  output O,
-  input  I,
-  input  IB
+	output O,
+	input  I,
+	input  IB
 );
 
 parameter CAPACITANCE = "DONT_CARE";
@@ -94,5 +94,44 @@ parameter IFD_DELAY_VALUE = "AUTO";
 parameter IOSTANDARD = "DEFAULT";
 
 assign O = I;
+
+endmodule
+
+
+module PLLE2_BASE (
+	input  CLKIN1,
+	input  RST,
+	input  PWRDWN,
+	output CLKOUT0,
+	output CLKOUT1,
+	output CLKOUT2,
+	output CLKOUT3,
+	output CLKOUT4,
+	output CLKOUT5,
+	output LOCKED,
+	output CLKFBOUT,
+	input  CLKFBIN
+);
+
+parameter CLKIN1_PERIOD = 10;
+parameter DIVCLK_DIVIDE = 1;
+parameter CLKFBOUT_MULT = 5;
+parameter CLKFBOUT_PHASE = 0.0;
+parameter CLKOUT0_DIVIDE = 1;
+parameter CLKOUT0_PHASE = 0.0;
+parameter CLKOUT0_DUTY_CYCLE = 0.5;
+
+/* Add dummy values */
+assign LOCKED = 1'b0;
+assign CLKFBOUT = 1'b0;
+
+reg clock0 = 0;
+assign CLKOUT0 = clock0;
+initial begin
+	//Verilator does not support delay. Move this to c++!
+end
+
+// CLKIN1_CLOCK = 1000000000 / CLKIN1_PERIOD
+// CLKIN1_PERIOD * CLKFBOUT_MULT
 
 endmodule
