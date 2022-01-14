@@ -128,7 +128,7 @@ assign CLKFBOUT = 1'b0;
 reg clock0 = 0;
 assign CLKOUT0 = clock0;
 initial begin
-	//Verilator does not support delay. Move this to c++!
+	// Delays are not supported by Verilator. Move this to c++!
 end
 
 // CLKIN1_CLOCK = 1000000000 / CLKIN1_PERIOD
