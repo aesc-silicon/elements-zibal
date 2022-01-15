@@ -87,26 +87,17 @@ object SimulationHelper {
   def expectZephyrPrompt(rxd: Bool, baudPeriod: Int) = {
     val pattern = "\\*\\*\\* Booting Zephyr OS build (.*)  \\*\\*\\*".r
     var log = ""
+    var run = true
     fork {
       waitUntil(rxd.toBoolean == true)
 
-      while(true) {
+      while(run) {
         waitUntil(rxd.toBoolean == false)
-        sleep(baudPeriod/2)
-
-        assert(rxd.toBoolean == false)
-        sleep(baudPeriod)
-
-        var buffer = 0
-        for(bitId <- 0 to 7) {
-          if(rxd.toBoolean)
-            buffer |= 1 << bitId
-          sleep(baudPeriod)
-        }
-
+        val buffer = uartReceive(rxd, baudPeriod)
         assert(rxd.toBoolean == true)
         if (buffer.toChar == '\n') {
           assert(pattern.findFirstIn(log) != None)
+          run = false
         }
         log = log + buffer.toChar
       }
