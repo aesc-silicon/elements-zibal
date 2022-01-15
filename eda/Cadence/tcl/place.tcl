@@ -13,7 +13,7 @@ set init_design_settop 1
 set init_top_cell ${TOP}
 
 set init_mmmc_file pdks/${PDK}.mmmc.tcl
-set init_verilog ${PATH_BUILD_ROOT}/map/${TOP}.v
+set init_verilog ${PATH_BUILD_ROOT}/synthesize/${TOP}.v
 
 set init_io_file ${PATH_RTL}/${TOP}.io
 

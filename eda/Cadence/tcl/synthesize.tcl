@@ -1,4 +1,4 @@
-set TOOL "map"
+set TOOL "synthesize"
 
 source common/board.tcl
 source common/pathes.tcl
