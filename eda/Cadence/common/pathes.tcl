@@ -2,7 +2,7 @@ puts "Hostname : [info hostname]"
 set DATE $::env(DATETIME)
 
 set PATH $::env(ELEMENTS_BASE)
-set PATH_PDK $::env(PDK_BASE)
+set PATH_PDK $::env(PDK_BASE)/${PDK}
 set PATH_RTL ${PATH}/build/${SOC}/${BOARD}/zibal/
 set PATH_BUILD_ROOT ${PATH}/build/${SOC}/${BOARD}/cadence
 set PATH_BUILD ${PATH_BUILD_ROOT}/${TOOL}/${DATE}
