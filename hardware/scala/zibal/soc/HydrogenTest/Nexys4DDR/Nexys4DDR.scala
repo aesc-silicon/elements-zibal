@@ -8,21 +8,22 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import zibal.platform.Hydrogen
 import zibal.soc.HydrogenTest
-import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper}
+import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 import zibal.blackboxes.xilinx.a7._
 
 import sys.process._
 
 
 object Nexys4DDR {
-  case class Io() extends Bundle {
-    val clock = XilinxCmosIo("E3").clock(100 MHz)
+  case class Io(parameter: Hydrogen.Parameter) extends Bundle {
+    val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
     val jtag = new Bundle {
       val tms = XilinxCmosIo("H2")
       val tdi = XilinxCmosIo("G4")
       val tdo = XilinxCmosIo("G2")
-      val tck = XilinxCmosIo("F3").clock(10 MHz).
+      val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
         comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
     }
     val uartStd = new Bundle {
@@ -90,192 +91,80 @@ object Nexys4DDR {
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
 
+  case class Parameter(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) {
+    def convert = HydrogenTest.Parameter.default(sysFrequency, dbgFrequency)
+  }
+  val parameter = Parameter(100 MHz, 10 MHz)
+
   def main(args: Array[String]) {
-    val elementsConfig = ElementsConfig()
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    var baudPeriod: Int = 0
-    var clockPeriod: Int = 0
-
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
-    val compiled = SimConfig.withConfig(config).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
-      val parameter = HydrogenTest.Peripherals.default()
-      val peripherals = parameter.peripherals.asInstanceOf[HydrogenTest.Peripherals]
-      baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-      clockPeriod = 1000000000 / parameter.sysFrequency.toInt
-
+    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
       val board = Nexys4DDRBoard(args(0))
       board
     }
     args(1) match {
+      case "simulate" =>
+        compiled.doSimUntilVoid("simulate") { dut =>
+          val testCases = TestCases()
+          testCases.addClock(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+        }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
-          SimulationHelper.expectZephyrPrompt(dut.io.uartStd.txd, baudPeriod)
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 400000000)
-          fork {
-            sleep(100000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            sleep(400000)
-            assert(dut.io.gpioStatus(0).toBoolean == true)
-            println("Heartbeat LED: ON")
-            sleep(150500000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            sleep(50000000)
-            assert(dut.io.gpioStatus(0).toBoolean == true)
-            println("Heartbeat LED: ON")
-            sleep(150000000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            simSuccess
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 400 ms)
+          testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case "gpio" =>
         compiled.doSimUntilVoid("gpio") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
-          fork {
-            SimulationHelper.waitUntilOrFail(dut.io.gpioA(0).toBoolean == true,
-                                             clockPeriod, 200000)
-            SimulationHelper.waitUntilOrFail(dut.io.gpioA(2).toBoolean == true,
-                                             clockPeriod, 20000)
-            simSuccess
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.gpioLoopback(dut.io.gpioA(0), dut.io.gpioA(2))
         }
       case "uart" =>
         compiled.doSimUntilVoid("uart") { dut =>
-          dut.io.uartStd.rxd #= true
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.dumpCharacters(dut.io.uartStd.txd, baudPeriod)
-          fork {
-            SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == true,
-                                             clockPeriod, 100000)
-
-            SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                             clockPeriod, 100000)
-
-            val buffer = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-            assert(buffer == 'X')
-            SimulationHelper.uartTransmit(dut.io.uartStd.rxd, baudPeriod, 'G')
-            val bufferG = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-            assert(bufferG == 'G')
-            simSuccess
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.uartLoopback(dut.io.uartStd.txd, dut.io.uartStd.rxd, dut.baudPeriod)
         }
         compiled.doSimUntilVoid("uart-irq") { dut =>
-          dut.io.uartStd.rxd #= true
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.dumpCharacters(dut.io.uartStd.txd, baudPeriod)
-          fork {
-            SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == true,
-                                             clockPeriod, 100000)
-
-            SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                             clockPeriod, 100000)
-            val buffer = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-            assert(buffer == 'X')
-            SimulationHelper.uartTransmit(dut.io.uartStd.rxd, baudPeriod, 'G')
-            val bufferG = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-            assert(bufferG == 'G')
-
-            SimulationHelper.uartTransmit(dut.io.uartStd.rxd, baudPeriod, 'H')
-            SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                             clockPeriod, 100000)
-            val bufferR = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-            assert(bufferR == 'R')
-            SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                             clockPeriod, 100000)
-            val bufferH = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-            assert(bufferH == 'H')
-            simSuccess
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.uartIrq(dut.io.uartStd.txd, dut.io.uartStd.rxd, dut.baudPeriod)
         }
       case "frequency" =>
         compiled.doSimUntilVoid("100Mhz") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.generateClock(dut.io.freqCounterA, 10, 10000000)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
-          fork {
-            var stdout = ""
-            sleep(1000000)
-            while (!stdout.contains("\n")) {
-              SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                               clockPeriod, 1000000)
-              val char = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-              stdout = stdout + char.toChar
-            }
-            "100\\d{6} Hz".r findFirstIn stdout match {
-              case Some(_) => simSuccess
-              case None => assert(false, s"100MHz not found in $stdout")
-            }
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.frequency(dut.io.freqCounterA, 100 MHz, dut.io.uartStd.txd, dut.baudPeriod)
         }
         compiled.doSimUntilVoid("33Mhz") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.generateClock(dut.io.freqCounterA, 30, 10000000)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
-          fork {
-            var stdout = ""
-            sleep(1000000)
-            while (!stdout.contains("\n")) {
-              SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                               clockPeriod, 1000000)
-              val char = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-              stdout = stdout + char.toChar
-            }
-            "333\\d{5} Hz".r findFirstIn stdout match {
-              case Some(_) => simSuccess
-              case None => assert(false, s"33MHz not found in $stdout")
-            }
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.frequency(dut.io.freqCounterA, 33 MHz, dut.io.uartStd.txd, dut.baudPeriod)
         }
         compiled.doSimUntilVoid("20Mhz") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.generateClock(dut.io.freqCounterA, 50, 10000000)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
-          fork {
-            var stdout = ""
-            sleep(1000000)
-            while (!stdout.contains("\n")) {
-              SimulationHelper.waitUntilOrFail(dut.io.uartStd.txd.toBoolean == false,
-                                               clockPeriod, 1000000)
-              val char = SimulationHelper.uartReceive(dut.io.uartStd.txd, baudPeriod)
-              stdout = stdout + char.toChar
-            }
-            "20\\d{6} Hz".r findFirstIn stdout match {
-              case Some(_) => simSuccess
-              case None => assert(false, s"20MHz not found in $stdout")
-            }
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.frequency(dut.io.freqCounterA, 20 MHz, dut.io.uartStd.txd, dut.baudPeriod)
         }
       case _ =>
         println(s"Unknown simulation ${args(1)}")
-    }
-  }
-
-  case class Nexys4DDRTop(source: String) extends BlackBox {
-    val io = Nexys4DDR.Io()
-
-    val elementsConfig = ElementsConfig()
-    val className = this.getClass().getName().split("\\.").last.split("\\$").last
-
-    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
-    if (source.equals("generated")) {
-      addRTLPath(elementsConfig.zibalBuildPath + s"${className}.v")
-    } else {
-      println(s"Unsupported source $source for $className")
-    }
-
-    val result = Process(s"ls ${elementsConfig.zibalBuildPath}").!!
-    for (line <- result.lines().toArray()) {
-      if (line.asInstanceOf[String].endsWith(".bin")) {
-        addRTLPath(elementsConfig.zibalBuildPath + line)
-      }
     }
   }
 
@@ -300,6 +189,10 @@ object Nexys4DDRBoard {
       val gpioA = Vec(inout(Analog(Bool())), 32)
       val freqCounterA = inout(Analog(Bool))
     }
+    val peripherals = parameter.convert.peripherals.asInstanceOf[HydrogenTest.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+    val clockFrequency = parameter.convert.sysFrequency
+
     val top = Nexys4DDRTop(source)
     val analogFalse = Analog(Bool)
     analogFalse := False
@@ -334,36 +227,46 @@ object Nexys4DDRBoard {
     }
     top.io.gpioA(1).PAD := analogTrue
   }
+
+  case class Nexys4DDRTop(source: String) extends BlackBox {
+    val io = Nexys4DDR.Io(parameter.convert)
+
+    val elementsConfig = ElementsConfig(this)
+    SimulationHelper.Xilinx.addRtl(this, elementsConfig, source)
+    SimulationHelper.Xilinx.addBinary(this, elementsConfig)
+  }
 }
 
 
 object Nexys4DDRTop {
-  def apply() = Nexys4DDRTop()
+  def apply() = Nexys4DDRTop(Nexys4DDRBoard.parameter.convert)
 
   def main(args: Array[String]) {
-    val elementsConfig = ElementsConfig()
-    val className = this.getClass().getName().stripSuffix("$").split("\\.").last
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
-
-    args(0) match {
-      case "prepare" =>
-        HydrogenTest.prepare(config, elementsConfig, 100 MHz)
-      case _ =>
-        config.generateVerilog({
-          val top = Nexys4DDRTop()
+    spinalConfig.generateVerilog({
+      val parameter = Nexys4DDRBoard.parameter.convert
+      args(0) match {
+        case "prepare" =>
+          val soc = HydrogenTest(parameter)
+          HydrogenTest.prepare(soc, elementsConfig)
+          soc
+        case _ =>
+          val top = Nexys4DDRTop(parameter)
           val system = top.soc.system
           BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io, className)
+          XilinxTools.Xdc(elementsConfig).generate(top.io)
           top
-        })
-    }
+      }
+    })
   }
 
-  case class Nexys4DDRTop() extends Component {
-    val io = Nexys4DDR.Io()
+  case class Nexys4DDRTop(parameter: Hydrogen.Parameter) extends Component {
+    val io = Nexys4DDR.Io(parameter)
 
-    val soc = HydrogenTest()
+    val soc = HydrogenTest(parameter)
 
     io.clock <> IBUF(soc.io_sys.clock)
     soc.io_sys.reset := False

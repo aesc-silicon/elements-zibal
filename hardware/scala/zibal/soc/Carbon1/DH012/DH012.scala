@@ -10,12 +10,10 @@ import spinal.lib._
 
 import zibal.platform.Carbon
 import zibal.soc.Carbon1
-import zibal.misc.{BinTools, CadenceTools, SimulationHelper}
+import zibal.misc.{BinTools, CadenceTools, SimulationHelper, ElementsConfig, TestCases}
 import zibal.blackboxes.ihp.sg13s._
 
 import zibal.sim.MT25Q
-
-import sys.process._
 
 
 object DH012 {
@@ -58,59 +56,28 @@ object DH012Board {
   def apply(source: String) = DH012Board(source)
 
   def main(args: Array[String]) {
-    val socBoard = System.getenv("SOC") + "/" + System.getenv("BOARD")
-    val zibalBuildPath = "./../build/"+socBoard+"/zibal/"
-    val fplBuildPath = "./../build/"+socBoard+"/fpl/"
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    var baudPeriod: Int = 0
-    var clockPeriod: Int = 0
-
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath)
-    val compiled = SimConfig.withConfig(config).withWave.workspacePath(zibalBuildPath).compile {
-      val parameter = Carbon1.Peripherals.default
-      val peripherals = parameter.peripherals.asInstanceOf[Carbon1.Peripherals]
-      baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-      clockPeriod = 1000000000 / parameter.sysFrequency.toInt
-
+    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
       val board = DH012Board(args(0))
-      BinTools.initRam(board.spiNor.deviceOut.data, fplBuildPath + "/kernel.img")
+      BinTools.initRam(board.spiNor.deviceOut.data, elementsConfig.fplBuildPath + "/kernel.img")
       board
     }
     args(1) match {
-      case "boot" =>
-        compiled.doSimUntilVoid("boot") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 30000000)
-          SimulationHelper.generateReset(dut.io.reset, clockPeriod, 100)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
+      case "simulate" =>
+        compiled.doSimUntilVoid("simulate") { dut =>
+          val testCases = TestCases()
+          testCases.addClock(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.addReset(dut.io.reset, 1 us)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case _ =>
         println(s"Unknown simulation ${args(1)}")
     }
   }
 
-  case class DH012Top(source: String) extends BlackBox {
-    val io = DH012.Io()
-
-    val socName = System.getenv("SOC")
-    val socBoard = socName + "/" + System.getenv("BOARD")
-    val zibalBuildPath = "./../build/"+socBoard+"/zibal/"
-    val className = this.getClass().getName().split("\\.").last.split("\\$").last
-
-    addRTLPath("hardware/scala/zibal/blackboxes/ihp/sg13s/IO.v")
-    if (source.equals("generated")) {
-      addRTLPath(zibalBuildPath + s"${socName}.v")
-      addRTLPath(zibalBuildPath + s"${className}.v")
-    } else {
-      println(s"Unsupported source $source for $className")
-    }
-
-    val result = Process(s"ls $zibalBuildPath").!!
-    for (line <- result.lines().toArray()) {
-      if (line.asInstanceOf[String].endsWith(".bin")) {
-        addRTLPath(zibalBuildPath + line)
-      }
-    }
-  }
 
   case class DH012Board(source: String) extends Component {
     val io = new Bundle {
@@ -133,6 +100,10 @@ object DH012Board {
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
       val gpioA = Vec(inout(Analog(Bool())), 7)
     }
+    val peripherals = Carbon1.Parameter.default.peripherals.asInstanceOf[Carbon1.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+    val clockFrequency = Carbon1.Parameter.default.sysFrequency
+
     val top = DH012Top(source)
     val analogFalse = Analog(Bool)
     analogFalse := False
@@ -177,6 +148,13 @@ object DH012Board {
       io.gpioA(index) <> top.io.gpioA(index).PAD
     }
   }
+
+  case class DH012Top(source: String) extends BlackBox {
+    val io = DH012.Io()
+
+    val elementsConfig = ElementsConfig(this)
+    SimulationHelper.IHP.addRtl(this, elementsConfig, source)
+  }
 }
 
 
@@ -184,54 +162,51 @@ object DH012Top {
   def apply() = DH012Top()
 
   def main(args: Array[String]) {
-    val socBoard = System.getenv("SOC") + "/" + System.getenv("BOARD")
-    val zephyrBuildPath = "./../build/"+socBoard+"/zephyr/zephyr/"
-    val zibalBuildPath = "./../build/"+socBoard+"/zibal/"
-    val className = this.getClass().getName().stripSuffix("$").split("\\.").last
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath)
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    config.generateVerilog({
-      val top = DH012Top()
-      val io = CadenceTools.Io()
-      io.addPad("top", 3, "gndpad")
-      io.addPad("top", 4, "gndcore")
-      io.addPad("top", 5, "vddcore")
-      io.addPad("top", 6, "vddpad")
-      io.addPad("right", 4, "gndpad")
-      io.addPad("right", 5, "gndcore")
-      io.addPad("right", 6, "vddcore")
-      io.addPad("right", 7, "vddpad")
-      io.addPad("bottom", 3, "gndpad")
-      io.addPad("bottom", 4, "gndcore")
-      io.addPad("bottom", 5, "vddcore")
-      io.addPad("bottom", 6, "vddpad")
-      io.addPad("left", 4, "gndpad")
-      io.addPad("left", 5, "gndcore")
-      io.addPad("left", 6, "vddcore")
-      io.addPad("left", 7, "vddpad")
-      io.addCorner("topright", 90, "corner")
-      io.addCorner("bottomright", 0, "corner")
-      io.addCorner("bottomleft", 270, "corner")
-      io.addCorner("topleft", 180, "corner")
-      io.generate(top.io, zibalBuildPath, className)
-      val sdc = CadenceTools.Sdc()
-      sdc.addClock(top.io.clock.PAD, top.soc.p.sysFrequency)
-      sdc.addClock(top.io.jtag.tck.PAD, top.soc.p.dbgFrequency)
-      sdc.generate(zibalBuildPath, className)
-      top
-    })
-  }
-
-  case class Carbon1(p: Carbon.Parameter) extends BlackBox {
-    var peripherals = p.peripherals.asInstanceOf[zibal.soc.Carbon1.Peripherals]
-    val io_sys = Carbon.Io(p)
-    val io_per = zibal.soc.Carbon1.Io(peripherals)
+    args(0) match {
+      case "prepare" =>
+        println("Nothing to do here!")
+      case _ =>
+        spinalConfig.generateVerilog({
+          val top = DH012Top()
+          val io = CadenceTools.Io(elementsConfig)
+          io.addPad("top", 3, "gndpad")
+          io.addPad("top", 4, "gndcore")
+          io.addPad("top", 5, "vddcore")
+          io.addPad("top", 6, "vddpad")
+          io.addPad("right", 4, "gndpad")
+          io.addPad("right", 5, "gndcore")
+          io.addPad("right", 6, "vddcore")
+          io.addPad("right", 7, "vddpad")
+          io.addPad("bottom", 3, "gndpad")
+          io.addPad("bottom", 4, "gndcore")
+          io.addPad("bottom", 5, "vddcore")
+          io.addPad("bottom", 6, "vddpad")
+          io.addPad("left", 4, "gndpad")
+          io.addPad("left", 5, "gndcore")
+          io.addPad("left", 6, "vddcore")
+          io.addPad("left", 7, "vddpad")
+          io.addCorner("topright", 90, "corner")
+          io.addCorner("bottomright", 0, "corner")
+          io.addCorner("bottomleft", 270, "corner")
+          io.addCorner("topleft", 180, "corner")
+          io.generate(top.io, elementsConfig.zibalBuildPath)
+          val sdc = CadenceTools.Sdc(elementsConfig)
+          sdc.addClock(top.io.clock.PAD, top.soc.p.sysFrequency)
+          sdc.addClock(top.io.jtag.tck.PAD, top.soc.p.dbgFrequency)
+          sdc.generate(elementsConfig.zibalBuildPath)
+          top
+        })
+    }
   }
 
   case class DH012Top() extends Component {
     val io = DH012.Io()
 
-    val soc = Carbon1(zibal.soc.Carbon1.Peripherals.default)
+    val soc = Carbon1()
 
     io.clock <> ixc013_i16x(soc.io_sys.clock)
     io.reset <> ixc013_i16x(soc.io_sys.reset)

@@ -12,8 +12,8 @@ import zibal.blackboxes.xilinx.a7._
 object XilinxTools {
 
   case class Xdc(config: ElementsConfig.ElementsConfig) {
-    def generate(io: Data, filename: String, emitVoltage: Boolean = true, emitSpi: Boolean =  true) = {
-      val file = s"${config.zibalBuildPath}${filename}.xdc"
+    def generate(io: Data, emitVoltage: Boolean = true, emitSpi: Boolean =  true) = {
+      val file = s"${config.zibalBuildPath}${config.className}.xdc"
       val writer = new PrintWriter(new File(file))
       writer.write("# CONFIG\n")
       if (emitVoltage) {

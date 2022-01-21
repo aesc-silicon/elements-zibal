@@ -32,36 +32,25 @@ object Carbon {
     dbgFrequency: HertzNumber,
     onChipRamSize: BigInt,
     onChipRomSize: BigInt,
-    mtimer: MachineTimerCtrl.Parameter,
-    plic: PlicCtrl.Parameter,
-    spiXip: SpiCtrl.Parameter,
-    core: ArrayBuffer[Plugin[VexRiscv]],
+    interrupts: Int,
     peripherals: Any
-  ) {}
+  ) {
+    require(interrupts >= 0)
+    val mtimer = MachineTimerCtrl.Parameter.default
+    val plic = PlicCtrl.Parameter.default(interrupts + 2)
+    val spiXip = SpiCtrl.Parameter.default
+    val core = VexRiscvCoreParameter.realtime(0xA0000000L).plugins
+  }
 
   object Parameter {
-    def default(peripherals: Any, interrupts: Int = 0) = Parameter(
-      sysFrequency = 100 MHz,
-      dbgFrequency = 10 MHz,
-      onChipRamSize = 4 kB,
-      onChipRomSize = 4 MB,
-      mtimer = MachineTimerCtrl.Parameter.default,
-      plic = PlicCtrl.Parameter.default(interrupts + 2),
-      spiXip = SpiCtrl.Parameter.default,
-      core = VexRiscvCoreParameter.realtime(0xA0000000L).plugins,
-      peripherals = peripherals
-    )
-    def light(peripherals: Any, interrupts: Int = 0) = Parameter(
-      sysFrequency = 50 MHz,
-      dbgFrequency = 10 MHz,
-      onChipRamSize = 512 Byte,
-      onChipRomSize = 4 MB,
-      mtimer = MachineTimerCtrl.Parameter.default,
-      plic = PlicCtrl.Parameter.default(interrupts + 2),
-      spiXip = SpiCtrl.Parameter.xip,
-      core = VexRiscvCoreParameter.realtime(0xA0000000L).plugins,
-      peripherals = peripherals
-    )
+    def default(
+      peripherals: Any,
+      sysFrequency: HertzNumber,
+      dbgFrequency: HertzNumber,
+      interrupts: Int,
+      onChipRamSize: BigInt = 4 kB,
+      onChipRomSize: BigInt = 4 MB
+    ) = Parameter(sysFrequency, dbgFrequency, onChipRamSize, onChipRomSize, interrupts, peripherals)
   }
 
   case class Io(p: Parameter) extends Bundle {
@@ -84,6 +73,16 @@ object Carbon {
       for ((index, interrupt) <- system.irqMapping) {
         system.plicCtrl.io.sources(index) := interrupt
       }
+    }
+
+    def addApbDevice(port: Apb3, address: BigInt, size: BigInt) {
+      system.apbMapping += port -> (address, size)
+    }
+
+    var nextInterruptNumber = 2
+    def addInterrupt(pin: Bool) {
+      system.irqMapping += nextInterruptNumber -> pin
+      nextInterruptNumber += 1
     }
 
     val resetCtrlClockDomain = ClockDomain(
@@ -214,16 +213,16 @@ object Carbon {
 
       /* Peripheral IP-Cores */
       val mtimerCtrl = Apb3MachineTimer(p.mtimer)
-      apbMapping += mtimerCtrl.io.bus -> (0x20000, 4 kB)
       core.mtimerInterrupt := mtimerCtrl.io.interrupt
+      apbMapping += mtimerCtrl.io.bus -> (0x20000, 4 kB)
 
       val plicCtrl = Apb3Plic(p.plic)
-      apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       core.globalInterrupt := plicCtrl.io.interrupt
+      apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       irqMapping += 0 -> False
 
-      apbMapping += spiXipMasterCtrl.io.bus -> (0x40000, 4 kB)
       spiXipMasterCtrl.io.spi <> io_sys.spiXip
+      apbMapping += spiXipMasterCtrl.io.bus -> (0x40000, 4 kB)
       irqMapping += 1 -> spiXipMasterCtrl.io.interrupt
     }
   }

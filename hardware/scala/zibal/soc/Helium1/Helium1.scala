@@ -20,30 +20,23 @@ import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 
 
 object Helium1 {
-  def apply(p: Helium.Parameter = Peripherals.default()) = Helium1(p)
+  def apply(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
+      Helium1(Parameter.default(sysFrequency, dbgFrequency))
+  def apply(parameter: Helium.Parameter) = Helium1(parameter)
 
-  def prepare(config: SpinalConfig, elementsConfig: ElementsConfig.ElementsConfig, clock: HertzNumber) {
-    config.generateVerilog({
-      val soc = Helium1(Peripherals.default(clock))
-      val dt = ZephyrTools.DeviceTree(elementsConfig)
-      dt.generate("helium", soc.clocks.systemClockDomain, soc.system.axiCrossbar.slavesConfigs,
-                  soc.system.apbBridge.io.axi, soc.system.apbMapping, soc.system.irqMapping,
-                  "helium1.dtsi")
-      val board = ZephyrTools.Board(elementsConfig)
-      board.addLed("heartbeat", soc.pers.gpioStatusCtrl, 0)
-      board.addLed("ok", soc.pers.gpioStatusCtrl, 1)
-      board.addLed("error", soc.pers.gpioStatusCtrl, 2)
-      board.addKey("reset", soc.pers.gpioStatusCtrl, 3)
-      board.generateDeviceTree(soc.pers.uartStdCtrl)
-      board.generateKconfig()
-      board.generateDefconfig(soc.system.apbMapping, soc.clocks.systemClockDomain)
-      soc
-    })
-  }
-
-  case class Io(peripherals: Peripherals) extends Bundle {
-    val uartStd = master(Uart.Io(peripherals.uartStd))
-    val gpioStatus = Gpio.Io(peripherals.gpioStatus)
+  def prepare(soc: Helium1, elementsConfig: ElementsConfig.ElementsConfig) {
+    val dt = ZephyrTools.DeviceTree(elementsConfig)
+    dt.generate("helium", soc.clocks.systemClockDomain, soc.system.axiCrossbar.slavesConfigs,
+                soc.system.apbBridge.io.axi, soc.system.apbMapping, soc.system.irqMapping,
+                "helium1.dtsi")
+    val board = ZephyrTools.Board(elementsConfig)
+    board.addLed("heartbeat", soc.pers.gpioStatusCtrl, 0)
+    board.addLed("ok", soc.pers.gpioStatusCtrl, 1)
+    board.addLed("error", soc.pers.gpioStatusCtrl, 2)
+    board.addKey("reset", soc.pers.gpioStatusCtrl, 3)
+    board.generateDeviceTree(soc.pers.uartStdCtrl)
+    board.generateKconfig()
+    board.generateDefconfig(soc.system.apbMapping, soc.clocks.systemClockDomain)
   }
 
   case class Peripherals (
@@ -51,15 +44,22 @@ object Helium1 {
     gpioStatus: GpioCtrl.Parameter
   ) {}
 
-  object Peripherals {
-    def default(frequency: HertzNumber = 100 MHz) = Helium.Parameter.default(
-      Peripherals(
-        uartStd = UartCtrl.Parameter.full,
-        gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3))
-      ),
-      frequency,
-      2
-    )
+  object Parameter {
+    def default(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
+      Helium.Parameter.default(
+        Peripherals(
+          uartStd = UartCtrl.Parameter.full,
+          gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3))
+        ),
+        sysFrequency,
+        dbgFrequency,
+        2
+      )
+  }
+
+  case class Io(peripherals: Peripherals) extends Bundle {
+    val uartStd = master(Uart.Io(peripherals.uartStd))
+    val gpioStatus = Gpio.Io(peripherals.gpioStatus)
   }
 
   case class Helium1(p: Helium.Parameter) extends Helium.Helium(p) {

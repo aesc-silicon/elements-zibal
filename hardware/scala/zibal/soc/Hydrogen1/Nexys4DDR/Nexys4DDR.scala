@@ -8,21 +8,20 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import zibal.platform.Hydrogen
 import zibal.soc.Hydrogen1
-import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper}
+import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 import zibal.blackboxes.xilinx.a7._
-
-import sys.process._
 
 
 object Nexys4DDR {
-  case class Io() extends Bundle {
-    val clock = XilinxCmosIo("E3").clock(100 MHz)
+  case class Io(parameter: Hydrogen.Parameter) extends Bundle {
+    val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
     val jtag = new Bundle {
       val tms = XilinxCmosIo("H2")
       val tdi = XilinxCmosIo("G4")
       val tdo = XilinxCmosIo("G2")
-      val tck = XilinxCmosIo("F3").clock(10 MHz).
+      val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
         comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
     }
     val uartStd = new Bundle {
@@ -44,74 +43,41 @@ object Nexys4DDR {
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
 
+  case class Parameter(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) {
+    def convert = Hydrogen1.Parameter.default(sysFrequency, dbgFrequency)
+  }
+  val parameter = Parameter(100 MHz, 10 MHz)
+
   def main(args: Array[String]) {
-    val elementsConfig = ElementsConfig()
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    var baudPeriod: Int = 0
-    var clockPeriod: Int = 0
-
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
-    val compiled = SimConfig.withConfig(config).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
-      val parameter = Hydrogen1.Peripherals.default()
-      val peripherals = parameter.peripherals.asInstanceOf[Hydrogen1.Peripherals]
-      baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-      clockPeriod = 1000000000 / parameter.sysFrequency.toInt
-
+    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
       val board = Nexys4DDRBoard(args(0))
       board
     }
     args(1) match {
+      case "simulate" =>
+        compiled.doSimUntilVoid("simulate") { dut =>
+          val testCases = TestCases()
+          testCases.addClock(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+        }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 10000000)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
-          SimulationHelper.expectZephyrPrompt(dut.io.uartStd.txd, baudPeriod)
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 400000000)
-          fork {
-            sleep(100000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            sleep(400000)
-            assert(dut.io.gpioStatus(0).toBoolean == true)
-            println("Heartbeat LED: ON")
-            sleep(150500000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            sleep(50000000)
-            assert(dut.io.gpioStatus(0).toBoolean == true)
-            println("Heartbeat LED: ON")
-            sleep(150000000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            simSuccess
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 400 ms)
+          testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
         println(s"Unknown simulation ${args(1)}")
-    }
-  }
-
-  case class Nexys4DDRTop(source: String) extends BlackBox {
-    val io = Nexys4DDR.Io()
-
-    val elementsConfig = ElementsConfig()
-    val className = this.getClass().getName().split("\\.").last.split("\\$").last
-
-    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
-    if (source.equals("generated")) {
-      addRTLPath(elementsConfig.zibalBuildPath + s"${className}.v")
-    } else {
-      println(s"Unsupported source $source for $className")
-    }
-
-    val result = Process(s"ls ${elementsConfig.zibalBuildPath}").!!
-    for (line <- result.lines().toArray()) {
-      if (line.asInstanceOf[String].endsWith(".bin")) {
-        addRTLPath(elementsConfig.zibalBuildPath + line)
-      }
     }
   }
 
@@ -129,6 +95,10 @@ object Nexys4DDRBoard {
       }
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
     }
+    val peripherals = parameter.convert.peripherals.asInstanceOf[Hydrogen1.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+    val clockFrequency = parameter.convert.sysFrequency
+
     val top = Nexys4DDRTop(source)
     val analogFalse = Analog(Bool)
     analogFalse := False
@@ -150,36 +120,46 @@ object Nexys4DDRBoard {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
   }
+
+  case class Nexys4DDRTop(source: String) extends BlackBox {
+    val io = Nexys4DDR.Io(parameter.convert)
+
+    val elementsConfig = ElementsConfig(this)
+    SimulationHelper.Xilinx.addRtl(this, elementsConfig, source)
+    SimulationHelper.Xilinx.addBinary(this, elementsConfig)
+  }
 }
 
 
 object Nexys4DDRTop {
-  def apply() = Nexys4DDRTop()
+  def apply() = Nexys4DDRTop(Nexys4DDRBoard.parameter.convert)
 
   def main(args: Array[String]) {
-    val elementsConfig = ElementsConfig()
-    val className = this.getClass().getName().stripSuffix("$").split("\\.").last
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
-
-    args(0) match {
-      case "prepare" =>
-        Hydrogen1.prepare(config, elementsConfig, 100 MHz)
-      case _ =>
-        config.generateVerilog({
-          val top = Nexys4DDRTop()
+    spinalConfig.generateVerilog({
+      val parameter = Nexys4DDRBoard.parameter.convert
+      args(0) match {
+        case "prepare" =>
+          val soc = Hydrogen1(parameter)
+          Hydrogen1.prepare(soc, elementsConfig)
+          soc
+        case _ =>
+          val top = Nexys4DDRTop(parameter)
           val system = top.soc.system
           BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io, className)
+          XilinxTools.Xdc(elementsConfig).generate(top.io)
           top
-        })
-    }
+      }
+    })
   }
 
-  case class Nexys4DDRTop() extends Component {
-    val io = Nexys4DDR.Io()
+  case class Nexys4DDRTop(parameter: Hydrogen.Parameter) extends Component {
+    val io = Nexys4DDR.Io(parameter)
 
-    val soc = Hydrogen1()
+    val soc = Hydrogen1(parameter)
 
     io.clock <> IBUF(soc.io_sys.clock)
     soc.io_sys.reset := False

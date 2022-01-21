@@ -8,16 +8,15 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import zibal.platform.Helium
 import zibal.soc.Helium1
-import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper}
+import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 import zibal.blackboxes.xilinx.a7._
-
-import sys.process._
 
 
 object AX7035 {
-  case class Io() extends Bundle {
-    val clock = XilinxCmosIo("Y18").clock(50 MHz)
+  case class Io(parameter: Helium.Parameter) extends Bundle {
+    val clock = XilinxCmosIo("Y18").clock(parameter.sysFrequency)
     val uartStd = new Bundle {
       val txd = XilinxCmosIo("G16")
       val rxd = XilinxCmosIo("G15")
@@ -35,74 +34,41 @@ object AX7035 {
 object AX7035Board {
   def apply(source: String) = AX7035Board(source)
 
+  case class Parameter(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) {
+    def convert = Helium1.Parameter.default(sysFrequency, dbgFrequency)
+  }
+  val parameter = Parameter(50 MHz, 0 MHz)
+
   def main(args: Array[String]) {
-    val elementsConfig = ElementsConfig()
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    var baudPeriod: Int = 0
-    var clockPeriod: Int = 0
-
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
-    val compiled = SimConfig.withConfig(config).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
-      val parameter = Helium1.Peripherals.default(50 MHz)
-      val peripherals = parameter.peripherals.asInstanceOf[Helium1.Peripherals]
-      baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-      clockPeriod = 1000000000 / parameter.sysFrequency.toInt
-
+    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
       val board = AX7035Board(args(0))
       board
     }
     args(1) match {
+      case "simulate" =>
+        compiled.doSimUntilVoid("simulate") { dut =>
+          val testCases = TestCases()
+          testCases.addClock(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+        }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 20000000)
-          SimulationHelper.dumpStdout(dut.io.uartStd.txd, baudPeriod)
-          SimulationHelper.expectZephyrPrompt(dut.io.uartStd.txd, baudPeriod)
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
-          SimulationHelper.generateClock(dut.io.clock, clockPeriod, 400000000)
-          fork {
-            sleep(100000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            sleep(400000)
-            assert(dut.io.gpioStatus(0).toBoolean == true)
-            println("Heartbeat LED: ON")
-            sleep(150500000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            sleep(50000000)
-            assert(dut.io.gpioStatus(0).toBoolean == true)
-            println("Heartbeat LED: ON")
-            sleep(150000000)
-            assert(dut.io.gpioStatus(0).toBoolean == false)
-            println("Heartbeat LED: OFF")
-            simSuccess
-          }
+          val testCases = TestCases()
+          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 400 ms)
+          testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
         println(s"Unknown simulation ${args(1)}")
-    }
-  }
-
-  case class AX7035Top(source: String) extends BlackBox {
-    val io = AX7035.Io()
-
-    val elementsConfig = ElementsConfig()
-    val className = this.getClass().getName().split("\\.").last.split("\\$").last
-
-    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
-    if (source.equals("generated")) {
-      addRTLPath(elementsConfig.zibalBuildPath + s"${className}.v")
-    } else {
-      println(s"Unsupported source $source for $className")
-    }
-
-    val result = Process(s"ls ${elementsConfig.zibalBuildPath}").!!
-    for (line <- result.lines().toArray()) {
-      if (line.asInstanceOf[String].endsWith(".bin")) {
-        addRTLPath(elementsConfig.zibalBuildPath + line)
-      }
     }
   }
 
@@ -115,6 +81,10 @@ object AX7035Board {
       }
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
     }
+    val peripherals = parameter.convert.peripherals.asInstanceOf[Helium1.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+    val clockFrequency = parameter.convert.sysFrequency
+
     val top = AX7035Top(source)
     val analogFalse = Analog(Bool)
     analogFalse := False
@@ -130,36 +100,46 @@ object AX7035Board {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
   }
+
+  case class AX7035Top(source: String) extends BlackBox {
+    val io = AX7035.Io(parameter.convert)
+
+    val elementsConfig = ElementsConfig(this)
+    SimulationHelper.Xilinx.addRtl(this, elementsConfig, source)
+    SimulationHelper.Xilinx.addBinary(this, elementsConfig)
+  }
 }
 
 
 object AX7035Top {
-  def apply() = AX7035Top()
+  def apply() = AX7035Top(AX7035Board.parameter.convert)
 
   def main(args: Array[String]) {
-    val elementsConfig = ElementsConfig()
-    val className = this.getClass().getName().stripSuffix("$").split("\\.").last
+    val elementsConfig = ElementsConfig(this)
+    val spinalConfig = SpinalConfig(noRandBoot = false,
+      targetDirectory = elementsConfig.zibalBuildPath)
 
-    val config = SpinalConfig(noRandBoot = false, targetDirectory = elementsConfig.zibalBuildPath)
-
-    args(0) match {
-      case "prepare" =>
-        Helium1.prepare(config, elementsConfig, 50 MHz)
-      case _ =>
-        config.generateVerilog({
-          val top = AX7035Top()
+    spinalConfig.generateVerilog({
+      val parameter = AX7035Board.parameter.convert
+      args(0) match {
+        case "prepare" =>
+          val soc = Helium1(parameter)
+          Helium1.prepare(soc, elementsConfig)
+          soc
+        case _ =>
+          val top = AX7035Top(parameter)
           val system = top.soc.system
           BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io, className)
+          XilinxTools.Xdc(elementsConfig).generate(top.io)
           top
-        })
-    }
+      }
+    })
   }
 
-  case class AX7035Top() extends Component {
-    val io = AX7035.Io()
+  case class AX7035Top(parameter: Helium.Parameter) extends Component {
+    val io = AX7035.Io(parameter)
 
-    val soc = Helium1(Helium1.Peripherals.default(50 MHz))
+    val soc = Helium1(parameter)
 
     io.clock <> IBUF(soc.io_sys.clock)
     soc.io_sys.reset := False

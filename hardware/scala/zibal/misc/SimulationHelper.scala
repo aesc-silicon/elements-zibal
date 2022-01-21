@@ -8,33 +8,51 @@ import scala.util.matching.Regex
 
 object SimulationHelper {
 
-  def generateClock(clock: Bool, period: Int, duration: Int, delay: Int = 0) = {
-    val clockDuration = duration / period
+  def generateClock(
+    clock: Bool,
+    period: Int,
+    duration: Int,
+    delay: Int = 0,
+    timeout: Boolean = false
+  ) = {
     fork {
       clock #= true
       sleep(delay)
       sleep(period/2)
-      for (_ <- 0 to clockDuration * 2) {
+      for (_ <- 0 to duration * 2) {
         clock #= !clock.toBoolean
         sleep(period/2)
       }
+      if (timeout)
+        simFailure("Clock Timeout")
+      else
+        simSuccess
     }
   }
-  def generateReset(reset: Bool, period: Int, delayCycles: Int) = {
+  def generateReset(reset: Bool, delay: Int) = {
     fork {
       reset #= false
-      sleep(period * delayCycles)
+      sleep(delay)
       reset #= true
     }
   }
-  def waitUntilOrFail(cond: => Boolean, period: Int, until: Int):Boolean = {
-    for (_ <- 0 to until) {
+  def wait(duration: TimeNumber) {
+    val durationCycles = (duration.toDouble * 1000000000).toInt
+    println(s"Sleep for ${durationCycles} cycles")
+    sleep(durationCycles)
+  }
+  def waitUntilOrFail(cond: => Boolean, duration: TimeNumber, checks: TimeNumber): Boolean = {
+    val durationCycles = (duration.toDouble * 1000000000).toInt
+    val checkCycles = (checks.toDouble * 1000000000).toInt
+    val sleepDuration = (durationCycles / checkCycles).toInt
+    println(s"Sleep for ${checkCycles} cycles and retry ${sleepDuration}")
+    for (_ <- 0 to sleepDuration) {
       if (cond) {
         return true
       }
-      sleep(period)
+      sleep(checkCycles)
     }
-    assert(false, s"waitUntil failed because condtition not happend after ${until} cycles.")
+    assert(false, s"waitUntil failed because condtition not happend after ${sleepDuration} checks.")
     false
   }
   def uartReceive(rxd: Bool, baudPeriod: Int) = {
@@ -100,6 +118,38 @@ object SimulationHelper {
           run = false
         }
         log = log + buffer.toChar
+      }
+      simSuccess
+    }
+  }
+
+  object Xilinx {
+    def addRtl(blackbox: BlackBox, elementsConfig: ElementsConfig.ElementsConfig, source: String) {
+      blackbox.addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
+      if (source.equals("generated")) {
+        blackbox.addRTLPath(elementsConfig.zibalBuildPath + s"${elementsConfig.className}.v")
+      } else {
+        println(s"Unsupported source ${source} for ${elementsConfig.className}")
+      }
+    }
+
+    def addBinary(blackbox: BlackBox, elementsConfig: ElementsConfig.ElementsConfig) {
+      val result = sys.process.Process(s"ls ${elementsConfig.zibalBuildPath}").!!
+      for (line <- result.lines().toArray()) {
+        if (line.asInstanceOf[String].endsWith(".bin")) {
+          blackbox.addRTLPath(elementsConfig.zibalBuildPath + line)
+        }
+      }
+    }
+  }
+
+  object IHP {
+    def addRtl(blackbox: BlackBox, elementsConfig: ElementsConfig.ElementsConfig, source: String) {
+      blackbox.addRTLPath("hardware/scala/zibal/blackboxes/ihp/sg13s/IO.v")
+      if (source.equals("generated")) {
+        blackbox.addRTLPath(elementsConfig.zibalBuildPath + s"${elementsConfig.className}.v")
+      } else {
+        println(s"Unsupported source ${source} for ${elementsConfig.className}")
       }
     }
   }

@@ -22,25 +22,49 @@ import zibal.peripherals.misc.frequencycounter.{Apb3FrequencyCounter, FrequencyC
 
 
 object HydrogenTest {
-  def apply(p: Hydrogen.Parameter = Peripherals.default()) = HydrogenTest(p)
+  def apply(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
+      HydrogenTest(Parameter.default(sysFrequency, dbgFrequency))
+  def apply(parameter: Hydrogen.Parameter) = HydrogenTest(parameter)
 
-  def prepare(config: SpinalConfig, elementsConfig: ElementsConfig.ElementsConfig, clock: HertzNumber) {
-    config.generateVerilog({
-      val soc = HydrogenTest(Peripherals.default(clock))
-      val dt = ZephyrTools.DeviceTree(elementsConfig)
-      dt.generate("hydrogen", soc.clocks.systemClockDomain, soc.system.axiCrossbar.slavesConfigs,
-                  soc.system.apbBridge.io.axi, soc.system.apbMapping, soc.system.irqMapping,
-                  "hydrogentest.dtsi")
-      val board = ZephyrTools.Board(elementsConfig)
-      board.addLed("heartbeat", soc.pers.gpioStatusCtrl, 0)
-      board.addLed("ok", soc.pers.gpioStatusCtrl, 1)
-      board.addLed("error", soc.pers.gpioStatusCtrl, 2)
-      board.addKey("reset", soc.pers.gpioStatusCtrl, 3)
-      board.generateDeviceTree(soc.pers.uartStdCtrl)
-      board.generateKconfig()
-      board.generateDefconfig(soc.system.apbMapping, soc.clocks.systemClockDomain)
-      soc
-    })
+  def prepare(soc: HydrogenTest, elementsConfig: ElementsConfig.ElementsConfig) {
+    val dt = ZephyrTools.DeviceTree(elementsConfig)
+    dt.generate("hydrogen", soc.clocks.systemClockDomain, soc.system.axiCrossbar.slavesConfigs,
+                soc.system.apbBridge.io.axi, soc.system.apbMapping, soc.system.irqMapping,
+                "hydrogentest.dtsi")
+    val board = ZephyrTools.Board(elementsConfig)
+    board.addLed("heartbeat", soc.pers.gpioStatusCtrl, 0)
+    board.addLed("ok", soc.pers.gpioStatusCtrl, 1)
+    board.addLed("error", soc.pers.gpioStatusCtrl, 2)
+    board.addKey("reset", soc.pers.gpioStatusCtrl, 3)
+    board.generateDeviceTree(soc.pers.uartStdCtrl)
+    board.generateKconfig()
+    board.generateDefconfig(soc.system.apbMapping, soc.clocks.systemClockDomain)
+  }
+
+  case class Peripherals (
+    uartStd: UartCtrl.Parameter,
+    gpioStatus: GpioCtrl.Parameter,
+    gpioA: GpioCtrl.Parameter,
+    spiA: SpiCtrl.Parameter,
+    i2cA: I2cCtrl.Parameter,
+    freqCounterA: FrequencyCounterCtrl.Parameter
+  )
+
+  object Parameter {
+    def default(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
+      Hydrogen.Parameter.default(
+        Peripherals(
+          uartStd = UartCtrl.Parameter.default,
+          gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
+          gpioA = GpioCtrl.Parameter(32, 2, null, null, null),
+          spiA = SpiCtrl.Parameter.default,
+          i2cA = I2cCtrl.Parameter.default,
+          freqCounterA = FrequencyCounterCtrl.Parameter.default
+        ),
+        sysFrequency,
+        dbgFrequency,
+        5
+      )
   }
 
   case class Io(peripherals: Peripherals) extends Bundle {
@@ -52,30 +76,6 @@ object HydrogenTest {
     val freqCounterA = FrequencyCounter.Io(peripherals.freqCounterA)
   }
 
-  case class Peripherals (
-    uartStd: UartCtrl.Parameter,
-    gpioStatus: GpioCtrl.Parameter,
-    gpioA: GpioCtrl.Parameter,
-    spiA: SpiCtrl.Parameter,
-    i2cA: I2cCtrl.Parameter,
-    freqCounterA: FrequencyCounterCtrl.Parameter
-  ) {}
-
-  object Peripherals {
-    def default(frequency: HertzNumber = 100 MHz) = Hydrogen.Parameter.default(
-      Peripherals(
-        uartStd = UartCtrl.Parameter.default,
-        gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
-        gpioA = GpioCtrl.Parameter(32, 2, null, null, null),
-        spiA = SpiCtrl.Parameter.default,
-        i2cA = I2cCtrl.Parameter.default,
-        freqCounterA = FrequencyCounterCtrl.Parameter.default
-      ),
-      frequency,
-      5
-    )
-  }
-
   case class HydrogenTest(p: Hydrogen.Parameter) extends Hydrogen.Hydrogen(p) {
     var peripherals = p.peripherals.asInstanceOf[Peripherals]
     val io_per = Io(peripherals)
@@ -83,33 +83,33 @@ object HydrogenTest {
     val pers = new ClockingArea(clocks.systemClockDomain) {
 
       val uartStdCtrl = Apb3Uart(peripherals.uartStd)
-      system.apbMapping += uartStdCtrl.io.bus -> (0x00000, 4 kB)
       uartStdCtrl.io.uart <> io_per.uartStd
-      system.irqMapping += 1 -> uartStdCtrl.io.interrupt
+      addApbDevice(uartStdCtrl.io.bus, 0x00000, 4 kB)
+      addInterrupt(uartStdCtrl.io.interrupt)
 
       val gpioStatusCtrl = Apb3Gpio(peripherals.gpioStatus)
-      system.apbMapping += gpioStatusCtrl.io.bus -> (0x10000, 4 kB)
       gpioStatusCtrl.io.gpio <> io_per.gpioStatus
-      system.irqMapping += 2 -> gpioStatusCtrl.io.interrupt
+      addApbDevice(gpioStatusCtrl.io.bus, 0x10000, 4 kB)
+      addInterrupt(gpioStatusCtrl.io.interrupt)
 
       val gpioACtrl = Apb3Gpio(peripherals.gpioA)
-      system.apbMapping += gpioACtrl.io.bus -> (0x11000, 4 kB)
       gpioACtrl.io.gpio <> io_per.gpioA
-      system.irqMapping += 3 -> gpioACtrl.io.interrupt
+      addApbDevice(gpioACtrl.io.bus, 0x11000, 4 kB)
+      addInterrupt(gpioACtrl.io.interrupt)
 
       val spiMasterACtrl = Apb3SpiMaster(peripherals.spiA)
-      system.apbMapping += spiMasterACtrl.io.bus -> (0x40000, 4 kB)
       spiMasterACtrl.io.spi <> io_per.spiA
-      system.irqMapping += 4 -> spiMasterACtrl.io.interrupt
+      addApbDevice(spiMasterACtrl.io.bus, 0x4000, 4 kB)
+      addInterrupt(spiMasterACtrl.io.interrupt)
 
       val i2cControllerACtrl = Apb3I2cController(peripherals.i2cA)
-      system.apbMapping += i2cControllerACtrl.io.bus -> (0x50000, 4 kB)
       i2cControllerACtrl.io.i2c <> io_per.i2cA
-      system.irqMapping += 5 -> i2cControllerACtrl.io.interrupt
+      addApbDevice(i2cControllerACtrl.io.bus, 0x50000, 4 kB)
+      addInterrupt(i2cControllerACtrl.io.interrupt)
 
       val frequencyCounterACtrl = Apb3FrequencyCounter(peripherals.freqCounterA)
-      system.apbMapping += frequencyCounterACtrl.io.bus -> (0x60000, 4 kB)
       frequencyCounterACtrl.io.clock <> io_per.freqCounterA
+      addApbDevice(frequencyCounterACtrl.io.bus, 0x60000, 4 kB)
 
       connectPeripherals()
     }

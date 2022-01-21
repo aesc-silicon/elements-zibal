@@ -30,22 +30,23 @@ object Hydrogen {
     sysFrequency: HertzNumber,
     dbgFrequency: HertzNumber,
     onChipRamSize: BigInt,
-    mtimer: MachineTimerCtrl.Parameter,
-    plic: PlicCtrl.Parameter,
-    core: ArrayBuffer[Plugin[VexRiscv]],
+    interrupts: Int,
     peripherals: Any
-  ) {}
+  ) {
+    require(interrupts >= 0)
+    val mtimer = MachineTimerCtrl.Parameter.default
+    val plic = PlicCtrl.Parameter.default(interrupts + 1)
+    val core = VexRiscvCoreParameter.realtime(0x80000000L).plugins
+  }
 
   object Parameter {
-    def default(peripherals: Any, frequency: HertzNumber, interrupts: Int = 0) = Parameter(
-      sysFrequency = frequency,
-      dbgFrequency = 10 MHz,
-      onChipRamSize = 128 kB,
-      mtimer = MachineTimerCtrl.Parameter.default,
-      plic = PlicCtrl.Parameter.default(interrupts + 1),
-      core = VexRiscvCoreParameter.realtime(0x80000000L).plugins,
-      peripherals = peripherals
-    )
+    def default(
+      peripherals: Any,
+      sysFrequency: HertzNumber,
+      dbgFrequency: HertzNumber,
+      interrupts: Int,
+      onChipRamSize: BigInt = 128 kB
+    ) = Parameter(sysFrequency, dbgFrequency, onChipRamSize, interrupts, peripherals)
   }
 
   case class Io() extends Bundle {
@@ -58,7 +59,7 @@ object Hydrogen {
   class Hydrogen(p: Parameter) extends Component {
     val io_sys = Io()
 
-    def connectPeripherals() = {
+    def connectPeripherals() {
       val apbDecoder = Apb3Decoder(
         master = system.apbBridge.io.apb,
         slaves = system.apbMapping
@@ -67,6 +68,16 @@ object Hydrogen {
       for ((index, interrupt) <- system.irqMapping) {
         system.plicCtrl.io.sources(index) := interrupt
       }
+    }
+
+    def addApbDevice(port: Apb3, address: BigInt, size: BigInt) {
+      system.apbMapping += port -> (address, size)
+    }
+
+    var nextInterruptNumber = 1
+    def addInterrupt(pin: Bool) {
+      system.irqMapping += nextInterruptNumber -> pin
+      nextInterruptNumber += 1
     }
 
     val resetCtrlClockDomain = ClockDomain(
@@ -200,12 +211,12 @@ object Hydrogen {
 
       /* Peripheral IP-Cores */
       val mtimerCtrl = Apb3MachineTimer(p.mtimer)
-      apbMapping += mtimerCtrl.io.bus -> (0x20000, 4 kB)
       core.mtimerInterrupt := mtimerCtrl.io.interrupt
+      apbMapping += mtimerCtrl.io.bus -> (0x20000, 4 kB)
 
       val plicCtrl = Apb3Plic(p.plic)
-      apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       core.globalInterrupt := plicCtrl.io.interrupt
+      apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       irqMapping += 0 -> False
     }
   }

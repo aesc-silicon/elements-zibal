@@ -12,7 +12,7 @@ import scala.collection.mutable.Map
 
 object CadenceTools {
 
-  case class Sdc() {
+  case class Sdc(config: ElementsConfig.ElementsConfig) {
     val clocks = Map[String, Float]()
 
     def addClock(pin: Bool, frequency: HertzNumber) = {
@@ -21,8 +21,8 @@ object CadenceTools {
       clocks += name -> time
     }
 
-    def generate(path: String, filename: String) = {
-      val file = s"${path}${filename}.sdc"
+    def generate(path: String) = {
+      val file = s"${path}${config.className}.sdc"
       val writer = new PrintWriter(new File(file))
 
       writer.write("""set sdc_version 2.0
@@ -41,7 +41,7 @@ current_design ${TOP}
     }
   }
 
-  case class Io() {
+  case class Io(config: ElementsConfig.ElementsConfig) {
 
     val pads = Map(
       "top" -> Map[Int, (String, String)](),
@@ -84,8 +84,8 @@ current_design ${TOP}
     }
 
 
-    def generate(io: Data, path: String, filename: String) = {
-      val file = s"${path}${filename}.io"
+    def generate(io: Data, path: String) = {
+      val file = s"${path}${config.className}.io"
       val writer = new PrintWriter(new File(file))
 
       io.component.getOrdredNodeIo.foreach { baseType =>
