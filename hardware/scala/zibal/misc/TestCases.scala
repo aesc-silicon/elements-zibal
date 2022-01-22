@@ -84,6 +84,7 @@ object TestCases {
         assert(receiveChar == 'X')
         // Check loopback
         SimulationHelper.uartTransmit(rxd, baudPeriod, 'G')
+        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
         val receiveG = SimulationHelper.uartReceive(txd, baudPeriod)
         assert(receiveG == 'G')
         simSuccess
@@ -101,6 +102,7 @@ object TestCases {
         assert(receiveChar == 'X')
         // Check loopback
         SimulationHelper.uartTransmit(rxd, baudPeriod, 'G')
+        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
         val receiveG = SimulationHelper.uartReceive(txd, baudPeriod)
         assert(receiveG == 'G')
         // IRQ is enabled. Send character. IRQ will send R followed be the sent char (I).
