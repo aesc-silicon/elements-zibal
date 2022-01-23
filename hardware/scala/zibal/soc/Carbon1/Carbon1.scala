@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2021 Phytec Messtechnik GmbH
- */
-
 package zibal.soc
 
 import spinal.core._

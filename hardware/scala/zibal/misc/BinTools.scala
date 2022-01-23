@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2019 Phytec Messtechnik GmbH
- */
-
 package zibal.misc
 
 import java.io.FileInputStream

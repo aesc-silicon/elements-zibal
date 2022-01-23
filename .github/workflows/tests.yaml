@@ -25,7 +25,7 @@ jobs:
       - name: Checkout VexRiscv
         uses: actions/checkout@v2
         with:
-          repository: phytec-labs/elements-vexriscv
+          repository: aesc-silicon/elements-vexriscv
           ref: stable
           path: vexriscv
 

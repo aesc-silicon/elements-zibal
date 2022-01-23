@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2021 Phytec Messtechnik GmbH
- */
-
 package zibal.misc
 
 import java.io._
