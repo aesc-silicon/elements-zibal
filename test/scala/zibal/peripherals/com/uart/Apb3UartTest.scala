@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2020 Phytec Messtechnik GmbH
- */
 package zibal.peripherals.com.uart
 
 import org.scalatest.funsuite.AnyFunSuite
