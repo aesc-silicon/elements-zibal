@@ -1,7 +1,11 @@
 proc elements_load_design {} {
 	global PROCESS
+	global PATH_BUILD_ROOT
+	global TOP
 
 	init_design
+
+	defIn ${PATH_BUILD_ROOT}/synthesize/${TOP}.scan.def
 
 	setDesignMode -process ${PROCESS}
 

@@ -1,10 +1,8 @@
 ## library_sets
-set timing_max ${PATH_PDK}/stdcell/lib/ixc013_stdcell_slow_1p08V_125C.lib
-lappend timing_max ${PATH_PDK}/iocell/lib/ixc013_iocell_slow_1p08V_3p0V_125C.lib
+set timing_max [get_lib_max_files]
+set timing_min [get_lib_min_files]
 create_library_set -name libset_max \
 	-timing $timing_max
-set timing_min ${PATH_PDK}/stdcell/lib/ixc013_stdcell_fast_1p32V_m40C.lib
-lappend timing_min ${PATH_PDK}/iocell/lib/ixc013_iocell_fast_1p32V_3p6V_m40C.lib
 create_library_set -name libset_min \
 	-timing $timing_min
 
@@ -19,8 +17,8 @@ create_rc_corner -name rc_corner_min \
 ## delay_corner
 create_delay_corner -name delay_corner_std_max \
 	-library_set libset_max \
-	-opcond_library {ixc013_stdcell_slow_1p08V_125C} \
-	-opcond {slow_1_08V_125C} \
+	-opcond_library {ixc013ng_stdcell_slow_1p08V_125C} \
+	-opcond {slow_1p08V_125C} \
 	-rc_corner rc_corner_max
 create_delay_corner -name delay_corner_io_max \
 	-library_set libset_max \
@@ -29,8 +27,8 @@ create_delay_corner -name delay_corner_io_max \
 	-rc_corner rc_corner_max
 create_delay_corner -name delay_corner_std_min \
 	-library_set libset_min \
-	-opcond_library {ixc013_stdcell_fast_1p32V_m40C} \
-	-opcond {fast_1_32V_m40C} \
+	-opcond_library {ixc013ng_stdcell_fast_1p32V_m40C} \
+	-opcond {fast_1p32V_m40C} \
 	-rc_corner rc_corner_min
 create_delay_corner -name delay_corner_io_min \
 	-library_set libset_min \

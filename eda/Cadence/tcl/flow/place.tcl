@@ -1,15 +1,15 @@
 proc elements_place how {
 	switch $how {
 	"ntd" {
-		setPlaceMode -timingdriven false -reorderScan false -congEffort medium
+		setPlaceMode -timingdriven false -reorderScan true -congEffort medium
 		placeDesign -noPrePlaceOpt
 		}
 	"td" {
-		setPlaceMode -timingdriven true -reorderScan false -congEffort medium
+		setPlaceMode -timingdriven true -reorderScan true -congEffort medium
 		placeDesign -noPrePlaceOpt
 		}
 	"opt" {
-		setPlaceMode -timingdriven true -reorderScan false -congEffort high
+		setPlaceMode -timingdriven true -reorderScan true -congEffort high
 		placeDesign -inPlaceOpt -prePlaceOpt
 		}
 	}

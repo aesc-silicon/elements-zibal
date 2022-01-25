@@ -22,7 +22,7 @@ set init_lef_file [get_lef_files]
 set init_pwr_net [get_power_nets]
 set init_gnd_net [get_ground_nets]
 
-foreach {suppress_message} [get_suppress_messages] {
+foreach {suppress_message} [get_suppress_messages "innovus"] {
 	suppressMessage "$suppress_message"
 }
 

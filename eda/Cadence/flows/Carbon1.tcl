@@ -36,7 +36,6 @@ proc route {} {
 	elements_opt_design postRouteHold
 	elements_analysis_timing postRoute true
 	elements_filler core
-	elements_filler metal
 }
 
 proc signoff {} {

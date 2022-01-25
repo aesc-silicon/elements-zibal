@@ -7,7 +7,6 @@ proc elements_verify {} {
 	verify_drc -report ${PATH_REPORT}/${TOP}.drc.rpt
 	verifyConnectivity -report ${PATH_REPORT}/${TOP}.con.rpt
 
-	verifyMetalDensity -report ${PATH_REPORT}/${TOP}.denstiy.rpt
 	verifyPowerVia -report ${PATH_REPORT}/${TOP}.power.rpt
 }
 
@@ -21,8 +20,13 @@ proc elements_verify_endcap {} {
 proc elements_save postfix {
 	global TOP
 	global PATH_OUTPUT
+	set pathes $PATH_OUTPUT
+	global PATH_LATEST
+	lappend pathes $PATH_LATEST
 
-	saveDesign ${PATH_OUTPUT}/${TOP}
+	foreach path $pathes {
+		saveDesign ${path}/${TOP}
+	}
 }
 
 proc elements_write postfix {
