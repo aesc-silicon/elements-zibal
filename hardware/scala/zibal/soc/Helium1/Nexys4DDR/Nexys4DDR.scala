@@ -146,7 +146,7 @@ object Nexys4DDRTop {
           val top = Nexys4DDRTop(parameter)
           val system = top.soc.system
           BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io)
+          XilinxTools.Xdc(elementsConfig).generate(top.io, true, false)
           top
       }
     })
