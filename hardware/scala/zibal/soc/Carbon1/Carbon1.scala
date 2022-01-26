@@ -33,7 +33,7 @@ object Carbon1 {
         gpioA = GpioCtrl.Parameter(7, 2, null, null, null),
         i2cA = I2cCtrl.Parameter.default
       ),
-      50 MHz,
+      64 MHz,
       10 MHz,
       4,
       512 Byte

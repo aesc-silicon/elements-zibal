@@ -45,7 +45,7 @@ object ixc013_b16m {
 
     def withTriState(pin: TriState[Bool]) = {
       val invertedEnable = Bool()
-      INVJILTX2(pin.writeEnable, invertedEnable)
+      INVJIX12(pin.writeEnable, invertedEnable)
       this.DIN := pin.write
       this.OEN := invertedEnable
       pin.read := this.DOUT
@@ -81,7 +81,7 @@ object ixc013_b16mpup {
 
     def withTriState(pin: TriState[Bool]) = {
       val invertedEnable = Bool()
-      INVJILTX2(pin.writeEnable, invertedEnable)
+      INVJIX12(pin.writeEnable, invertedEnable)
       this.DIN := pin.write
       this.OEN := invertedEnable
       pin.read := this.DOUT
@@ -124,10 +124,10 @@ object ixc013_i16x {
   }
 }
 
-object INVJILTX2 {
-  def apply(normal: Bool, inverted: Bool) = INVJILTX2().connect(normal, inverted)
+object INVJIX12 {
+  def apply(normal: Bool, inverted: Bool) = INVJIX12().connect(normal, inverted)
 
-  case class INVJILTX2() extends BlackBox {
+  case class INVJIX12() extends BlackBox {
     val A = in Bool()
     val Q = out Bool()
 
