@@ -10,23 +10,6 @@ import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, Test
 import zibal.blackboxes.xilinx.a7._
 
 
-object AX7035 {
-  case class Io(parameter: Helium.Parameter) extends Bundle {
-    val clock = XilinxCmosIo("Y18").clock(parameter.sysFrequency)
-    val uartStd = new Bundle {
-      val txd = XilinxCmosIo("G16")
-      val rxd = XilinxCmosIo("G15")
-    }
-    val gpioStatus = Vec(
-      XilinxCmosIo("F19"),
-      XilinxCmosIo("E21"),
-      XilinxCmosIo("D20"),
-      XilinxCmosIo("F20")
-    )
-  }
-}
-
-
 object AX7035Board {
   def apply(source: String) = AX7035Board(source)
 
@@ -37,11 +20,12 @@ object AX7035Board {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
-    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
+    val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = AX7035Board(args(0))
+      val system = board.top.soc.system
+      BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
       board
     }
     args(1) match {
@@ -81,7 +65,7 @@ object AX7035Board {
     val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
     val clockFrequency = parameter.convert.sysFrequency
 
-    val top = AX7035Top(source)
+    val top = AX7035Top()
     val analogFalse = Analog(Bool)
     analogFalse := False
     val analogTrue = Analog(Bool)
@@ -96,14 +80,6 @@ object AX7035Board {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
   }
-
-  case class AX7035Top(source: String) extends BlackBox {
-    val io = AX7035.Io(parameter.convert)
-
-    val elementsConfig = ElementsConfig(this)
-    SimulationHelper.Xilinx.addRtl(this, elementsConfig, source)
-    SimulationHelper.Xilinx.addBinary(this, elementsConfig)
-  }
 }
 
 
@@ -112,8 +88,7 @@ object AX7035Top {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
       val parameter = AX7035Board.parameter.convert
@@ -133,7 +108,19 @@ object AX7035Top {
   }
 
   case class AX7035Top(parameter: Helium.Parameter) extends Component {
-    val io = AX7035.Io(parameter)
+    val io = new Bundle {
+      val clock = XilinxCmosIo("Y18").clock(parameter.sysFrequency)
+      val uartStd = new Bundle {
+        val txd = XilinxCmosIo("G16")
+        val rxd = XilinxCmosIo("G15")
+      }
+      val gpioStatus = Vec(
+        XilinxCmosIo("F19"),
+        XilinxCmosIo("E21"),
+        XilinxCmosIo("D20"),
+        XilinxCmosIo("F20")
+      )
+    }
 
     val soc = Helium1(parameter)
 

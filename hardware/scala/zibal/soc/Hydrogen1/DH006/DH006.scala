@@ -10,27 +10,6 @@ import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, Test
 import zibal.blackboxes.xilinx.a7._
 
 
-object DH006 {
-  case class Io(parameter: Hydrogen.Parameter) extends Bundle {
-    val clock = XilinxCmosIo("E12").clock(parameter.sysFrequency)
-    val jtag = new Bundle {
-      val tms = XilinxCmosIo("R13")
-      val tdi = XilinxCmosIo("N13")
-      val tdo = XilinxCmosIo("P13")
-      val tck = XilinxCmosIo("N14").clock(parameter.dbgFrequency)
-    }
-    val uartStd = new Bundle {
-      val txd = XilinxCmosIo("M4")
-      val rxd = XilinxCmosIo("L4")
-      val rts = XilinxCmosIo("M2")
-      val cts = XilinxCmosIo("M1")
-    }
-    val gpioStatus = Vec(XilinxCmosIo("K12"), XilinxCmosIo("L13"), XilinxCmosIo("K13"),
-                         XilinxCmosIo("G11"))
-  }
-}
-
-
 object DH006Board {
   def apply(source: String) = DH006Board(source)
 
@@ -41,10 +20,9 @@ object DH006Board {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
-    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
+    val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = DH006Board(args(0))
       board
     }
@@ -90,7 +68,7 @@ object DH006Board {
     val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
     val clockFrequency = parameter.convert.sysFrequency
 
-    val top = DH006Top(source)
+    val top = DH006Top()
     val analogFalse = Analog(Bool)
     analogFalse := False
     val analogTrue = Analog(Bool)
@@ -111,13 +89,6 @@ object DH006Board {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
   }
-  case class DH006Top(source: String) extends BlackBox {
-    val io = DH006.Io(parameter.convert)
-
-    val elementsConfig = ElementsConfig(this)
-    SimulationHelper.Xilinx.addRtl(this, elementsConfig, source)
-    SimulationHelper.Xilinx.addBinary(this, elementsConfig)
-  }
 }
 
 
@@ -126,8 +97,7 @@ object DH006Top {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
       val parameter = DH006Board.parameter.convert
@@ -147,7 +117,23 @@ object DH006Top {
   }
 
   case class DH006Top(parameter: Hydrogen.Parameter) extends Component {
-    val io = DH006.Io(parameter)
+    val io = new Bundle {
+      val clock = XilinxCmosIo("E12").clock(parameter.sysFrequency)
+      val jtag = new Bundle {
+        val tms = XilinxCmosIo("R13")
+        val tdi = XilinxCmosIo("N13")
+        val tdo = XilinxCmosIo("P13")
+        val tck = XilinxCmosIo("N14").clock(parameter.dbgFrequency)
+      }
+      val uartStd = new Bundle {
+        val txd = XilinxCmosIo("M4")
+        val rxd = XilinxCmosIo("L4")
+        val rts = XilinxCmosIo("M2")
+        val cts = XilinxCmosIo("M1")
+      }
+      val gpioStatus = Vec(XilinxCmosIo("K12"), XilinxCmosIo("L13"), XilinxCmosIo("K13"),
+                           XilinxCmosIo("G11"))
+    }
 
     val soc = Hydrogen1(parameter)
 

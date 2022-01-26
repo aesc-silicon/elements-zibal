@@ -12,51 +12,14 @@ import zibal.blackboxes.ihp.sg13s._
 import zibal.sim.MT25Q
 
 
-object DH012 {
-  case class Io() extends Bundle {
-    val clock = IhpCmosIo("top", 0)
-    val reset = IhpCmosIo("top", 1)
-    val sysReset_out = IhpCmosIo("top", 2)
-    val jtag = new Bundle {
-      val tms = IhpCmosIo("right", 0)
-      val tdi = IhpCmosIo("right", 1)
-      val tdo = IhpCmosIo("right", 2)
-      val tck = IhpCmosIo("right", 3)
-    }
-    val uartStd = new Bundle {
-      val txd = IhpCmosIo("bottom", 7)
-      val rxd = IhpCmosIo("bottom", 8)
-      val rts = IhpCmosIo("bottom", 9)
-      val cts = IhpCmosIo("bottom", 10)
-    }
-    val spiXip = new Bundle {
-      val ss = IhpCmosIo("left", 0)
-      val sclk = IhpCmosIo("left", 1)
-      val mosi = IhpCmosIo("left", 2)
-      val miso = IhpCmosIo("left", 3)
-    }
-    val i2cA = new Bundle {
-      val scl = IhpCmosIo("left", 8)
-      val sda = IhpCmosIo("left", 9)
-    }
-    val gpioStatus = Vec(IhpCmosIo("top", 7), IhpCmosIo("top", 8), IhpCmosIo("top", 9),
-                         IhpCmosIo("top", 10))
-    val gpioA = Vec(IhpCmosIo("right", 8), IhpCmosIo("right", 9), IhpCmosIo("right", 10),
-                    IhpCmosIo("bottom", 0), IhpCmosIo("bottom", 1), IhpCmosIo("bottom", 2),
-                    IhpCmosIo("left", 10))
-  }
-}
-
-
 object DH012Board {
   def apply(source: String) = DH012Board(source)
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genASICSpinalConfig
 
-    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
+    val compiled = elementsConfig.genASICSimConfig.compile {
       val board = DH012Board(args(0))
       BinTools.initRam(board.spiNor.deviceOut.data, elementsConfig.fplBuildPath + "/kernel.img")
       board
@@ -100,7 +63,7 @@ object DH012Board {
     val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
     val clockFrequency = Carbon1.Parameter.default.sysFrequency
 
-    val top = DH012Top(source)
+    val top = DH012Top()
     val analogFalse = Analog(Bool)
     analogFalse := False
     val analogTrue = Analog(Bool)
@@ -144,13 +107,6 @@ object DH012Board {
       io.gpioA(index) <> top.io.gpioA(index).PAD
     }
   }
-
-  case class DH012Top(source: String) extends BlackBox {
-    val io = DH012.Io()
-
-    val elementsConfig = ElementsConfig(this)
-    SimulationHelper.IHP.addRtl(this, elementsConfig, source)
-  }
 }
 
 
@@ -159,8 +115,7 @@ object DH012Top {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genASICSpinalConfig
 
     args(0) match {
       case "prepare" =>
@@ -200,7 +155,38 @@ object DH012Top {
   }
 
   case class DH012Top() extends Component {
-    val io = DH012.Io()
+    val io = new Bundle {
+      val clock = IhpCmosIo("top", 0)
+      val reset = IhpCmosIo("top", 1)
+      val sysReset_out = IhpCmosIo("top", 2)
+      val jtag = new Bundle {
+        val tms = IhpCmosIo("right", 0)
+        val tdi = IhpCmosIo("right", 1)
+        val tdo = IhpCmosIo("right", 2)
+        val tck = IhpCmosIo("right", 3)
+      }
+      val uartStd = new Bundle {
+        val txd = IhpCmosIo("bottom", 7)
+        val rxd = IhpCmosIo("bottom", 8)
+        val rts = IhpCmosIo("bottom", 9)
+        val cts = IhpCmosIo("bottom", 10)
+      }
+      val spiXip = new Bundle {
+        val ss = IhpCmosIo("left", 0)
+        val sclk = IhpCmosIo("left", 1)
+        val mosi = IhpCmosIo("left", 2)
+        val miso = IhpCmosIo("left", 3)
+      }
+      val i2cA = new Bundle {
+        val scl = IhpCmosIo("left", 8)
+        val sda = IhpCmosIo("left", 9)
+      }
+      val gpioStatus = Vec(IhpCmosIo("top", 7), IhpCmosIo("top", 8), IhpCmosIo("top", 9),
+                           IhpCmosIo("top", 10))
+      val gpioA = Vec(IhpCmosIo("right", 8), IhpCmosIo("right", 9), IhpCmosIo("right", 10),
+                      IhpCmosIo("bottom", 0), IhpCmosIo("bottom", 1), IhpCmosIo("bottom", 2),
+                      IhpCmosIo("left", 10))
+    }
 
     val soc = Carbon1()
 

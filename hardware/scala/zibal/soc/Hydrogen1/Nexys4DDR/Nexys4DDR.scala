@@ -10,32 +10,6 @@ import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, Test
 import zibal.blackboxes.xilinx.a7._
 
 
-object Nexys4DDR {
-  case class Io(parameter: Hydrogen.Parameter) extends Bundle {
-    val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
-    val jtag = new Bundle {
-      val tms = XilinxCmosIo("H2")
-      val tdi = XilinxCmosIo("G4")
-      val tdo = XilinxCmosIo("G2")
-      val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
-        comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
-    }
-    val uartStd = new Bundle {
-      val txd = XilinxCmosIo("D4")
-      val rxd = XilinxCmosIo("C4")
-      val rts = XilinxCmosIo("D3")
-      val cts = XilinxCmosIo("E5")
-    }
-    val gpioStatus = Vec(
-      XilinxCmosIo("R12"),
-      XilinxCmosIo("R11"),
-      XilinxCmosIo("G14"),
-      XilinxCmosIo("N16")
-    )
-  }
-}
-
-
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
 
@@ -46,11 +20,12 @@ object Nexys4DDRBoard {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
-    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
+    val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = Nexys4DDRBoard(args(0))
+      val system = board.top.soc.system
+      BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
       board
     }
     args(1) match {
@@ -95,7 +70,7 @@ object Nexys4DDRBoard {
     val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
     val clockFrequency = parameter.convert.sysFrequency
 
-    val top = Nexys4DDRTop(source)
+    val top = Nexys4DDRTop()
     val analogFalse = Analog(Bool)
     analogFalse := False
     val analogTrue = Analog(Bool)
@@ -116,24 +91,14 @@ object Nexys4DDRBoard {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
   }
-
-  case class Nexys4DDRTop(source: String) extends BlackBox {
-    val io = Nexys4DDR.Io(parameter.convert)
-
-    val elementsConfig = ElementsConfig(this)
-    SimulationHelper.Xilinx.addRtl(this, elementsConfig, source)
-    SimulationHelper.Xilinx.addBinary(this, elementsConfig)
-  }
 }
-
 
 object Nexys4DDRTop {
   def apply() = Nexys4DDRTop(Nexys4DDRBoard.parameter.convert)
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
       val parameter = Nexys4DDRBoard.parameter.convert
@@ -153,7 +118,28 @@ object Nexys4DDRTop {
   }
 
   case class Nexys4DDRTop(parameter: Hydrogen.Parameter) extends Component {
-    val io = Nexys4DDR.Io(parameter)
+    val io = new Bundle {
+      val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
+      val jtag = new Bundle {
+        val tms = XilinxCmosIo("H2")
+        val tdi = XilinxCmosIo("G4")
+        val tdo = XilinxCmosIo("G2")
+        val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
+          comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
+      }
+      val uartStd = new Bundle {
+        val txd = XilinxCmosIo("D4")
+        val rxd = XilinxCmosIo("C4")
+        val rts = XilinxCmosIo("D3")
+        val cts = XilinxCmosIo("E5")
+      }
+      val gpioStatus = Vec(
+        XilinxCmosIo("R12"),
+        XilinxCmosIo("R11"),
+        XilinxCmosIo("G14"),
+        XilinxCmosIo("N16")
+      )
+    }
 
     val soc = Hydrogen1(parameter)
 

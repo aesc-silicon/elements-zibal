@@ -133,6 +133,8 @@ object IOBUF {
     val O = out Bool()
     val IO = inout(Analog(Bool()))
 
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
+
     addGeneric("DRIVE", DRIVE)
     addGeneric("IBUF_LOW_PWR", IBUF_LOW_PWR)
     addGeneric("IOSTANDARD", IOSTANDARD)
@@ -173,6 +175,8 @@ object IBUF {
     val I = in Bool()
     val O = out Bool()
 
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
+
     addGeneric("IBUF_LOW_PWR", IBUF_LOW_PWR)
     addGeneric("IOSTANDARD", IOSTANDARD)
 
@@ -196,6 +200,8 @@ object OBUF {
   ) extends BlackBox {
     val I = in Bool()
     val O = out Bool()
+
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
 
     addGeneric("DRIVE", DRIVE)
     addGeneric("IOSTANDARD", IOSTANDARD)
@@ -229,6 +235,8 @@ object OBUFT {
     val I, T = in Bool()
     val O = out Bool()
 
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
+
     addGeneric("DRIVE", DRIVE)
     addGeneric("IOSTANDARD", IOSTANDARD)
 
@@ -250,6 +258,8 @@ object PULLUP {
   case class PULLUP() extends BlackBox {
     // Fake direction for SpinalHDL. Pin O is output!
     val O = in Bool()
+
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
   }
 }
 
@@ -259,6 +269,8 @@ object PULLDOWN {
   case class PULLDOWN() extends BlackBox {
     // Fake direction for SpinalHDL. Pin O is output!
     val O = out Bool()
+
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
   }
 }
 
@@ -278,6 +290,8 @@ object IBUFDS {
     val I = in Bool()
     val IB = in Bool()
     val O = out Bool()
+
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
 
     addGeneric("DIFF_TERM", DIFF_TERM)
     addGeneric("DQS_BIAS", DQS_BIAS)
@@ -323,6 +337,8 @@ object PLL {
 
     val designClockDomain = ClockDomain.current
     mapCurrentClockDomain(CLKIN1)
+
+    addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
 
     addGeneric("CLKIN1_PERIOD", (1000000000 / designClockDomain.frequency.getValue.toInt))
     addGeneric("DIVCLK_DIVIDE", DIVCLK_DIVIDE)

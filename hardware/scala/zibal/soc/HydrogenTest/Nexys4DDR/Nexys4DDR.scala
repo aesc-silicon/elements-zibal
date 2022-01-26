@@ -9,80 +9,6 @@ import zibal.soc.HydrogenTest
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 import zibal.blackboxes.xilinx.a7._
 
-import sys.process._
-
-
-object Nexys4DDR {
-  case class Io(parameter: Hydrogen.Parameter) extends Bundle {
-    val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
-    val jtag = new Bundle {
-      val tms = XilinxCmosIo("H2")
-      val tdi = XilinxCmosIo("G4")
-      val tdo = XilinxCmosIo("G2")
-      val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
-        comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
-    }
-    val uartStd = new Bundle {
-      val txd = XilinxCmosIo("D4")
-      val rxd = XilinxCmosIo("C4")
-      val rts = XilinxCmosIo("D3")
-      val cts = XilinxCmosIo("E5")
-    }
-    val gpioStatus = Vec(
-      XilinxCmosIo("R12"),
-      XilinxCmosIo("R11"),
-      XilinxCmosIo("G14"),
-      XilinxCmosIo("N16")
-    )
-    val gpioA = Vec(
-      XilinxCmosIo("J15"),
-      XilinxCmosIo("L16"),
-      XilinxCmosIo("M13"),
-      XilinxCmosIo("R15"),
-      XilinxCmosIo("R17"),
-      XilinxCmosIo("T18"),
-      XilinxCmosIo("U18"),
-      XilinxCmosIo("R13"),
-      XilinxCmosIo("T8"),
-      XilinxCmosIo("U8"),
-      XilinxCmosIo("R16"),
-      XilinxCmosIo("T13"),
-      XilinxCmosIo("H6"),
-      XilinxCmosIo("U12"),
-      XilinxCmosIo("U11"),
-      XilinxCmosIo("V10"),
-      XilinxCmosIo("H17"),
-      XilinxCmosIo("K15"),
-      XilinxCmosIo("J13"),
-      XilinxCmosIo("N14"),
-      XilinxCmosIo("R18"),
-      XilinxCmosIo("V17"),
-      XilinxCmosIo("U17"),
-      XilinxCmosIo("U16"),
-      XilinxCmosIo("V16"),
-      XilinxCmosIo("T15"),
-      XilinxCmosIo("U14"),
-      XilinxCmosIo("T16"),
-      XilinxCmosIo("V15"),
-      XilinxCmosIo("V14"),
-      XilinxCmosIo("V12"),
-      XilinxCmosIo("V11")
-    )
-    val spiA = new Bundle {
-      val ss = XilinxCmosIo("D14")
-      val sclk = XilinxCmosIo("F16")
-      val mosi = XilinxCmosIo("G16")
-      val miso = XilinxCmosIo("H14")
-    }
-    val i2cA = new Bundle {
-      val scl = XilinxCmosIo("C14")
-      val sda = XilinxCmosIo("C15")
-    }
-    val freqCounterA = XilinxCmosIo("C17").clock(100 MHz).
-        comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_10_O}]")
-  }
-}
-
 
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
@@ -94,10 +20,9 @@ object Nexys4DDRBoard {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
-    val compiled = SimConfig.withConfig(spinalConfig).withWave.workspacePath(elementsConfig.zibalBuildPath).allOptimisation.compile {
+    val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = Nexys4DDRBoard(args(0))
       board
     }
@@ -189,7 +114,7 @@ object Nexys4DDRBoard {
     val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
     val clockFrequency = parameter.convert.sysFrequency
 
-    val top = Nexys4DDRTop(source)
+    val top = Nexys4DDRTop()
     val analogFalse = Analog(Bool)
     analogFalse := False
     val analogTrue = Analog(Bool)
@@ -223,14 +148,6 @@ object Nexys4DDRBoard {
     }
     top.io.gpioA(1).PAD := analogTrue
   }
-
-  case class Nexys4DDRTop(source: String) extends BlackBox {
-    val io = Nexys4DDR.Io(parameter.convert)
-
-    val elementsConfig = ElementsConfig(this)
-    SimulationHelper.Xilinx.addRtl(this, elementsConfig, source)
-    SimulationHelper.Xilinx.addBinary(this, elementsConfig)
-  }
 }
 
 
@@ -239,8 +156,7 @@ object Nexys4DDRTop {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = SpinalConfig(noRandBoot = false,
-      targetDirectory = elementsConfig.zibalBuildPath)
+    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
       val parameter = Nexys4DDRBoard.parameter.convert
@@ -260,7 +176,74 @@ object Nexys4DDRTop {
   }
 
   case class Nexys4DDRTop(parameter: Hydrogen.Parameter) extends Component {
-    val io = Nexys4DDR.Io(parameter)
+    val io = new Bundle {
+      val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
+      val jtag = new Bundle {
+        val tms = XilinxCmosIo("H2")
+        val tdi = XilinxCmosIo("G4")
+        val tdo = XilinxCmosIo("G2")
+        val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
+          comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
+      }
+      val uartStd = new Bundle {
+        val txd = XilinxCmosIo("D4")
+        val rxd = XilinxCmosIo("C4")
+        val rts = XilinxCmosIo("D3")
+        val cts = XilinxCmosIo("E5")
+      }
+      val gpioStatus = Vec(
+        XilinxCmosIo("R12"),
+        XilinxCmosIo("R11"),
+        XilinxCmosIo("G14"),
+        XilinxCmosIo("N16")
+      )
+      val gpioA = Vec(
+        XilinxCmosIo("J15"),
+        XilinxCmosIo("L16"),
+        XilinxCmosIo("M13"),
+        XilinxCmosIo("R15"),
+        XilinxCmosIo("R17"),
+        XilinxCmosIo("T18"),
+        XilinxCmosIo("U18"),
+        XilinxCmosIo("R13"),
+        XilinxCmosIo("T8"),
+        XilinxCmosIo("U8"),
+        XilinxCmosIo("R16"),
+        XilinxCmosIo("T13"),
+        XilinxCmosIo("H6"),
+        XilinxCmosIo("U12"),
+        XilinxCmosIo("U11"),
+        XilinxCmosIo("V10"),
+        XilinxCmosIo("H17"),
+        XilinxCmosIo("K15"),
+        XilinxCmosIo("J13"),
+        XilinxCmosIo("N14"),
+        XilinxCmosIo("R18"),
+        XilinxCmosIo("V17"),
+        XilinxCmosIo("U17"),
+        XilinxCmosIo("U16"),
+        XilinxCmosIo("V16"),
+        XilinxCmosIo("T15"),
+        XilinxCmosIo("U14"),
+        XilinxCmosIo("T16"),
+        XilinxCmosIo("V15"),
+        XilinxCmosIo("V14"),
+        XilinxCmosIo("V12"),
+        XilinxCmosIo("V11")
+      )
+      val spiA = new Bundle {
+        val ss = XilinxCmosIo("D14")
+        val sclk = XilinxCmosIo("F16")
+        val mosi = XilinxCmosIo("G16")
+        val miso = XilinxCmosIo("H14")
+      }
+      val i2cA = new Bundle {
+        val scl = XilinxCmosIo("C14")
+        val sda = XilinxCmosIo("C15")
+      }
+      val freqCounterA = XilinxCmosIo("C17").clock(100 MHz).
+          comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_10_O}]")
+    }
 
     val soc = HydrogenTest(parameter)
 

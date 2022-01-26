@@ -1,5 +1,8 @@
 package zibal.misc
 
+import spinal.core._
+import spinal.core.sim._
+
 object ElementsConfig {
   def apply(top: Object) = ElementsConfig(top)
   case class ElementsConfig(top: Object) {
@@ -14,5 +17,9 @@ object ElementsConfig {
     val vivadoBuildPath = buildPath+"/vivado/syn/"
     val fplBuildPath = buildPath+"/fpl/"
     val className = top.getClass().getName().stripSuffix("$").split("\\.").last.split("\\$").last
+    def genFPGASpinalConfig = SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath)
+    def genFPGASimConfig = SimConfig.withConfig(this.genFPGASpinalConfig).withWave.workspacePath(this.zibalBuildPath).allOptimisation
+    def genASICSpinalConfig = SpinalConfig(noRandBoot = true, targetDirectory = zibalBuildPath)
+    def genASICSimConfig = SimConfig.withConfig(this.genASICSpinalConfig).withWave.workspacePath(this.zibalBuildPath).allOptimisation
   }
 }

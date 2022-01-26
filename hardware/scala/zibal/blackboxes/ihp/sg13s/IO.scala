@@ -38,6 +38,8 @@ object ixc013_b16m {
     val DOUT = out Bool()
     val PAD = inout(Analog(Bool()))
 
+    addRTLPath("hardware/scala/zibal/blackboxes/ihp/sg13s/IO.v")
+
     when(OEN){
       PAD := DIN
     }
@@ -73,6 +75,8 @@ object ixc013_b16mpup {
     val DIN, OEN = in Bool()
     val DOUT = out Bool()
     val PAD = inout(Analog(Bool()))
+
+    addRTLPath("hardware/scala/zibal/blackboxes/ihp/sg13s/IO.v")
 
     when(OEN){
       PAD := DIN
@@ -115,6 +119,8 @@ object ixc013_i16x {
     val PAD = in Bool()
     val DOUT = out Bool()
 
+    addRTLPath("hardware/scala/zibal/blackboxes/ihp/sg13s/IO.v")
+
     DOUT := PAD
 
     def withBool(pin: Bool) = {
@@ -130,6 +136,8 @@ object INVJIX12 {
   case class INVJIX12() extends BlackBox {
     val A = in Bool()
     val Q = out Bool()
+
+    addRTLPath("hardware/scala/zibal/blackboxes/ihp/sg13s/IO.v")
 
     Q := !A
 

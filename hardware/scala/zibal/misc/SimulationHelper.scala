@@ -122,35 +122,4 @@ object SimulationHelper {
       simSuccess
     }
   }
-
-  object Xilinx {
-    def addRtl(blackbox: BlackBox, elementsConfig: ElementsConfig.ElementsConfig, source: String) {
-      blackbox.addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
-      if (source.equals("generated")) {
-        blackbox.addRTLPath(elementsConfig.zibalBuildPath + s"${elementsConfig.className}.v")
-      } else {
-        println(s"Unsupported source ${source} for ${elementsConfig.className}")
-      }
-    }
-
-    def addBinary(blackbox: BlackBox, elementsConfig: ElementsConfig.ElementsConfig) {
-      val result = sys.process.Process(s"ls ${elementsConfig.zibalBuildPath}").!!
-      for (line <- result.lines().toArray()) {
-        if (line.asInstanceOf[String].endsWith(".bin")) {
-          blackbox.addRTLPath(elementsConfig.zibalBuildPath + line)
-        }
-      }
-    }
-  }
-
-  object IHP {
-    def addRtl(blackbox: BlackBox, elementsConfig: ElementsConfig.ElementsConfig, source: String) {
-      blackbox.addRTLPath("hardware/scala/zibal/blackboxes/ihp/sg13s/IO.v")
-      if (source.equals("generated")) {
-        blackbox.addRTLPath(elementsConfig.zibalBuildPath + s"${elementsConfig.className}.v")
-      } else {
-        println(s"Unsupported source ${source} for ${elementsConfig.className}")
-      }
-    }
-  }
 }
