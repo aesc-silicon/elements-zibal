@@ -20,7 +20,6 @@ object AX7035Board {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = AX7035Board(args(0))

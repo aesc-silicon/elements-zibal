@@ -20,7 +20,6 @@ object DH006Board {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = DH006Board(args(0))

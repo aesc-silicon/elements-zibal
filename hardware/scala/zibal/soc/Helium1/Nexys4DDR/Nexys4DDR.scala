@@ -20,7 +20,6 @@ object Nexys4DDRBoard {
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = Nexys4DDRBoard(args(0))
