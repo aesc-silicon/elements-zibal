@@ -106,7 +106,11 @@ object Carbon {
       val debugClockDomain = ClockDomain(
         clock = io_sys.clock,
         reset = io_sys.reset,
-        frequency = FixedFrequency(p.dbgFrequency)
+        frequency = FixedFrequency(p.sysFrequency),
+        config = ClockDomainConfig(
+          resetKind = spinal.core.SYNC,
+          resetActiveLevel = LOW
+        )
       )
     }
 

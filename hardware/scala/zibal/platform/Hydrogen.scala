@@ -114,7 +114,7 @@ object Hydrogen {
       val debugClockDomain = ClockDomain(
         clock = io_sys.clock,
         reset = resetCtrl.debugReset,
-        frequency = FixedFrequency(p.dbgFrequency)
+        frequency = FixedFrequency(p.sysFrequency)
       )
     }
 
