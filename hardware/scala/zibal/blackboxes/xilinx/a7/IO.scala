@@ -126,7 +126,7 @@ object IOBUF {
   case class IOBUF(
     DRIVE: Int = 12,
     IBUF_LOW_PWR: String = "TRUE",
-    IOSTANDARD: String = " DEFAULT",
+    IOSTANDARD: String = "DEFAULT",
     SLEW: String = "SLOW"
   ) extends BlackBox {
     val I, T = in Bool()
