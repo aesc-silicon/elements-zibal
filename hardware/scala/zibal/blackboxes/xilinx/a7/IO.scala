@@ -1,5 +1,6 @@
 package zibal.blackboxes.xilinx.a7
 import spinal.core._
+import spinal.core.sim._
 import spinal.lib.io.TriState
 import spinal.lib.History
 
@@ -337,6 +338,7 @@ object PLL {
 
     val designClockDomain = ClockDomain.current
     mapCurrentClockDomain(CLKIN1)
+    val multipliedFrequency = designClockDomain.frequency.getValue * CLKFBOUT_MULT
 
     addRTLPath("hardware/scala/zibal/blackboxes/xilinx/a7/IO.v")
 
@@ -396,34 +398,54 @@ object PLL {
       addGeneric("CLKOUT%d_DUTY_CYCLE".format(number), dutyCycle)
     }
 
-    def addClock0(divide: Int, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+    def addClock0(desiredFrequency: HertzNumber, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+      val divide = (multipliedFrequency / desiredFrequency).toInt
       this.addClock(this.CLKOUT0, 0, divide, phase, dutyCycle)
       this.CLKOUT0
     }
 
-    def addClock1(divide: Int, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+    def addClock1(desiredFrequency: HertzNumber, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+      val divide = (multipliedFrequency / desiredFrequency).toInt
       this.addClock(this.CLKOUT1, 1, divide, phase, dutyCycle)
       this.CLKOUT1
     }
 
-    def addClock2(divide: Int, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+    def addClock2(desiredFrequency: HertzNumber, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+      val divide = (multipliedFrequency / desiredFrequency).toInt
       this.addClock(this.CLKOUT2, 2, divide, phase, dutyCycle)
       this.CLKOUT2
     }
 
-    def addClock3(divide: Int, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+    def addClock3(desiredFrequency: HertzNumber, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+      val divide = (multipliedFrequency / desiredFrequency).toInt
       this.addClock(this.CLKOUT3, 3, divide, phase, dutyCycle)
       this.CLKOUT3
     }
 
-    def addClock4(divide: Int, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+    def addClock4(desiredFrequency: HertzNumber, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+      val divide = (multipliedFrequency / desiredFrequency).toInt
       this.addClock(this.CLKOUT4, 4, divide, phase, dutyCycle)
       this.CLKOUT4
     }
 
-    def addClock5(divide: Int, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+    def addClock5(desiredFrequency: HertzNumber, phase: Double = 0.0, dutyCycle: Double = 0.5) = {
+      val divide = (multipliedFrequency / desiredFrequency).toInt
       this.addClock(this.CLKOUT5, 5, divide, phase, dutyCycle)
       this.CLKOUT5
+    }
+
+    def simClock(frequency: HertzNumber, clock: Bool) {
+      val sleepPeriod = frequency.toTime.decompose._1.toInt
+      fork {
+        clock #= false
+        sleep(100)
+        while(true) {
+          clock #= true
+          sleep(sleepPeriod / 2)
+          clock #= false
+          sleep(sleepPeriod / 2)
+        }
+      }
     }
   }
 }

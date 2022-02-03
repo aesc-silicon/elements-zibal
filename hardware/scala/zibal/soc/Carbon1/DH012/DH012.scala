@@ -15,6 +15,8 @@ import zibal.sim.MT25Q
 object DH012Board {
   def apply(source: String) = DH012Board(source)
 
+  val quartzFrequency = 50 MHz
+
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
     val spinalConfig = elementsConfig.genASICSpinalConfig
@@ -27,8 +29,9 @@ object DH012Board {
     args(1) match {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.addClock(dut.io.clock, quartzFrequency, 1 ms)
           testCases.addReset(dut.io.reset, 1 us)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
@@ -59,9 +62,6 @@ object DH012Board {
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
       val gpioA = Vec(inout(Analog(Bool())), 7)
     }
-    val peripherals = Carbon1.Parameter.default.peripherals.asInstanceOf[Carbon1.Peripherals]
-    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-    val clockFrequency = Carbon1.Parameter.default.sysFrequency
 
     val top = DH012Top()
     val analogFalse = Analog(Bool)
@@ -106,12 +106,19 @@ object DH012Board {
     for (index <- 0 until 7) {
       io.gpioA(index) <> top.io.gpioA(index).PAD
     }
+
+    val peripherals = top.soc.p.peripherals.asInstanceOf[Carbon1.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+
+    def simHook() {}
   }
 }
 
 
 object DH012Top {
-  def apply() = DH012Top()
+  def apply() = DH012Top(Carbon1.Parameter.default(clocks))
+
+  val clocks = Carbon1.Parameter.Clocks(DH012Board.quartzFrequency)
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
@@ -122,7 +129,7 @@ object DH012Top {
         println("Nothing to do here!")
       case _ =>
         spinalConfig.generateVerilog({
-          val top = DH012Top()
+          val top = DH012Top(Carbon1.Parameter.default(clocks))
           val io = CadenceTools.Io(elementsConfig)
           io.addPad("top", 3, "gndpad")
           io.addPad("top", 4, "gndcore")
@@ -146,15 +153,15 @@ object DH012Top {
           io.addCorner("topleft", 180, "corner")
           io.generate(top.io, elementsConfig.zibalBuildPath)
           val sdc = CadenceTools.Sdc(elementsConfig)
-          sdc.addClock(top.io.clock.PAD, top.soc.p.sysFrequency)
-          sdc.addClock(top.io.jtag.tck.PAD, top.soc.p.dbgFrequency)
+          sdc.addClock(top.io.clock.PAD, clocks.sysFrequency)
+          sdc.addClock(top.io.jtag.tck.PAD, clocks.jtagFrequency)
           sdc.generate(elementsConfig.zibalBuildPath)
           top
         })
     }
   }
 
-  case class DH012Top() extends Component {
+  case class DH012Top(parameter: Carbon.Parameter) extends Component {
     val io = new Bundle {
       val clock = IhpCmosIo("top", 0)
       val reset = IhpCmosIo("top", 1)
@@ -188,7 +195,7 @@ object DH012Top {
                       IhpCmosIo("left", 10))
     }
 
-    val soc = Carbon1()
+    val soc = Carbon1(parameter)
 
     io.clock <> ixc013_i16x(soc.io_sys.clock)
     io.reset <> ixc013_i16x(soc.io_sys.reset)

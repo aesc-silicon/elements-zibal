@@ -2,15 +2,22 @@ package zibal.misc
 
 import java.io._
 import spinal.core._
+import scala.collection.mutable
 import zibal.blackboxes.xilinx.a7._
 
 
 object XilinxTools {
 
   case class Xdc(config: ElementsConfig.ElementsConfig) {
-    def generate(io: Data, emitVoltage: Boolean = true, emitSpi: Boolean =  true) = {
+    var clocks = List[(String, String)]()
+    def addGeneratedClock(clock: Bool) = {
+      val path = clock.getComponent().getPath().split("/", 2)(1)
+      clocks = clocks :+ (clock.getName(), path+"/"+clock.getName())
+    }
+    def generate(io: Data, emitVoltage: Boolean = true, emitSpi: Boolean = false) = {
       val file = s"${config.zibalBuildPath}${config.className}.xdc"
       val writer = new PrintWriter(new File(file))
+      println(s"Generate ${config.className}.xdc")
       writer.write("# CONFIG\n")
       if (emitVoltage) {
         writer.write("set_property CFGBVS VCCO [current_design]\n")
@@ -36,8 +43,12 @@ object XilinxTools {
         val clockSpeed = instance.getClockSpeed().toTime.toBigDecimal
         if (clockSpeed != 1) {
           val time = (clockSpeed / 1.0e-9).floatValue()
-          writer.write(s"create_clock -name ${name}_pin -period $time [get_ports {$name}];\n")
+          writer.write(s"create_clock -name ${name}_pin -period $time [get_ports {$name}]\n")
         }
+        for ((name, pin) <- clocks) {
+          writer.write(s"create_generated_clock -name clk_${name} [get_pins ${pin}]\n")
+        }
+
         writer.write(s"set_property PACKAGE_PIN $pin [get_ports {$name}]\n")
         writer.write(s"set_property IOSTANDARD $ioStandard [get_ports {$name}]\n")
         if (!instance.comment_.equals("")) {

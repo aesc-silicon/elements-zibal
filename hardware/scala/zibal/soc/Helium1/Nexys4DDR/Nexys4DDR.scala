@@ -13,10 +13,7 @@ import zibal.blackboxes.xilinx.a7._
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
 
-  case class Parameter(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) {
-    def convert = Helium1.Parameter.default(sysFrequency, dbgFrequency)
-  }
-  val parameter = Parameter(100 MHz, 10 MHz)
+  def quartzFrequency = 100 MHz
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
@@ -30,20 +27,23 @@ object Nexys4DDRBoard {
     args(1) match {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -65,9 +65,6 @@ object Nexys4DDRBoard {
       }
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
     }
-    val peripherals = parameter.convert.peripherals.asInstanceOf[Helium1.Peripherals]
-    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-    val clockFrequency = parameter.convert.sysFrequency
 
     val top = Nexys4DDRTop()
     val analogFalse = Analog(Bool)
@@ -89,18 +86,27 @@ object Nexys4DDRBoard {
     for (index <- 0 until 4) {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
+
+    val peripherals = top.soc.p.peripherals.asInstanceOf[Helium1.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+
+    def simHook() {
+      top.pllArea.pll.simClock(top.soc.p.sysFrequency, top.soc.io_sys.clock)
+    }
   }
 }
 
 object Nexys4DDRTop {
-  def apply() = Nexys4DDRTop(Nexys4DDRBoard.parameter.convert)
+  def apply() = Nexys4DDRTop(Helium1.Parameter.default(clocks))
+
+  val clocks = Helium1.Parameter.Clocks(90 MHz)
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
     val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
-      val parameter = Nexys4DDRBoard.parameter.convert
+      val parameter = Helium1.Parameter.default(clocks)
       args(0) match {
         case "prepare" =>
           val soc = Helium1(parameter)
@@ -110,7 +116,9 @@ object Nexys4DDRTop {
           val top = Nexys4DDRTop(parameter)
           val system = top.soc.system
           BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io, true, false)
+          val xdc = XilinxTools.Xdc(elementsConfig)
+          xdc.addGeneratedClock(top.pllArea.pll.CLKOUT0)
+          xdc.generate(top.io)
           top
       }
     })
@@ -118,12 +126,12 @@ object Nexys4DDRTop {
 
   case class Nexys4DDRTop(parameter: Helium.Parameter) extends Component {
     val io = new Bundle {
-      val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
+      val clock = XilinxCmosIo("E3").clock(Nexys4DDRBoard.quartzFrequency)
       val jtag = new Bundle {
         val tms = XilinxCmosIo("H2")
         val tdi = XilinxCmosIo("G4")
         val tdo = XilinxCmosIo("G2")
-        val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
+        val tck = XilinxCmosIo("F3").clock(clocks.jtagFrequency).
           comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
       }
       val uartStd = new Bundle {
@@ -142,7 +150,20 @@ object Nexys4DDRTop {
 
     val soc = Helium1(parameter)
 
-    io.clock <> IBUF(soc.io_sys.clock)
+    val clock = Bool()
+    io.clock <> IBUF(clock)
+    val pllClockDomain = ClockDomain(
+      clock = clock,
+      frequency = FixedFrequency(Nexys4DDRBoard.quartzFrequency),
+      config = ClockDomainConfig(
+        resetKind = BOOT
+      )
+    )
+    val pllArea = new ClockingArea(pllClockDomain) {
+      val pll = PLL.PLLE2_BASE(CLKFBOUT_MULT=9).connect()
+      soc.io_sys.clock.simPublic()
+      soc.io_sys.clock := pll.addClock0(clocks.sysFrequency)
+    }
     soc.io_sys.reset := False
 
     io.jtag.tms <> IBUF(soc.io_sys.jtag.tms)

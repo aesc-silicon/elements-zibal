@@ -16,8 +16,7 @@ import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 
 
 object Helium1 {
-  def apply(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
-      Helium1(Parameter.default(sysFrequency, dbgFrequency))
+  def apply(sysFrequency: HertzNumber) = Helium1(Parameter.default(Parameter.Clocks(sysFrequency)))
   def apply(parameter: Helium.Parameter) = Helium1(parameter)
 
   def prepare(soc: Helium1, elementsConfig: ElementsConfig.ElementsConfig) {
@@ -40,15 +39,20 @@ object Helium1 {
     gpioStatus: GpioCtrl.Parameter
   ) {}
 
+
   object Parameter {
-    def default(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
+    case class Clocks(sysFrequency: HertzNumber) {
+      val jtagFrequency = 10 MHz
+    }
+
+    def default(clocks: Clocks) =
       Helium.Parameter.default(
         Peripherals(
           uartStd = UartCtrl.Parameter.full,
           gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3))
         ),
-        sysFrequency,
-        dbgFrequency,
+        clocks.sysFrequency,
+        clocks.jtagFrequency,
         2
       )
   }

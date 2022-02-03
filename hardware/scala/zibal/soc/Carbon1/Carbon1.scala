@@ -16,7 +16,7 @@ import zibal.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
 
 
 object Carbon1 {
-  def apply() = Carbon1(Parameter.default)
+  def apply(parameter: Carbon.Parameter) = Carbon1(parameter)
 
   case class Peripherals (
     uartStd: UartCtrl.Parameter,
@@ -26,15 +26,19 @@ object Carbon1 {
   ) {}
 
   object Parameter {
-    def default = Carbon.Parameter.default(
+    case class Clocks(sysFrequency: HertzNumber) {
+      val jtagFrequency = 10 MHz
+    }
+
+    def default(clocks: Clocks) = Carbon.Parameter.default(
       Peripherals(
         uartStd = UartCtrl.Parameter.default,
         gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3)),
         gpioA = GpioCtrl.Parameter(7, 2, null, null, null),
         i2cA = I2cCtrl.Parameter.default
       ),
-      64 MHz,
-      10 MHz,
+      clocks.sysFrequency,
+      clocks.jtagFrequency,
       4,
       512 Byte
     )

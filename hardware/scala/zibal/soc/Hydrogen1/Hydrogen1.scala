@@ -16,8 +16,8 @@ import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 
 
 object Hydrogen1 {
-  def apply(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
-      Hydrogen1(Parameter.default(sysFrequency, dbgFrequency))
+  def apply(sysFrequency: HertzNumber) =
+    Hydrogen1(Parameter.default(Parameter.Clocks(sysFrequency)))
   def apply(parameter: Hydrogen.Parameter) = Hydrogen1(parameter)
 
   def prepare(soc: Hydrogen1, elementsConfig: ElementsConfig.ElementsConfig) {
@@ -41,14 +41,18 @@ object Hydrogen1 {
   )
 
   object Parameter {
-    def default(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
+    case class Clocks(sysFrequency: HertzNumber) {
+      val jtagFrequency = 10 MHz
+    }
+
+    def default(clocks: Clocks) =
       Hydrogen.Parameter.default(
         Peripherals(
           uartStd = UartCtrl.Parameter.full,
           gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3))
         ),
-        sysFrequency,
-        dbgFrequency,
+        clocks.sysFrequency,
+        clocks.jtagFrequency,
         2
       )
   }

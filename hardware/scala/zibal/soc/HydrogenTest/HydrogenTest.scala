@@ -18,8 +18,8 @@ import zibal.peripherals.misc.frequencycounter.{Apb3FrequencyCounter, FrequencyC
 
 
 object HydrogenTest {
-  def apply(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
-      HydrogenTest(Parameter.default(sysFrequency, dbgFrequency))
+  def apply(sysFrequency: HertzNumber) =
+      HydrogenTest(Parameter.default(Parameter.Clocks(sysFrequency)))
   def apply(parameter: Hydrogen.Parameter) = HydrogenTest(parameter)
 
   def prepare(soc: HydrogenTest, elementsConfig: ElementsConfig.ElementsConfig) {
@@ -47,7 +47,11 @@ object HydrogenTest {
   )
 
   object Parameter {
-    def default(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) =
+    case class Clocks(sysFrequency: HertzNumber) {
+      val jtagFrequency = 10 MHz
+    }
+
+    def default(clocks: Clocks) =
       Hydrogen.Parameter.default(
         Peripherals(
           uartStd = UartCtrl.Parameter.default,
@@ -57,8 +61,8 @@ object HydrogenTest {
           i2cA = I2cCtrl.Parameter.default,
           freqCounterA = FrequencyCounterCtrl.Parameter.default
         ),
-        sysFrequency,
-        dbgFrequency,
+        clocks.sysFrequency,
+        clocks.jtagFrequency,
         5
       )
   }

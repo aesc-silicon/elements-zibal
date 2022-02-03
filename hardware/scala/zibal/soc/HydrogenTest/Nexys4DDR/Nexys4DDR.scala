@@ -13,73 +13,81 @@ import zibal.blackboxes.xilinx.a7._
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
 
-  case class Parameter(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) {
-    def convert = HydrogenTest.Parameter.default(sysFrequency, dbgFrequency)
-  }
-  val parameter = Parameter(100 MHz, 10 MHz)
+  def quartzFrequency = 100 MHz
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
 
     val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = Nexys4DDRBoard(args(0))
+      val system = board.top.soc.system
+      BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
       board
     }
     args(1) match {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case "gpio" =>
         compiled.doSimUntilVoid("gpio") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 1 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
           testCases.gpioLoopback(dut.io.gpioA(0), dut.io.gpioA(2))
         }
       case "uart" =>
         compiled.doSimUntilVoid("uart") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 1 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
           testCases.uartLoopback(dut.io.uartStd.txd, dut.io.uartStd.rxd, dut.baudPeriod)
         }
         compiled.doSimUntilVoid("uart-irq") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 1 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 1 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
           testCases.uartIrq(dut.io.uartStd.txd, dut.io.uartStd.rxd, dut.baudPeriod)
         }
       case "frequency" =>
         compiled.doSimUntilVoid("100Mhz") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
           testCases.frequency(dut.io.freqCounterA, 100 MHz, dut.io.uartStd.txd, dut.baudPeriod)
         }
         compiled.doSimUntilVoid("33Mhz") { dut =>
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          dut.simHook()
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
           testCases.frequency(dut.io.freqCounterA, 33 MHz, dut.io.uartStd.txd, dut.baudPeriod)
         }
         compiled.doSimUntilVoid("20Mhz") { dut =>
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          dut.simHook()
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
           testCases.frequency(dut.io.freqCounterA, 20 MHz, dut.io.uartStd.txd, dut.baudPeriod)
         }
@@ -109,9 +117,6 @@ object Nexys4DDRBoard {
       val gpioA = Vec(inout(Analog(Bool())), 32)
       val freqCounterA = inout(Analog(Bool))
     }
-    val peripherals = parameter.convert.peripherals.asInstanceOf[HydrogenTest.Peripherals]
-    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-    val clockFrequency = parameter.convert.sysFrequency
 
     val top = Nexys4DDRTop()
     val analogFalse = Analog(Bool)
@@ -146,19 +151,26 @@ object Nexys4DDRBoard {
       io.gpioA(index) <> top.io.gpioA(index).PAD
     }
     top.io.gpioA(1).PAD := analogTrue
+
+    val peripherals = top.soc.p.peripherals.asInstanceOf[HydrogenTest.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+
+    def simHook() {}
   }
 }
 
 
 object Nexys4DDRTop {
-  def apply() = Nexys4DDRTop(Nexys4DDRBoard.parameter.convert)
+  def apply() = Nexys4DDRTop(HydrogenTest.Parameter.default(clocks))
+
+  val clocks = HydrogenTest.Parameter.Clocks(Nexys4DDRBoard.quartzFrequency)
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
     val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
-      val parameter = Nexys4DDRBoard.parameter.convert
+      val parameter = HydrogenTest.Parameter.default(clocks)
       args(0) match {
         case "prepare" =>
           val soc = HydrogenTest(parameter)
@@ -168,7 +180,7 @@ object Nexys4DDRTop {
           val top = Nexys4DDRTop(parameter)
           val system = top.soc.system
           BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io, true, false)
+          XilinxTools.Xdc(elementsConfig).generate(top.io)
           top
       }
     })
@@ -176,12 +188,12 @@ object Nexys4DDRTop {
 
   case class Nexys4DDRTop(parameter: Hydrogen.Parameter) extends Component {
     val io = new Bundle {
-      val clock = XilinxCmosIo("E3").clock(parameter.sysFrequency)
+      val clock = XilinxCmosIo("E3").clock(clocks.sysFrequency)
       val jtag = new Bundle {
         val tms = XilinxCmosIo("H2")
         val tdi = XilinxCmosIo("G4")
         val tdo = XilinxCmosIo("G2")
-        val tck = XilinxCmosIo("F3").clock(parameter.dbgFrequency).
+        val tck = XilinxCmosIo("F3").clock(clocks.jtagFrequency).
           comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_4_O}]")
       }
       val uartStd = new Bundle {
@@ -241,7 +253,7 @@ object Nexys4DDRTop {
         val sda = XilinxCmosIo("C15")
       }
       val freqCounterA = XilinxCmosIo("C17").clock(100 MHz).
-          comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_10_O}]")
+          comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_8_O}]")
     }
 
     val soc = HydrogenTest(parameter)

@@ -13,35 +13,37 @@ import zibal.blackboxes.xilinx.a7._
 object AX7101Board {
   def apply(source: String) = AX7101Board(source)
 
-  case class Parameter(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) {
-    def convert = Helium1.Parameter.default(sysFrequency, dbgFrequency)
-  }
-  val parameter = Parameter(200 MHz, 0 MHz)
+  def quartzFrequency = 200 MHz
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
 
     val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = AX7101Board(args(0))
+      val system = board.top.soc.system
+      BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
       board
     }
     args(1) match {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -58,9 +60,6 @@ object AX7101Board {
       }
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
     }
-    val peripherals = parameter.convert.peripherals.asInstanceOf[Helium1.Peripherals]
-    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-    val clockFrequency = parameter.convert.sysFrequency
 
     val top = AX7101Top()
     val analogFalse = Analog(Bool)
@@ -77,19 +76,28 @@ object AX7101Board {
     for (index <- 0 until 4) {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
+
+    val peripherals = top.soc.p.peripherals.asInstanceOf[Helium1.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+
+    def simHook() {
+      top.pllArea.pll.simClock(top.soc.p.sysFrequency, top.soc.io_sys.clock)
+    }
   }
 }
 
 
 object AX7101Top {
-  def apply() = AX7101Top(AX7101Board.parameter.convert)
+  def apply() = AX7101Top(Helium1.Parameter.default(clocks))
+
+  val clocks = Helium1.Parameter.Clocks(120 MHz)
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
     val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
-      val parameter = AX7101Board.parameter.convert
+      val parameter = Helium1.Parameter.default(clocks)
       args(0) match {
         case "prepare" =>
           val soc = Helium1(parameter)
@@ -99,7 +107,9 @@ object AX7101Top {
           val top = AX7101Top(parameter)
           val system = top.soc.system
           BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io)
+          val xdc = XilinxTools.Xdc(elementsConfig)
+          xdc.addGeneratedClock(top.pllArea.pll.CLKOUT0)
+          xdc.generate(top.io)
           top
       }
     })
@@ -107,8 +117,8 @@ object AX7101Top {
 
   case class AX7101Top(parameter: Helium.Parameter) extends Component {
     val io = new Bundle {
-      val clockPos = XilinxLvdsInput.Pos("R4").clock(parameter.sysFrequency).ioStandard("DIFF_SSTL15")
-      val clockNeg = XilinxLvdsInput.Neg("T4").clock(parameter.sysFrequency).ioStandard("DIFF_SSTL15")
+      val clockPos = XilinxLvdsInput.Pos("R4").clock(AX7101Board.quartzFrequency).ioStandard("DIFF_SSTL15")
+      val clockNeg = XilinxLvdsInput.Neg("T4").ioStandard("DIFF_SSTL15")
       val uartStd = new Bundle {
         val txd = XilinxCmosIo("AB15")
         val rxd = XilinxCmosIo("AA15")
@@ -123,9 +133,22 @@ object AX7101Top {
 
     val soc = Helium1(parameter)
 
-    val clock = IBUFDS(soc.io_sys.clock)
-    io.clockPos <> clock
-    io.clockNeg <> clock
+    val clock = Bool()
+    val clockBuf = IBUFDS(clock)
+    io.clockPos <> clockBuf
+    io.clockNeg <> clockBuf
+    val pllClockDomain = ClockDomain(
+      clock = clock,
+      frequency = FixedFrequency(AX7101Board.quartzFrequency),
+      config = ClockDomainConfig(
+        resetKind = BOOT
+      )
+    )
+    val pllArea = new ClockingArea(pllClockDomain) {
+      val pll = PLL.PLLE2_BASE(CLKFBOUT_MULT=6).connect()
+      soc.io_sys.clock.simPublic()
+      soc.io_sys.clock := pll.addClock0(clocks.sysFrequency)
+    }
     soc.io_sys.reset := False
 
     soc.io_sys.jtag.tms := False

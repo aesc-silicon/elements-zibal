@@ -13,10 +13,7 @@ import zibal.blackboxes.xilinx.a7._
 object AX7035Board {
   def apply(source: String) = AX7035Board(source)
 
-  case class Parameter(sysFrequency: HertzNumber, dbgFrequency: HertzNumber) {
-    def convert = Hydrogen1.Parameter.default(sysFrequency, dbgFrequency)
-  }
-  val parameter = Parameter(50 MHz, 0 MHz)
+  def quartzFrequency = 50 MHz
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
@@ -30,20 +27,23 @@ object AX7035Board {
     args(1) match {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
+          dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, dut.clockFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -60,9 +60,6 @@ object AX7035Board {
       }
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
     }
-    val peripherals = parameter.convert.peripherals.asInstanceOf[Hydrogen1.Peripherals]
-    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
-    val clockFrequency = parameter.convert.sysFrequency
 
     val top = AX7035Top()
     val analogFalse = Analog(Bool)
@@ -78,19 +75,26 @@ object AX7035Board {
     for (index <- 0 until 4) {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
+
+    val peripherals = top.soc.p.peripherals.asInstanceOf[Hydrogen1.Peripherals]
+    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+
+    def simHook() {}
   }
 }
 
 
 object AX7035Top {
-  def apply() = AX7035Top(AX7035Board.parameter.convert)
+  def apply() = AX7035Top(Hydrogen1.Parameter.default(clocks))
+
+  val clocks = Hydrogen1.Parameter.Clocks(AX7035Board.quartzFrequency)
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
     val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
-      val parameter = AX7035Board.parameter.convert
+      val parameter = Hydrogen1.Parameter.default(clocks)
       args(0) match {
         case "prepare" =>
           val soc = Hydrogen1(parameter)
@@ -108,7 +112,7 @@ object AX7035Top {
 
   case class AX7035Top(parameter: Hydrogen.Parameter) extends Component {
     val io = new Bundle {
-      val clock = XilinxCmosIo("Y18").clock(parameter.sysFrequency)
+      val clock = XilinxCmosIo("Y18").clock(clocks.sysFrequency)
       val uartStd = new Bundle {
         val txd = XilinxCmosIo("G16")
         val rxd = XilinxCmosIo("G15")

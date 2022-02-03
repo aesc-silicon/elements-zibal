@@ -22,6 +22,7 @@ object ZephyrTools {
       val clockSpeed = clockDomain.frequency.getValue.toInt
       val file = s"${config.zephyrBoardPath}/${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
       val writer = new PrintWriter(new File(file))
+      println(s"Generate ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}_defconfig")
       writer.write(s"""CONFIG_SOC_SERIES_RISCV32_ELEMENTS=y
 CONFIG_SOC_RISCV32_ELEMENTS=y
 CONFIG_SOC_RISCV32_ELEMENTS_ISA_C=y
@@ -69,6 +70,7 @@ CONFIG_SPI_ELEMENTS=y
     def generateKconfig() = {
       var file = s"${config.zephyrBoardPath}/Kconfig.board"
       var writer = new PrintWriter(new File(file))
+      println(s"Generate Kconfig.board")
 
       writer.write(s"""config BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
     bool "${config.socName} ${config.boardName} board"
@@ -81,6 +83,7 @@ CONFIG_SPI_ELEMENTS=y
 
       file = s"${config.zephyrBoardPath}/Kconfig.defconfig"
       writer = new PrintWriter(new File(file))
+      println(s"Generate Kconfig.defconfig")
 
       writer.write(s"""if BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
 config BOARD
@@ -106,6 +109,7 @@ endif
       val stdoutName = stdout.toString()
       val file = s"${config.zephyrBoardPath}/${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}.dts"
       val writer = new PrintWriter(new File(file))
+      println(s"Generate ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}.dts")
 
       writer.write(s"""/dts-v1/;
 #include <${config.socName.toLowerCase()}.dtsi>
@@ -161,7 +165,8 @@ endif
                  configs: mutable.LinkedHashMap[Axi4Bus,Axi4CrossbarSlaveConfig],
                  bridge: Axi4Shared, apbMapping: ArrayBuffer[(Apb3, SizeMapping)],
                  irqMapping: ArrayBuffer[(Int, Bool)], filename: String) = {
-     val writer = new PrintWriter(new File(config.buildPath + filename))
+      val writer = new PrintWriter(new File(config.buildPath + filename))
+      println(s"Generate ${filename}")
 
       writer.write(s"""#include <$platform.dtsi>
 / {
