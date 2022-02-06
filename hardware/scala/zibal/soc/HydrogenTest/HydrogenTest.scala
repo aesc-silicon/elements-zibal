@@ -15,6 +15,7 @@ import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 import zibal.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
 import zibal.peripherals.misc.frequencycounter.{Apb3FrequencyCounter, FrequencyCounter, FrequencyCounterCtrl}
+import zibal.peripherals.io.pio.{Apb3Pio, Pio, PioCtrl}
 
 
 object HydrogenTest {
@@ -43,7 +44,8 @@ object HydrogenTest {
     gpioA: GpioCtrl.Parameter,
     spiA: SpiCtrl.Parameter,
     i2cA: I2cCtrl.Parameter,
-    freqCounterA: FrequencyCounterCtrl.Parameter
+    freqCounterA: FrequencyCounterCtrl.Parameter,
+    pioA: PioCtrl.Parameter
   )
 
   object Parameter {
@@ -59,7 +61,8 @@ object HydrogenTest {
           gpioA = GpioCtrl.Parameter(32, 2, null, null, null),
           spiA = SpiCtrl.Parameter.default,
           i2cA = I2cCtrl.Parameter.default,
-          freqCounterA = FrequencyCounterCtrl.Parameter.default
+          freqCounterA = FrequencyCounterCtrl.Parameter.default,
+          pioA = PioCtrl.Parameter(2)
         ),
         clocks.sysFrequency,
         clocks.jtagFrequency,
@@ -74,6 +77,7 @@ object HydrogenTest {
     val spiA = master(Spi.Io(peripherals.spiA))
     val i2cA = master(I2c.Io(peripherals.i2cA))
     val freqCounterA = FrequencyCounter.Io(peripherals.freqCounterA)
+    val pioA = Pio.Io(peripherals.pioA)
   }
 
   case class HydrogenTest(p: Hydrogen.Parameter) extends Hydrogen.Hydrogen(p) {
@@ -110,6 +114,10 @@ object HydrogenTest {
       val frequencyCounterACtrl = Apb3FrequencyCounter(peripherals.freqCounterA)
       frequencyCounterACtrl.io.clock <> io_per.freqCounterA
       addApbDevice(frequencyCounterACtrl.io.bus, 0x60000, 4 kB)
+
+      val pioACtrl = Apb3Pio(peripherals.pioA)
+      pioACtrl.io.pio <> io_per.pioA
+      addApbDevice(pioACtrl.io.bus, 0x12000, 4 kB)
 
       connectPeripherals()
     }

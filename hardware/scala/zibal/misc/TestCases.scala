@@ -157,5 +157,37 @@ object TestCases {
         }
       }
     }
+
+    def pioWrite(pin: Bool, baudPeriod: Int) {
+      fork {
+        // Wait for reset.
+        SimulationHelper.wait(1 us)
+        // Check at least something is sent
+        SimulationHelper.waitUntilOrFail(pin.toBoolean == true, 5 ms, 100 ns)
+        SimulationHelper.waitUntilOrFail(pin.toBoolean == false, 200 us, 100 ns)
+        // Check successful transmission
+        val receiveChar = SimulationHelper.uartReceive(pin, baudPeriod)
+        assert(receiveChar == 'G')
+        simSuccess
+      }
+    }
+
+    def pioRead(txd: Bool, baudPeriod: Int) {
+      var stdout = ""
+      fork {
+        // Wait for reset.
+        SimulationHelper.wait(1 us)
+        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 5 ms, 100 ns)
+        while (!stdout.contains("\n")) {
+          SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
+          stdout += SimulationHelper.uartReceive(txd, baudPeriod).toChar
+        }
+        println(s"Received stdout: ${stdout}")
+        f"Read: 10001".r findFirstIn stdout match {
+          case Some(_) => simSuccess
+          case None => assert(false, s"Read: 10001 not found in $stdout")
+        }
+      }
+    }
   }
 }

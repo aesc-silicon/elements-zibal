@@ -91,6 +91,21 @@ object Nexys4DDRBoard {
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
           testCases.frequency(dut.io.freqCounterA, 20 MHz, dut.io.uartStd.txd, dut.baudPeriod)
         }
+      case "pio" =>
+        compiled.doSimUntilVoid("write") { dut =>
+          dut.simHook()
+          val testCases = TestCases()
+          testCases.addClock(dut.io.clock, quartzFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.pioWrite(dut.io.pioA(0), dut.baudPeriod)
+        }
+        compiled.doSimUntilVoid("read") { dut =>
+          dut.simHook()
+          val testCases = TestCases()
+          testCases.addClock(dut.io.clock, quartzFrequency, 10 ms)
+          testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
+          testCases.pioRead(dut.io.uartStd.txd, dut.baudPeriod)
+        }
       case _ =>
         println(s"Unknown simulation ${args(1)}")
     }
@@ -116,6 +131,7 @@ object Nexys4DDRBoard {
       }
       val gpioA = Vec(inout(Analog(Bool())), 32)
       val freqCounterA = inout(Analog(Bool))
+      val pioA = Vec(inout(Analog(Bool())), 1)
     }
 
     val top = Nexys4DDRTop()
@@ -151,6 +167,11 @@ object Nexys4DDRBoard {
       io.gpioA(index) <> top.io.gpioA(index).PAD
     }
     top.io.gpioA(1).PAD := analogTrue
+
+    for (index <- 0 until 1) {
+      io.pioA(index) <> top.io.pioA(index).PAD
+    }
+    top.io.pioA(1).PAD := analogTrue
 
     val peripherals = top.soc.p.peripherals.asInstanceOf[HydrogenTest.Peripherals]
     val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
@@ -254,6 +275,7 @@ object Nexys4DDRTop {
       }
       val freqCounterA = XilinxCmosIo("C17").clock(100 MHz).
           comment("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {iBUF_8_O}]")
+      val pioA = Vec(XilinxCmosIo("V11"), XilinxCmosIo("V12"))
     }
 
     val soc = HydrogenTest(parameter)
@@ -287,6 +309,10 @@ object Nexys4DDRTop {
 
     for (index <- 0 until 32) {
       io.gpioA(index) <> IOBUF(soc.io_per.gpioA.pins(index))
+    }
+
+    for (index <- 0 until 2) {
+      io.pioA(index) <> IOBUF(soc.io_per.pioA.pins(index))
     }
   }
 }
