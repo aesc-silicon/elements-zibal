@@ -35,8 +35,7 @@ object VexRiscvCoreParameter {
         catchIllegalInstruction = true
       ),
       new RegFilePlugin(
-        regFileReadyKind = plugin.ASYNC,
-        zeroBoot = false
+        regFileReadyKind = plugin.ASYNC
       ),
       new IntAluPlugin,
       new SrcPlugin(
@@ -126,8 +125,7 @@ object VexRiscvCoreParameter {
         catchIllegalInstruction = true
       ),
       new RegFilePlugin(
-        regFileReadyKind = plugin.ASYNC,
-        zeroBoot = false
+        regFileReadyKind = plugin.ASYNC
       ),
       new IntAluPlugin,
       new SrcPlugin(
