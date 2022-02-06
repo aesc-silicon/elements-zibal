@@ -160,7 +160,7 @@ object DH006Top {
       soc.io_sys.clock.simPublic()
       soc.io_sys.clock := pll.addClock0(clocks.sysFrequency)
     }
-    soc.io_sys.reset := False
+    soc.resetCtrl.buildFPGA(soc.io_sys.clock, soc.io_sys.resets)
 
     io.jtag.tms <> IBUF(soc.io_sys.jtag.tms)
     io.jtag.tdi <> IBUF(soc.io_sys.jtag.tdi)

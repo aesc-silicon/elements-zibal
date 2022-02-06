@@ -15,6 +15,7 @@ import spinal.lib.bus.misc.SizeMapping
 
 import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import zibal.peripherals.misc.plic.{Apb3Plic, Plic, PlicCtrl}
+import zibal.peripherals.misc.reset.{Apb3ResetController, ResetControllerCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv.{plugin, _}
@@ -33,6 +34,7 @@ object Hydrogen {
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(interrupts + 1)
     val core = VexRiscvCoreParameter.realtime(0x80000000L).plugins
+    val resets = ResetControllerCtrl.Parameter(List(("system", 64), ("debug", 64)))
   }
 
   object Parameter {
@@ -45,15 +47,14 @@ object Hydrogen {
     ) = Parameter(sysFrequency, dbgFrequency, onChipRamSize, interrupts, peripherals)
   }
 
-  case class Io() extends Bundle {
+  case class Io(p: Parameter) extends Bundle {
     val clock = in(Bool)
-    val reset = in(Bool)
-    val sysReset_out = out(Bool)
     val jtag = slave(Jtag())
+    val resets = ResetControllerCtrl.BuildConnection(p.resets)
   }
 
   class Hydrogen(p: Parameter) extends Component {
-    val io_sys = Io()
+    val io_sys = Io(p)
 
     def connectPeripherals() {
       val apbDecoder = Apb3Decoder(
@@ -76,45 +77,28 @@ object Hydrogen {
       nextInterruptNumber += 1
     }
 
-    val resetCtrlClockDomain = ClockDomain(
-      clock = io_sys.clock,
-      config = ClockDomainConfig(
-        resetKind = BOOT
-      )
-    )
-
-    val resetCtrl = new ClockingArea(resetCtrlClockDomain) {
-      val mainClkResetUnbuffered = False
-
-      //Implement an counter to keep the reset axiResetOrder high 64 cycles
-      // Also this counter will automatically do a reset when the system boot.
-      val systemClkResetCounter = Reg(UInt(6 bits)) init (0)
-      when(systemClkResetCounter =/= U(systemClkResetCounter.range -> true)) {
-        systemClkResetCounter := systemClkResetCounter + 1
-        mainClkResetUnbuffered := True
-      }
-      when(BufferCC(io_sys.reset)) {
-        systemClkResetCounter := 0
-      }
-
-      //Create all reset used later in the design
-      val systemReset = RegNext(mainClkResetUnbuffered)
-      val debugReset = RegNext(mainClkResetUnbuffered)
-    }
-
-    io_sys.sysReset_out <> resetCtrl.systemReset
+    val resetCtrl = ResetControllerCtrl(p.resets)
+    resetCtrl.io.buildConnection <> io_sys.resets
 
     val clocks = new Area {
       val systemClockDomain = ClockDomain(
         clock = io_sys.clock,
-        reset = resetCtrl.systemReset,
-        frequency = FixedFrequency(p.sysFrequency)
+        reset = resetCtrl.getResetByName("system"),
+        frequency = FixedFrequency(p.sysFrequency),
+        config = ClockDomainConfig(
+          resetKind = spinal.core.SYNC,
+          resetActiveLevel = LOW
+        )
       )
 
       val debugClockDomain = ClockDomain(
         clock = io_sys.clock,
-        reset = resetCtrl.debugReset,
-        frequency = FixedFrequency(p.sysFrequency)
+        reset = resetCtrl.getResetByName("debug"),
+        frequency = FixedFrequency(p.sysFrequency),
+        config = ClockDomainConfig(
+          resetKind = spinal.core.SYNC,
+          resetActiveLevel = LOW
+        )
       )
     }
 
@@ -146,7 +130,7 @@ object Hydrogen {
           }
           case plugin: DebugPlugin =>
             clocks.debugClockDomain {
-              resetCtrl.systemReset.setWhen(RegNext(plugin.io.resetOut))
+              resetCtrl.triggerByNameWithCond("system", RegNext(plugin.io.resetOut))
               io_sys.jtag <> plugin.io.bus.fromJtag()
             }
           case _ =>
@@ -214,6 +198,10 @@ object Hydrogen {
       core.globalInterrupt := plicCtrl.io.interrupt
       apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
       irqMapping += 0 -> False
+
+      val resetCtrlMapper = Apb3ResetController(p.resets)
+      apbMapping += resetCtrlMapper.io.bus -> (0x21000, 4 kB)
+      resetCtrlMapper.io.config <> resetCtrl.io.config
     }
   }
 }

@@ -259,7 +259,7 @@ object Nexys4DDRTop {
     val soc = HydrogenTest(parameter)
 
     io.clock <> IBUF(soc.io_sys.clock)
-    soc.io_sys.reset := False
+    soc.resetCtrl.buildFPGA(soc.io_sys.clock, soc.io_sys.resets)
 
     io.jtag.tms <> IBUF(soc.io_sys.jtag.tms)
     io.jtag.tdi <> IBUF(soc.io_sys.jtag.tdi)

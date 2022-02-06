@@ -130,7 +130,7 @@ object AX7101Top {
     val clock = IBUFDS(soc.io_sys.clock)
     io.clockPos <> clock
     io.clockNeg <> clock
-    soc.io_sys.reset := False
+    soc.resetCtrl.buildFPGA(soc.io_sys.clock, soc.io_sys.resets)
 
     soc.io_sys.jtag.tms := False
     soc.io_sys.jtag.tdi := False

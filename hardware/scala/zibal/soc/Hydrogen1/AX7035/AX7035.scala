@@ -128,7 +128,7 @@ object AX7035Top {
     val soc = Hydrogen1(parameter)
 
     io.clock <> IBUF(soc.io_sys.clock)
-    soc.io_sys.reset := False
+    soc.resetCtrl.buildFPGA(soc.io_sys.clock, soc.io_sys.resets)
 
     soc.io_sys.jtag.tms := False
     soc.io_sys.jtag.tdi := False
