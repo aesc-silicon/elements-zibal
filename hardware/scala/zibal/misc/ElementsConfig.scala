@@ -18,8 +18,8 @@ object ElementsConfig {
     val fplBuildPath = buildPath+"/fpl/"
     val className = top.getClass().getName().stripSuffix("$").split("\\.").last.split("\\$").last
     def genFPGASpinalConfig = SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath)
-    def genFPGASimConfig = SimConfig.withConfig(this.genFPGASpinalConfig).withWave.workspacePath(this.zibalBuildPath).allOptimisation
+    def genFPGASimConfig = SimConfig.withConfig(this.genFPGASpinalConfig).withWave.addSimulatorFlag("--trace-max-width 100000").workspacePath(this.zibalBuildPath).allOptimisation
     def genASICSpinalConfig = SpinalConfig(noRandBoot = true, targetDirectory = zibalBuildPath)
-    def genASICSimConfig = SimConfig.withConfig(this.genASICSpinalConfig).withWave.workspacePath(this.zibalBuildPath).allOptimisation
+    def genASICSimConfig = SimConfig.withConfig(this.genASICSpinalConfig).withWave.addSimulatorFlag("--trace-max-width 100000").workspacePath(this.zibalBuildPath).allOptimisation
   }
 }
