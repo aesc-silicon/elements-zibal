@@ -438,12 +438,12 @@ object PLL {
       val sleepPeriod = frequency.toTime.decompose._1.toInt
       fork {
         clock #= false
-        sleep(100)
+        sleep(100 * 1000)
         while(true) {
           clock #= true
-          sleep(sleepPeriod / 2)
+          sleep((sleepPeriod / 2) * 1000)
           clock #= false
-          sleep(sleepPeriod / 2)
+          sleep((sleepPeriod / 2) * 1000)
         }
       }
     }

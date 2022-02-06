@@ -17,11 +17,11 @@ object SimulationHelper {
   ) = {
     fork {
       clock #= true
-      sleep(delay)
-      sleep(period/2)
+      sleep(delay * 1000)
+      sleep((period/2) * 1000)
       for (_ <- 0 to duration * 2) {
         clock #= !clock.toBoolean
-        sleep(period/2)
+        sleep((period/2) * 1000)
       }
       if (timeout)
         simFailure("Clock Timeout")
@@ -32,54 +32,54 @@ object SimulationHelper {
   def generateReset(reset: Bool, delay: Int) = {
     fork {
       reset #= false
-      sleep(delay)
+      sleep(delay * 1000)
       reset #= true
     }
   }
   def wait(duration: TimeNumber) {
     val durationCycles = (duration.toDouble * 1000000000).toInt
     println(s"Sleep for ${durationCycles} cycles")
-    sleep(durationCycles)
+    sleep(durationCycles * 1000)
   }
   def waitUntilOrFail(cond: => Boolean, duration: TimeNumber, checks: TimeNumber): Boolean = {
     val durationCycles = (duration.toDouble * 1000000000).toInt
     val checkCycles = (checks.toDouble * 1000000000).toInt
     val sleepDuration = (durationCycles / checkCycles).toInt
-    println(s"Sleep for ${checkCycles} cycles and retry ${sleepDuration}")
+    println(s"Sleep for ${checkCycles} cycles and retry ${sleepDuration} times")
     for (_ <- 0 to sleepDuration) {
       if (cond) {
         return true
       }
-      sleep(checkCycles)
+      sleep(checkCycles * 1000)
     }
     assert(false, s"waitUntil failed because condtition not happend after ${sleepDuration} checks.")
     false
   }
   def uartReceive(rxd: Bool, baudPeriod: Int) = {
-    sleep(baudPeriod/2)
+    sleep((baudPeriod/2) * 1000)
 
     assert(rxd.toBoolean == false)
-    sleep(baudPeriod)
+    sleep(baudPeriod * 1000)
 
     var buffer = 0
     for(bitId <- 0 to 7) {
       if(rxd.toBoolean)
         buffer |= 1 << bitId
-      sleep(baudPeriod)
+      sleep(baudPeriod * 1000)
     }
     assert(rxd.toBoolean == true)
     buffer
   }
   def uartTransmit(txd: Bool, baudPeriod: Int, character: Char) = {
     txd #= false
-    sleep(baudPeriod)
+    sleep(baudPeriod * 1000)
 
     for(bitId <- 0 to 7) {
       txd #= ((character >> bitId) & 1) != 0
-      sleep(baudPeriod)
+      sleep(baudPeriod * 1000)
     }
     txd #= true
-    sleep(baudPeriod)
+    sleep(baudPeriod * 1000)
   }
   def dumpStdout(rxd: Bool, baudPeriod: Int) = {
     fork {

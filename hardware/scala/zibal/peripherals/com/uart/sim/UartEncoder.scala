@@ -9,14 +9,14 @@ object UartEncoder {
     uartPin #= true
 
     uartPin #= false
-    sleep(baudPeriod)
+    sleep(baudPeriod * 1000)
 
     (0 to 7).foreach{ bitId =>
       uartPin #= ((buffer >> bitId) & 1) != 0
-      sleep(baudPeriod)
+      sleep(baudPeriod * 1000)
     }
 
     uartPin #= true
-    sleep(baudPeriod)
+    sleep(baudPeriod * 1000)
   }
 }
