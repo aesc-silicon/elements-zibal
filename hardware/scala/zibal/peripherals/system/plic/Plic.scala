@@ -1,4 +1,4 @@
-package zibal.peripherals.misc.plic
+package zibal.peripherals.system.plic
 
 import spinal.core._
 import spinal.lib._

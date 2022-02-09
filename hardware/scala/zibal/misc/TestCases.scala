@@ -130,7 +130,7 @@ object TestCases {
         SimulationHelper.wait(1 us)
         SimulationHelper.generateClock(frequencyPin, clockPeriod.toInt, clockDuration.toInt)
 
-        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 5 ms, 100 ns)
+        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 5 ms, 1 us)
         while (!stdout.contains("\n")) {
           SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
           stdout += SimulationHelper.uartReceive(txd, baudPeriod).toChar
@@ -149,7 +149,7 @@ object TestCases {
         // Wait for reset.
         SimulationHelper.wait(1 us)
         // Check at least something is sent
-        SimulationHelper.waitUntilOrFail(pin.toBoolean == true, 5 ms, 100 ns)
+        SimulationHelper.waitUntilOrFail(pin.toBoolean == true, 5 ms, 1 us)
         SimulationHelper.waitUntilOrFail(pin.toBoolean == false, 200 us, 100 ns)
         // Check successful transmission
         val receiveChar = SimulationHelper.uartReceive(pin, baudPeriod)
@@ -163,7 +163,7 @@ object TestCases {
       fork {
         // Wait for reset.
         SimulationHelper.wait(1 us)
-        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 5 ms, 100 ns)
+        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 5 ms, 1 us)
         while (!stdout.contains("\n")) {
           SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
           stdout += SimulationHelper.uartReceive(txd, baudPeriod).toChar

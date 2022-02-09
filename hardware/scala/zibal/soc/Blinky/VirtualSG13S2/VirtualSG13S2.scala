@@ -4,6 +4,7 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import zibal.board.Nexys4DDR
 import zibal.soc.Blinky
 import zibal.misc.{CadenceTools, SimulationHelper, ElementsConfig, TestCases}
 import zibal.blackboxes.ihp.sg13s._
@@ -11,8 +12,6 @@ import zibal.blackboxes.ihp.sg13s._
 
 object VirtualSG13S2Board {
   def apply(source: String) = VirtualSG13S2Board(source)
-
-  val quartzFrequency = 100 MHz
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
@@ -26,7 +25,7 @@ object VirtualSG13S2Board {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, quartzFrequency, 3 ms)
+          testCases.addClock(dut.io.clock, Nexys4DDR.quartzFrequency, 3 ms)
           testCases.addReset(dut.io.reset, 1 us)
         }
       case _ =>
@@ -82,7 +81,7 @@ object VirtualSG13S2Top {
           io.addCorner("topleft", 180, "corner")
           io.generate(top.io, elementsConfig.zibalBuildPath)
           val sdc = CadenceTools.Sdc(elementsConfig)
-          sdc.addClock(top.io.clock.PAD, VirtualSG13S2Board.quartzFrequency)
+          sdc.addClock(top.io.clock.PAD, Nexys4DDR.quartzFrequency)
           sdc.generate(elementsConfig.zibalBuildPath)
           top
         })

@@ -38,9 +38,8 @@ object I2cController {
 
     val mapper = I2cControllerCtrl.Mapper(factory(io.bus), i2cControllerCtrl.io, p)
 
-    def deviceTree(name: String, address: BigInt, size: BigInt, clockDomain: ClockDomain,
-                   irqNumber: Int = -1) = {
-      val clockSpeed = clockDomain.frequency.getValue.toInt
+    val clockSpeed = ClockDomain.current.frequency.getValue.toInt
+    def deviceTree(name: String, address: BigInt, size: BigInt, irqNumber: Int = -1) = {
       val baseAddress = "%08x".format(address.toInt)
       val regSize = "%04x".format(size.toInt)
       var dt = s"""

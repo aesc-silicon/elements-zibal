@@ -4,6 +4,11 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import zibal.peripherals.system.reset.ResetControllerCtrl.ResetControllerCtrl
+import zibal.peripherals.system.clock.ClockControllerCtrl.ClockControllerCtrl
+
+import zibal.board.{KitParameter, BoardParameter, ResetParameter, ClockParameter}
+import zibal.board.AX7101
 import zibal.platform.Hydrogen
 import zibal.soc.Hydrogen1
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
@@ -13,13 +18,15 @@ import zibal.blackboxes.xilinx.a7._
 object AX7101Board {
   def apply(source: String) = AX7101Board(source)
 
-  def quartzFrequency = 200 MHz
-
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
 
     val compiled = elementsConfig.genFPGASimConfig.compile {
       val board = AX7101Board(args(0))
+      board.top.soc.initOnChipRam(elementsConfig.zephyrBuildPath + "/zephyr.bin")
+      for (domain <- board.top.soc.parameter.getKitParameter.clocks) {
+        board.top.soc.clockCtrl.getClockDomainByName(domain.name).clock.simPublic()
+      }
       board
     }
     args(1) match {
@@ -27,21 +34,21 @@ object AX7101Board {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, quartzFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, AX7101.quartzFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, AX7101.quartzFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, quartzFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, AX7101.quartzFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -75,34 +82,52 @@ object AX7101Board {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
 
-    val peripherals = top.soc.p.peripherals.asInstanceOf[Hydrogen1.Peripherals]
-    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+    val baudPeriod = top.soc.socParameter.uartStd.init.getBaudPeriod()
 
-    def simHook() {}
+    def simHook() {
+      for ((domain, index) <- top.soc.parameter.getKitParameter.clocks.zipWithIndex) {
+        val clockDomain = top.soc.clockCtrl.getClockDomainByName(domain.name)
+        SimulationHelper.generateEndlessClock(clockDomain.clock, domain.frequency)
+      }
+    }
   }
 }
 
 
 object AX7101Top {
-  def apply() = AX7101Top(Hydrogen1.Parameter.default(clocks))
+  def apply() = AX7101Top(getConfig)
 
-  val clocks = Hydrogen1.Parameter.Clocks(AX7101Board.quartzFrequency)
+  def getConfig = {
+    val resets = List[ResetParameter](ResetParameter("system", 64), ResetParameter("debug", 64))
+    val clocks = List[ClockParameter](
+      ClockParameter("system", 105 MHz, "system"),
+      ClockParameter("debug", 105 MHz, "debug", synchronousWith = "system")
+    )
+
+    val kitParameter = KitParameter(resets, clocks)
+    val boardParameter = AX7101.Parameter(kitParameter)
+    val socParameter = Hydrogen1.Parameter(boardParameter)
+    Hydrogen.Parameter(socParameter, 128 kB,
+      (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
+      (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
+        clockCtrl.buildXilinxPll(clock, boardParameter.getQuartzFrequency,
+          List("system", "debug"), 5)
+      })
+  }
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
     val spinalConfig = elementsConfig.genFPGASpinalConfig
 
     spinalConfig.generateVerilog({
-      val parameter = Hydrogen1.Parameter.default(clocks)
       args(0) match {
         case "prepare" =>
-          val soc = Hydrogen1(parameter)
+          val soc = Hydrogen1(getConfig)
           Hydrogen1.prepare(soc, elementsConfig)
           soc
         case _ =>
-          val top = AX7101Top(parameter)
-          val system = top.soc.system
-          BinTools.initRam(system.onChipRam.ram, elementsConfig.zephyrBuildPath + "/zephyr.bin")
+          val top = AX7101Top(getConfig)
+          top.soc.initOnChipRam(elementsConfig.zephyrBuildPath + "/zephyr.bin")
           XilinxTools.Xdc(elementsConfig).generate(top.io)
           top
       }
@@ -110,8 +135,9 @@ object AX7101Top {
   }
 
   case class AX7101Top(parameter: Hydrogen.Parameter) extends Component {
+    var boardParameter = parameter.getBoardParameter.asInstanceOf[AX7101.Parameter]
     val io = new Bundle {
-      val clockPos = XilinxLvdsInput.Pos("R4").clock(clocks.sysFrequency).ioStandard("DIFF_SSTL15")
+      val clockPos = XilinxLvdsInput.Pos("R4").clock(boardParameter.getQuartzFrequency).ioStandard("DIFF_SSTL15")
       val clockNeg = XilinxLvdsInput.Neg("T4").ioStandard("DIFF_SSTL15")
       val uartStd = new Bundle {
         val txd = XilinxCmosIo("AB15")
@@ -127,14 +153,13 @@ object AX7101Top {
 
     val soc = Hydrogen1(parameter)
 
-    val clock = IBUFDS(soc.io_sys.clock)
-    io.clockPos <> clock
-    io.clockNeg <> clock
-    soc.resetCtrl.buildFPGA(soc.io_sys.clock, soc.io_sys.resets)
+    val clockBuf = IBUFDS(soc.io_plat.clock)
+    io.clockPos <> clockBuf
+    io.clockNeg <> clockBuf
 
-    soc.io_sys.jtag.tms := False
-    soc.io_sys.jtag.tdi := False
-    soc.io_sys.jtag.tck := False
+    soc.io_plat.jtag.tms := False
+    soc.io_plat.jtag.tdi := False
+    soc.io_plat.jtag.tck := False
 
     io.uartStd.txd <> OBUF(soc.io_per.uartStd.txd)
     io.uartStd.rxd <> IBUF(soc.io_per.uartStd.rxd)

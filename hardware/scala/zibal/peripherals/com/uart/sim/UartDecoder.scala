@@ -10,7 +10,7 @@ object UartDecoder {
     waitUntil(uartPin.toBoolean == true)
 
     waitUntil(uartPin.toBoolean == false)
-    sleep((baudPeriod/2) * 1000)
+    sleep((baudPeriod / 2.0) * 1000)
 
     assert(uartPin.toBoolean == false, "UART frame error on start bit")
     sleep(baudPeriod * 1000)

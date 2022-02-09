@@ -4,6 +4,14 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import spinal.lib.bus.amba3.apb._
+import spinal.lib.bus.amba4.axi._
+
+import zibal.peripherals.system.reset.ResetControllerCtrl.ResetControllerCtrl
+import zibal.peripherals.system.clock.ClockControllerCtrl.ClockControllerCtrl
+
+import zibal.board.{KitParameter, BoardParameter, ResetParameter, ClockParameter}
+import zibal.board.DH012
 import zibal.platform.Carbon
 import zibal.soc.Carbon1
 import zibal.misc.{BinTools, CadenceTools, SimulationHelper, ElementsConfig, TestCases}
@@ -15,11 +23,8 @@ import zibal.sim.MT25Q
 object DH012Board {
   def apply(source: String) = DH012Board(source)
 
-  val quartzFrequency = 50 MHz
-
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
-    val spinalConfig = elementsConfig.genASICSpinalConfig
 
     val compiled = elementsConfig.genASICSimConfig.compile {
       val board = DH012Board(args(0))
@@ -31,7 +36,7 @@ object DH012Board {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, quartzFrequency, 1 ms)
+          testCases.addClock(dut.io.clock, DH012.quartzFrequency, 1 ms)
           testCases.addReset(dut.io.reset, 1 us)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
@@ -45,7 +50,6 @@ object DH012Board {
     val io = new Bundle {
       val clock = inout(Analog(Bool))
       val reset = inout(Analog(Bool))
-      val sysReset_out = inout(Analog(Bool))
       val jtag = new Bundle {
         val tdo = inout(Analog(Bool))
       }
@@ -60,7 +64,7 @@ object DH012Board {
         val miso = inout(Analog(Bool))
       }
       val gpioStatus = Vec(inout(Analog(Bool())), 4)
-      val gpioA = Vec(inout(Analog(Bool())), 7)
+      val gpioA = Vec(inout(Analog(Bool())), 8)
     }
 
     val top = DH012Top()
@@ -81,7 +85,6 @@ object DH012Board {
 
     top.io.clock.PAD := io.clock
     top.io.reset.PAD := io.reset
-    io.sysReset_out := top.io.sysReset_out.PAD
 
     top.io.jtag.tms.PAD := analogFalse
     top.io.jtag.tdi.PAD := analogFalse
@@ -103,12 +106,11 @@ object DH012Board {
       io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
     }
 
-    for (index <- 0 until 7) {
+    for (index <- 0 until 8) {
       io.gpioA(index) <> top.io.gpioA(index).PAD
     }
 
-    val peripherals = top.soc.p.peripherals.asInstanceOf[Carbon1.Peripherals]
-    val baudPeriod = peripherals.uartStd.init.getBaudPeriod()
+    val baudPeriod = top.soc.socParameter.uartStd.init.getBaudPeriod()
 
     def simHook() {}
   }
@@ -116,20 +118,40 @@ object DH012Board {
 
 
 object DH012Top {
-  def apply() = DH012Top(Carbon1.Parameter.default(clocks))
+  def apply() = DH012Top(getConfig)
 
-  val clocks = Carbon1.Parameter.Clocks(DH012Board.quartzFrequency)
+  def getConfig = {
+    val resets = List[ResetParameter](ResetParameter("system", 64))
+    val clocks = List[ClockParameter](ClockParameter("system", 50 MHz, "system"))
+
+    val kitParameter = KitParameter(resets, clocks)
+    val boardParameter = DH012.Parameter(kitParameter)
+    val socParameter = Carbon1.Parameter(boardParameter)
+    Carbon.Parameter(socParameter, 512 Byte, 4 MB,
+      (resetCtrl: ResetControllerCtrl, reset: Bool, _) => { resetCtrl.buildDummy(reset) },
+      (clockCtrl: ClockControllerCtrl, _, clock: Bool) => { clockCtrl.buildDummy(clock) },
+      (onChipRamSize: BigInt) => {
+        val ram = Axi4SharedOnChipRam(
+          dataWidth = 32,
+          byteCount = onChipRamSize,
+          idWidth = 4
+        )
+        ram.io.axi
+      })
+  }
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
     val spinalConfig = elementsConfig.genASICSpinalConfig
 
-    args(0) match {
-      case "prepare" =>
-        println("Nothing to do here!")
-      case _ =>
-        spinalConfig.generateVerilog({
-          val top = DH012Top(Carbon1.Parameter.default(clocks))
+    spinalConfig.generateVerilog({
+      args(0) match {
+        case "prepare" =>
+          val soc = Carbon1(getConfig)
+          Carbon1.prepare(soc, elementsConfig)
+          soc
+        case _ =>
+          val top = DH012Top(getConfig)
           val io = CadenceTools.Io(elementsConfig)
           io.addPad("top", 3, "gndpad")
           io.addPad("top", 4, "gndcore")
@@ -153,19 +175,19 @@ object DH012Top {
           io.addCorner("topleft", 180, "corner")
           io.generate(top.io, elementsConfig.zibalBuildPath)
           val sdc = CadenceTools.Sdc(elementsConfig)
-          sdc.addClock(top.io.clock.PAD, clocks.sysFrequency)
-          sdc.addClock(top.io.jtag.tck.PAD, clocks.jtagFrequency)
+          sdc.addClock(top.io.clock.PAD, top.boardParameter.getQuartzFrequency)
+          sdc.addClock(top.io.jtag.tck.PAD, top.boardParameter.getJtagFrequency)
           sdc.generate(elementsConfig.zibalBuildPath)
           top
-        })
-    }
+      }
+    })
   }
 
   case class DH012Top(parameter: Carbon.Parameter) extends Component {
+    var boardParameter = parameter.getBoardParameter.asInstanceOf[DH012.Parameter]
     val io = new Bundle {
       val clock = IhpCmosIo("top", 0)
       val reset = IhpCmosIo("top", 1)
-      val sysReset_out = IhpCmosIo("top", 2)
       val jtag = new Bundle {
         val tms = IhpCmosIo("right", 0)
         val tdi = IhpCmosIo("right", 1)
@@ -192,24 +214,23 @@ object DH012Top {
                            IhpCmosIo("top", 10))
       val gpioA = Vec(IhpCmosIo("right", 8), IhpCmosIo("right", 9), IhpCmosIo("right", 10),
                       IhpCmosIo("bottom", 0), IhpCmosIo("bottom", 1), IhpCmosIo("bottom", 2),
-                      IhpCmosIo("left", 10))
+                      IhpCmosIo("left", 10), IhpCmosIo("top", 2))
     }
 
     val soc = Carbon1(parameter)
 
-    io.clock <> ixc013_i16x(soc.io_sys.clock)
-    io.reset <> ixc013_i16x(soc.io_sys.reset)
-    io.sysReset_out <> ixc013_b16m().asOutput(soc.io_sys.sysReset_out)
+    io.clock <> ixc013_i16x(soc.io_plat.clock)
+    io.reset <> ixc013_i16x(soc.io_plat.reset)
 
-    io.jtag.tms <> ixc013_b16m().asInput(soc.io_sys.jtag.tms)
-    io.jtag.tdi <> ixc013_b16m().asInput(soc.io_sys.jtag.tdi)
-    io.jtag.tdo <> ixc013_b16m().asOutput(soc.io_sys.jtag.tdo)
-    io.jtag.tck <> ixc013_b16m().asInput(soc.io_sys.jtag.tck)
+    io.jtag.tms <> ixc013_b16m().asInput(soc.io_plat.jtag.tms)
+    io.jtag.tdi <> ixc013_b16m().asInput(soc.io_plat.jtag.tdi)
+    io.jtag.tdo <> ixc013_b16m().asOutput(soc.io_plat.jtag.tdo)
+    io.jtag.tck <> ixc013_b16m().asInput(soc.io_plat.jtag.tck)
 
-    io.spiXip.ss <> ixc013_b16m().asOutput(soc.io_sys.spiXip.ss(0))
-    io.spiXip.sclk <> ixc013_b16m().asOutput(soc.io_sys.spiXip.sclk)
-    io.spiXip.mosi <> ixc013_b16m().asOutput(soc.io_sys.spiXip.mosi)
-    io.spiXip.miso <> ixc013_b16m().asInput(soc.io_sys.spiXip.miso)
+    io.spiXip.ss <> ixc013_b16m().asOutput(soc.io_plat.spiXip.ss(0))
+    io.spiXip.sclk <> ixc013_b16m().asOutput(soc.io_plat.spiXip.sclk)
+    io.spiXip.mosi <> ixc013_b16m().asOutput(soc.io_plat.spiXip.mosi)
+    io.spiXip.miso <> ixc013_b16m().asInput(soc.io_plat.spiXip.miso)
 
     io.uartStd.txd <> ixc013_b16m().asOutput(soc.io_per.uartStd.txd)
     io.uartStd.rxd <> ixc013_b16m().asInput(soc.io_per.uartStd.rxd)
@@ -223,7 +244,7 @@ object DH012Top {
       io.gpioStatus(index) <> ixc013_b16m(soc.io_per.gpioStatus.pins(index))
     }
 
-    for (index <- 0 until 7) {
+    for (index <- 0 until 8) {
       io.gpioA(index) <> ixc013_b16m(soc.io_per.gpioA.pins(index))
     }
   }

@@ -4,128 +4,66 @@ import spinal.core._
 import spinal.lib._
 
 import zibal.cores.VexRiscvCoreParameter
-
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
-import spinal.lib.io.TriStateArray
+import zibal.soc.SocParameter
 
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
-import spinal.lib.bus.misc.SizeMapping
 
-import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
-import zibal.peripherals.misc.plic.{Apb3Plic, Plic, PlicCtrl}
-import zibal.peripherals.com.spi.{AmbaSpiXipMaster, Spi, SpiCtrl}
+import zibal.peripherals.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
+import zibal.peripherals.system.plic.{Apb3Plic, Plic, PlicCtrl}
+import zibal.peripherals.system.reset.{Apb3ResetController, ResetControllerCtrl}
+import zibal.peripherals.system.clock.{Apb3ClockController, ClockControllerCtrl}
+import zibal.peripherals.com.spi.{Axi4SharedSpiXipMaster, Spi, SpiCtrl}
 import spinal.lib.com.jtag.Jtag
 
-import vexriscv.{plugin, _}
+import vexriscv._
 import vexriscv.plugin._
+
 
 object Carbon {
 
   case class Parameter(
-    sysFrequency: HertzNumber,
-    dbgFrequency: HertzNumber,
+    socParameter: SocParameter,
     onChipRamSize: BigInt,
-    onChipRomSize: BigInt,
-    interrupts: Int,
-    peripherals: Any
-  ) {
-    require(interrupts >= 0)
-    val mtimer = MachineTimerCtrl.Parameter.default
-    val plic = PlicCtrl.Parameter.default(interrupts + 2)
-    val spiXip = SpiCtrl.Parameter.default
+    spiRomSize: BigInt,
+    resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
+    clockLogic: (ClockControllerCtrl.ClockControllerCtrl, ResetControllerCtrl.ResetControllerCtrl,
+                 Bool) => Unit,
+    onChipRamLogic: (BigInt) => Axi4Shared
+  ) extends PlatformParameter(socParameter) {
     val core = VexRiscvCoreParameter.realtime(0xA0000000L).plugins
+    val mtimer = MachineTimerCtrl.Parameter.default
+    val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(1))
+    val spiXip = SpiCtrl.Parameter.default
+    val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
+    val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
   }
 
-  object Parameter {
-    def default(
-      peripherals: Any,
-      sysFrequency: HertzNumber,
-      dbgFrequency: HertzNumber,
-      interrupts: Int,
-      onChipRamSize: BigInt = 4 kB,
-      onChipRomSize: BigInt = 4 MB
-    ) = Parameter(sysFrequency, dbgFrequency, onChipRamSize, onChipRomSize, interrupts, peripherals)
-  }
-
-  case class Io(p: Parameter) extends Bundle {
-    val clock = in(Bool)
-    val reset = in(Bool)
-    val sysReset_out = out(Bool)
-    val jtag = slave(Jtag())
-    val spiXip = master(Spi.Io(p.spiXip))
-  }
-
-  class Carbon(p: Parameter) extends Component {
-    val io_sys = Io(p)
-
-    def connectPeripherals() = {
-      val apbDecoder = Apb3Decoder(
-        master = system.apbBridge.io.apb,
-        slaves = system.apbMapping
-      )
-
-      for ((index, interrupt) <- system.irqMapping) {
-        system.plicCtrl.io.sources(index) := interrupt
-      }
+  class Carbon(parameter: Parameter) extends PlatformComponent(parameter) {
+    val io_plat = new Bundle {
+      val reset = in(Bool)
+      val clock = in(Bool)
+      val jtag = slave(Jtag())
+      val spiXip = master(Spi.Io(parameter.spiXip))
     }
 
-    def addApbDevice(port: Apb3, address: BigInt, size: BigInt) {
-      system.apbMapping += port -> (address, size)
-    }
+    override def initOnChipRam(path: String) = println("initOnChipRam not implemented!")
 
-    var nextInterruptNumber = 2
-    def addInterrupt(pin: Bool) {
-      system.irqMapping += nextInterruptNumber -> pin
-      nextInterruptNumber += 1
-    }
+    val resetCtrl = ResetControllerCtrl(parameter.resets)
+    parameter.resetLogic(resetCtrl, io_plat.reset, io_plat.clock)
 
-    val resetCtrlClockDomain = ClockDomain(
-      clock = io_sys.clock,
-      config = ClockDomainConfig(
-        resetKind = BOOT
-      )
-    )
+    val clockCtrl = ClockControllerCtrl(parameter.clocks, resetCtrl)
+    parameter.clockLogic(clockCtrl, resetCtrl, io_plat.clock)
 
-    val debugReset = Bool
-    val systemReset = io_sys.reset | !debugReset
-    io_sys.sysReset_out := systemReset
+    val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
 
-    val clocks = new Area {
-      val systemClockDomain = ClockDomain(
-        clock = io_sys.clock,
-        reset = io_sys.reset,
-        frequency = FixedFrequency(p.sysFrequency),
-        config = ClockDomainConfig(
-          resetKind = spinal.core.SYNC,
-          resetActiveLevel = LOW
-        )
-      )
-
-      val debugClockDomain = ClockDomain(
-        clock = io_sys.clock,
-        reset = io_sys.reset,
-        frequency = FixedFrequency(p.sysFrequency),
-        config = ClockDomainConfig(
-          resetKind = spinal.core.SYNC,
-          resetActiveLevel = LOW
-        )
-      )
-    }
-
-    val system = new ClockingArea(clocks.systemClockDomain) {
-
-      val axiCrossbar = Axi4CrossbarFactory()
-
-      /* AXI Masters */
-
+      /* AXI Manager */
       val core = new Area {
         val mtimerInterrupt = Bool
         val globalInterrupt = Bool
 
         val config = VexRiscvConfig(
-          plugins = p.core += new DebugPlugin(clocks.debugClockDomain)
+          plugins = parameter.core += new DebugPlugin(clockCtrl.getClockDomainByName("system"))
         )
 
         val cpu = new VexRiscv(config)
@@ -141,21 +79,16 @@ object Carbon {
             plugin.timerInterrupt := mtimerInterrupt
           }
           case plugin: DebugPlugin =>
-            plugin.debugClockDomain {
-              debugReset := plugin.io.resetOut
-              io_sys.jtag <> plugin.io.bus.fromJtag()
+            clockCtrl.getClockDomainByName("system") {
+              resetCtrl.triggerByNameWithCond("system", RegNext(plugin.io.resetOut))
+              io_plat.jtag <> plugin.io.bus.fromJtag()
             }
           case _ =>
         }
       }
 
-      /* AXI Slaves */
-
-      val onChipRam = Axi4SharedOnChipRam(
-        dataWidth = 32,
-        byteCount = p.onChipRamSize,
-        idWidth = 4
-      )
+      /* AXI Subordinates */
+      val onChipRamAxiPort = parameter.onChipRamLogic(parameter.onChipRamSize)
 
       val apbBridge = Axi4SharedToApb3Bridge(
         addressWidth = 20,
@@ -163,22 +96,20 @@ object Carbon {
         idWidth = 4
       )
 
-      val spiXipMasterCtrl = AmbaSpiXipMaster(p.spiXip, Axi4Config(20, 32, 4))
-
-      val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()
-      val irqMapping = ArrayBuffer[(Int, Bool)]()
+      val spiXipMasterCtrl = Axi4SharedSpiXipMaster(parameter.spiXip)
 
       /* Generate AXI Crossbar */
+      val axiCrossbar = Axi4CrossbarFactory()
 
       axiCrossbar.addSlaves(
-        onChipRam.io.axi -> (0x80000000L, p.onChipRamSize),
-        spiXipMasterCtrl.io.dataBus -> (0xA0000000L, p.onChipRomSize),
+        onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
+        spiXipMasterCtrl.io.dataBus -> (0xA0000000L, parameter.spiRomSize),
         apbBridge.io.axi -> (0xF0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
         core.iBus -> List(spiXipMasterCtrl.io.dataBus),
-        core.dBus -> List(onChipRam.io.axi, apbBridge.io.axi)
+        core.dBus -> List(onChipRamAxiPort, apbBridge.io.axi)
       )
 
       axiCrossbar.addPipelining(apbBridge.io.axi)((crossbar, bridge) => {
@@ -188,7 +119,7 @@ object Carbon {
         crossbar.readRsp << bridge.readRsp
       })
 
-      axiCrossbar.addPipelining(onChipRam.io.axi)((crossbar, ctrl) => {
+      axiCrossbar.addPipelining(onChipRamAxiPort)((crossbar, ctrl) => {
         crossbar.sharedCmd.halfPipe() >> ctrl.sharedCmd
         crossbar.writeData >/-> ctrl.writeData
         crossbar.writeRsp << ctrl.writeRsp
@@ -212,18 +143,28 @@ object Carbon {
       axiCrossbar.build()
 
       /* Peripheral IP-Cores */
-      val mtimerCtrl = Apb3MachineTimer(p.mtimer)
-      core.mtimerInterrupt := mtimerCtrl.io.interrupt
-      apbMapping += mtimerCtrl.io.bus -> (0x20000, 4 kB)
-
-      val plicCtrl = Apb3Plic(p.plic)
+      val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
-      irqMapping += 0 -> False
+      addApbDevice(plicCtrl.io.bus, 0xF0000, 64 kB)
+      addInterrupt(False)
 
-      spiXipMasterCtrl.io.spi <> io_sys.spiXip
-      apbMapping += spiXipMasterCtrl.io.bus -> (0x40000, 4 kB)
-      irqMapping += 1 -> spiXipMasterCtrl.io.interrupt
+      val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
+      core.mtimerInterrupt := mtimerCtrl.io.interrupt
+      addApbDevice(mtimerCtrl.io.bus, 0x20000, 4 kB)
+
+      val resetCtrlMapper = Apb3ResetController(parameter.resets)
+      resetCtrlMapper.io.config <> resetCtrl.io.config
+      addApbDevice(resetCtrlMapper.io.bus, 0x21000, 4 kB)
+
+      val clockCtrlMapper = Apb3ClockController(parameter.clocks)
+      clockCtrlMapper.io.config <> clockCtrl.io.config
+      addApbDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
+
+      spiXipMasterCtrl.io.spi <> io_plat.spiXip
+      addApbDevice(spiXipMasterCtrl.io.bus, 0x40000, 4 kB)
+      addInterrupt(spiXipMasterCtrl.io.interrupt)
+
+      publishApbComponents(apbBridge, plicCtrl)
     }
   }
 }

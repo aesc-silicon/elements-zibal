@@ -18,15 +18,26 @@ object SimulationHelper {
     fork {
       clock #= true
       sleep(delay * 1000)
-      sleep((period/2) * 1000)
+      sleep((period / 2.0) * 1000)
       for (_ <- 0 to duration * 2) {
         clock #= !clock.toBoolean
-        sleep((period/2) * 1000)
+        sleep((period / 2.0) * 1000)
       }
       if (timeout)
         simFailure("Clock Timeout")
       else
         simSuccess
+    }
+  }
+  def generateEndlessClock(clock: Bool, frequency: HertzNumber, delay: Int = 0) {
+    val period = frequency.toTime.decompose._1.toInt
+    fork {
+      clock #= false
+      sleep(delay * 1000)
+      while(true) {
+        clock #= !clock.toBoolean
+        sleep((period / 2.0) * 1000)
+      }
     }
   }
   def generateReset(reset: Bool, delay: Int) = {
@@ -56,7 +67,7 @@ object SimulationHelper {
     false
   }
   def uartReceive(rxd: Bool, baudPeriod: Int) = {
-    sleep((baudPeriod/2) * 1000)
+    sleep((baudPeriod / 2.0) * 1000)
 
     assert(rxd.toBoolean == false)
     sleep(baudPeriod * 1000)

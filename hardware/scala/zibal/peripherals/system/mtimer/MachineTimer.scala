@@ -1,4 +1,4 @@
-package zibal.peripherals.misc.mtimer
+package zibal.peripherals.system.mtimer
 
 import spinal.core._
 import spinal.lib._

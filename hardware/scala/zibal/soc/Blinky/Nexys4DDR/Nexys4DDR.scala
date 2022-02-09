@@ -4,6 +4,7 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import zibal.board.Nexys4DDR
 import zibal.soc.Blinky
 import zibal.misc.{ElementsConfig, XilinxTools, SimulationHelper, TestCases}
 import zibal.blackboxes.xilinx.a7._
@@ -11,8 +12,6 @@ import zibal.blackboxes.xilinx.a7._
 
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
-
-  def quartzFrequency = 100 MHz
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
@@ -25,7 +24,7 @@ object Nexys4DDRBoard {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, quartzFrequency, 1 ms)
+          testCases.addClock(dut.io.clock, Nexys4DDR.quartzFrequency, 1 ms)
           testCases.addReset(dut.io.reset, 1 us)
         }
       case _ =>
@@ -77,7 +76,7 @@ object Nexys4DDRTop {
 
   case class Nexys4DDRTop() extends Component {
     val io = new Bundle {
-      val clock = XilinxCmosIo("E3").clock(Nexys4DDRBoard.quartzFrequency)
+      val clock = XilinxCmosIo("E3").clock(Nexys4DDR.quartzFrequency)
       val reset = XilinxCmosIo("C12")
       val led = Vec(
         XilinxCmosIo("H17"),

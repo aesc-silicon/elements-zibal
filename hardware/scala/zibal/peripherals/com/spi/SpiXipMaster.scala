@@ -36,9 +36,9 @@ object SpiXipMaster {
   }
 }
 
-case class AmbaSpiXipMaster(
+case class Axi4SharedSpiXipMaster(
   parameter: SpiCtrl.Parameter,
-  dataBusConfig: Axi4Config,
+  dataBusConfig: Axi4Config = Axi4Config(20, 32, 4),
   busConfig: Apb3Config = Apb3Config(12, 32)
 ) extends SpiXipMaster.Core[Apb3] (
   parameter,

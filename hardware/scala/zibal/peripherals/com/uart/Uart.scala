@@ -54,9 +54,8 @@ object Uart {
 
     val mapper = UartCtrl.Mapper(factory(io.bus), ctrl.io, p)
 
-    def deviceTree(name: String, address: BigInt, size: BigInt, clockDomain: ClockDomain,
-                   irqNumber: Int = -1) = {
-      val clockSpeed = clockDomain.frequency.getValue.toInt
+    val clockSpeed = ClockDomain.current.frequency.getValue.toInt
+    def deviceTree(name: String, address: BigInt, size: BigInt, irqNumber: Int = -1) = {
       val baseAddress = "%08x".format(address.toInt)
       val regSize = "%04x".format(size.toInt)
       val baudrate = this.p.init.baudrate

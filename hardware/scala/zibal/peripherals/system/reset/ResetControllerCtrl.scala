@@ -1,9 +1,11 @@
-package zibal.peripherals.misc.reset
+package zibal.peripherals.system.reset
 
 import spinal.core._
 import spinal.lib._
 import spinal.lib.bus.misc.BusSlaveFactory
 import scala.collection.mutable.Map
+
+import zibal.board.ResetParameter
 
 
 object ResetControllerCtrl {
@@ -13,12 +15,12 @@ object ResetControllerCtrl {
     resetCtrl
   }
 
-  case class Parameter(domains: List[(String, Int)]) {
-    for ((name, delay) <- domains)
-      require(delay > 0, s"Delay for reset domain $name must at least 1 cycle!")
+  case class Parameter(domains: List[ResetParameter]) {
+    for (domain <- domains)
+      require(domain.delay > 0, s"Delay for reset domain ${domain.name} must at least 1 cycle!")
   }
 
-  case class BuildConnection(parameter: Parameter) extends Bundle {
+  case class Io(parameter: Parameter) extends Bundle {
     val resets = in UInt(parameter.domains.length bits)
     val trigger = out UInt(parameter.domains.length bits)
   }
@@ -33,7 +35,7 @@ object ResetControllerCtrl {
     val io = new Bundle {
       val resets = out UInt(parameter.domains.length bits)
       val trigger = in UInt(parameter.domains.length bits)
-      val buildConnection = BuildConnection(parameter)
+      val buildConnection = Io(parameter)
       val config = in(Config(parameter))
     }
     io.resets := io.buildConnection.resets
@@ -45,16 +47,16 @@ object ResetControllerCtrl {
 
     var resetDict = Map[String, Bool]()
     var triggerDict = Map[String, Bool]()
-    for (((name, delay), index) <- parameter.domains.zipWithIndex) {
-      resetDict += name -> io.resets(index)
-      triggerDict += name -> io.trigger(index)
+    for ((domain, index) <- parameter.domains.zipWithIndex) {
+      resetDict += domain.name -> io.resets(index)
+      triggerDict += domain.name -> io.trigger(index)
     }
     def getResetByName(name: String): Bool = resetDict.get(name).get
     def triggerByNameWithCond(name: String, cond: Bool) {
       triggerDict.get(name).get.setWhen(cond)
     }
 
-    def buildFPGA(clock: Bool, buildConnection: BuildConnection) {
+    def buildXilinx(clock: Bool) {
       val resetCtrlClockDomain = ClockDomain(
         clock = clock,
         config = ClockDomainConfig(
@@ -63,18 +65,24 @@ object ResetControllerCtrl {
       )
 
       val resetCtrl = new ClockingArea(resetCtrlClockDomain) {
-        for (((name, delay), index) <- parameter.domains.zipWithIndex) {
+        for (((domain), index) <- parameter.domains.zipWithIndex) {
           val resetUnbuffered = True
-          val counter = Reg(UInt(log2Up(delay) bits)) init(0)
-          when (counter =/= U(delay - 1)) {
+          val counter = Reg(UInt(log2Up(domain.delay) bits)) init(0)
+          when (counter =/= U(domain.delay - 1)) {
             counter := counter + 1
             resetUnbuffered := False
           }
-          when (counter === U(delay - 1) && BufferCC(buildConnection.trigger(index))) {
+          when (counter === U(domain.delay - 1) && BufferCC(io.buildConnection.trigger(index))) {
             counter := 0
           }
-          buildConnection.resets(index) := RegNext(resetUnbuffered)
+          io.buildConnection.resets(index) := RegNext(resetUnbuffered)
         }
+      }
+    }
+
+    def buildDummy(reset: Bool) {
+      for (((domain), index) <- parameter.domains.zipWithIndex) {
+       io.buildConnection.resets(index) := reset
       }
     }
   }

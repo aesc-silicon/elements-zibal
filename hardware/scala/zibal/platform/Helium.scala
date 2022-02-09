@@ -4,116 +4,70 @@ import spinal.core._
 import spinal.lib._
 
 import zibal.cores.VexRiscvCoreParameter
-
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
-import spinal.lib.io.TriStateArray
+import zibal.soc.SocParameter
+import zibal.misc.BinTools
 
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
-import spinal.lib.bus.misc.SizeMapping
 
-import zibal.peripherals.misc.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
-import zibal.peripherals.misc.plic.{Apb3Plic, Plic, PlicCtrl}
-import zibal.peripherals.misc.reset.{Apb3ResetController, ResetControllerCtrl}
+import zibal.peripherals.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
+import zibal.peripherals.system.plic.{Apb3Plic, Plic, PlicCtrl}
+import zibal.peripherals.system.reset.{Apb3ResetController, ResetControllerCtrl}
+import zibal.peripherals.system.clock.{Apb3ClockController, ClockControllerCtrl}
 import spinal.lib.com.jtag.Jtag
 
-import vexriscv.{plugin, _}
+import vexriscv._
+
 import vexriscv.plugin._
 
 object Helium {
 
   case class Parameter(
-    sysFrequency: HertzNumber,
-    dbgFrequency: HertzNumber,
+    socParameter: SocParameter,
     onChipRamSize: BigInt,
-    interrupts: Int,
-    peripherals: Any
-  ) {
-    require(interrupts >= 0)
-    val mtimer = MachineTimerCtrl.Parameter.default
-    val plic = PlicCtrl.Parameter.default(interrupts + 1)
+    resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
+    clockLogic: (ClockControllerCtrl.ClockControllerCtrl, ResetControllerCtrl.ResetControllerCtrl,
+                 Bool) => Unit,
+    onChipRamLogic: (BigInt) => (Axi4Shared, Mem[Bits]) = (onChipRamSize: BigInt) => {
+      val ram = Axi4SharedOnChipRam(
+        dataWidth = 32,
+        byteCount = onChipRamSize,
+        idWidth = 4
+      )
+      (ram.io.axi, ram.ram)
+    }
+  ) extends PlatformParameter(socParameter) {
     val core = VexRiscvCoreParameter.mcu(0x80000000L).plugins
-    val resets = ResetControllerCtrl.Parameter(List(("system", 64), ("debug", 64)))
+    val mtimer = MachineTimerCtrl.Parameter.default
+    val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
+    val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
+    val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
   }
 
-  object Parameter {
-    def default(
-      peripherals: Any,
-      sysFrequency: HertzNumber,
-      dbgFrequency: HertzNumber,
-      interrupts: Int,
-      onChipRamSize: BigInt = 128 kB
-    ) = Parameter(sysFrequency, dbgFrequency, onChipRamSize, interrupts, peripherals)
-  }
-
-  case class Io(p: Parameter) extends Bundle {
-    val clock = in(Bool)
-    val jtag = slave(Jtag())
-    val resets = ResetControllerCtrl.BuildConnection(p.resets)
-  }
-
-  class Helium(p: Parameter) extends Component {
-    val io_sys = Io(p)
-
-    def connectPeripherals() = {
-      val apbDecoder = Apb3Decoder(
-        master = system.apbBridge.io.apb,
-        slaves = system.apbMapping
-      )
-
-      for ((index, interrupt) <- system.irqMapping) {
-        system.plicCtrl.io.sources(index) := interrupt
-      }
+  class Helium(parameter: Parameter) extends PlatformComponent(parameter) {
+    val io_plat = new Bundle {
+      val reset = in(Bool)
+      val clock = in(Bool)
+      val jtag = slave(Jtag())
     }
 
-    def addApbDevice(port: Apb3, address: BigInt, size: BigInt) {
-      system.apbMapping += port -> (address, size)
-    }
+    override def initOnChipRam(path: String) = BinTools.initRam(system.onChipRamMem, path)
 
-    var nextInterruptNumber = 1
-    def addInterrupt(pin: Bool) {
-      system.irqMapping += nextInterruptNumber -> pin
-      nextInterruptNumber += 1
-    }
+    val resetCtrl = ResetControllerCtrl(parameter.resets)
+    parameter.resetLogic(resetCtrl, io_plat.reset, io_plat.clock)
 
-    val resetCtrl = ResetControllerCtrl(p.resets)
-    resetCtrl.io.buildConnection <> io_sys.resets
+    val clockCtrl = ClockControllerCtrl(parameter.clocks, resetCtrl)
+    parameter.clockLogic(clockCtrl, resetCtrl, io_plat.clock)
 
-    val clocks = new Area {
-      val systemClockDomain = ClockDomain(
-        clock = io_sys.clock,
-        reset = resetCtrl.getResetByName("system"),
-        frequency = FixedFrequency(p.sysFrequency),
-        config = ClockDomainConfig(
-          resetKind = spinal.core.SYNC,
-          resetActiveLevel = LOW
-        )
-      )
+    val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
 
-      val debugClockDomain = ClockDomain(
-        clock = io_sys.clock,
-        reset = resetCtrl.getResetByName("debug"),
-        frequency = FixedFrequency(p.sysFrequency),
-        config = ClockDomainConfig(
-          resetKind = spinal.core.SYNC,
-          resetActiveLevel = LOW
-        )
-      )
-    }
-
-    val system = new ClockingArea(clocks.systemClockDomain) {
-
-      val axiCrossbar = Axi4CrossbarFactory()
-
-      /* AXI Masters */
-
+      /* AXI Manager */
       val core = new Area {
         val mtimerInterrupt = Bool
         val globalInterrupt = Bool
 
         val config = VexRiscvConfig(
-          plugins = p.core += new DebugPlugin(clocks.debugClockDomain)
+          plugins = parameter.core += new DebugPlugin(clockCtrl.getClockDomainByName("debug"))
         )
 
         val cpu = new VexRiscv(config)
@@ -129,21 +83,16 @@ object Helium {
             plugin.timerInterrupt := mtimerInterrupt
           }
           case plugin: DebugPlugin =>
-            clocks.debugClockDomain {
+            clockCtrl.getClockDomainByName("debug") {
               resetCtrl.triggerByNameWithCond("system", RegNext(plugin.io.resetOut))
-              io_sys.jtag <> plugin.io.bus.fromJtag()
+              io_plat.jtag <> plugin.io.bus.fromJtag()
             }
           case _ =>
         }
       }
 
-      /* AXI Slaves */
-
-      val onChipRam = Axi4SharedOnChipRam(
-        dataWidth = 32,
-        byteCount = p.onChipRamSize,
-        idWidth = 4
-      )
+      /* AXI Subordinates */
+      val (onChipRamAxiPort, onChipRamMem) = parameter.onChipRamLogic(parameter.onChipRamSize)
 
       val apbBridge = Axi4SharedToApb3Bridge(
         addressWidth = 20,
@@ -151,19 +100,17 @@ object Helium {
         idWidth = 4
       )
 
-      val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()
-      val irqMapping = ArrayBuffer[(Int, Bool)]()
-
       /* Generate AXI Crossbar */
+      val axiCrossbar = Axi4CrossbarFactory()
 
       axiCrossbar.addSlaves(
-        onChipRam.io.axi -> (0x80000000L, p.onChipRamSize),
+        onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
         apbBridge.io.axi -> (0xF0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
-        core.iBus -> List(onChipRam.io.axi),
-        core.dBus -> List(onChipRam.io.axi, apbBridge.io.axi)
+        core.iBus -> List(onChipRamAxiPort),
+        core.dBus -> List(onChipRamAxiPort, apbBridge.io.axi)
       )
 
       axiCrossbar.addPipelining(apbBridge.io.axi)((crossbar, bridge) => {
@@ -173,7 +120,7 @@ object Helium {
         crossbar.readRsp << bridge.readRsp
       })
 
-      axiCrossbar.addPipelining(onChipRam.io.axi)((crossbar, ctrl) => {
+      axiCrossbar.addPipelining(onChipRamAxiPort)((crossbar, ctrl) => {
         crossbar.sharedCmd.halfPipe() >> ctrl.sharedCmd
         crossbar.writeData >/-> ctrl.writeData
         crossbar.writeRsp << ctrl.writeRsp
@@ -190,18 +137,24 @@ object Helium {
       axiCrossbar.build()
 
       /* Peripheral IP-Cores */
-      val mtimerCtrl = Apb3MachineTimer(p.mtimer)
-      core.mtimerInterrupt := mtimerCtrl.io.interrupt
-      apbMapping += mtimerCtrl.io.bus -> (0x20000, 4 kB)
-
-      val plicCtrl = Apb3Plic(p.plic)
+      val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      apbMapping += plicCtrl.io.bus -> (0xF0000, 64 kB)
-      irqMapping += 0 -> False
+      addApbDevice(plicCtrl.io.bus, 0xF0000, 64 kB)
+      addInterrupt(False)
 
-      val resetCtrlMapper = Apb3ResetController(p.resets)
-      apbMapping += resetCtrlMapper.io.bus -> (0x21000, 4 kB)
+      val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
+      core.mtimerInterrupt := mtimerCtrl.io.interrupt
+      addApbDevice(mtimerCtrl.io.bus, 0x20000, 4 kB)
+
+      val resetCtrlMapper = Apb3ResetController(parameter.resets)
       resetCtrlMapper.io.config <> resetCtrl.io.config
+      addApbDevice(resetCtrlMapper.io.bus, 0x21000, 4 kB)
+
+      val clockCtrlMapper = Apb3ClockController(parameter.clocks)
+      clockCtrlMapper.io.config <> clockCtrl.io.config
+      addApbDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
+
+      publishApbComponents(apbBridge, plicCtrl)
     }
   }
 }

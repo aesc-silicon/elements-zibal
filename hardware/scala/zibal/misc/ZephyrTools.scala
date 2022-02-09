@@ -10,7 +10,7 @@ import spinal.lib.bus.misc.SizeMapping
 import zibal.peripherals.io.gpio.Apb3Gpio
 import zibal.peripherals.com.uart.Apb3Uart
 import zibal.peripherals.com.spi.Apb3SpiMaster
-import zibal.peripherals.com.spi.AmbaSpiXipMaster
+import zibal.peripherals.com.spi.Axi4SharedSpiXipMaster
 import zibal.peripherals.com.i2c.Apb3I2cController
 
 
@@ -35,7 +35,7 @@ CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=${clockSpeed}
       apbMapping.foreach { case (ip, size) => ips += ip.parent.component }
 
       val xip = ips.filter {
-        case _: AmbaSpiXipMaster => true
+        case _: Axi4SharedSpiXipMaster => true
         case _ => false
       }
       if (xip.isEmpty) {
@@ -161,10 +161,10 @@ endif
 
   case class DeviceTree(config: ElementsConfig.ElementsConfig) {
 
-    def generate(platform: String, clockDomain: ClockDomain,
+    def generate(filename: String, platform: String,
                  configs: mutable.LinkedHashMap[Axi4Bus,Axi4CrossbarSlaveConfig],
                  bridge: Axi4Shared, apbMapping: ArrayBuffer[(Apb3, SizeMapping)],
-                 irqMapping: ArrayBuffer[(Int, Bool)], filename: String) = {
+                 irqMapping: ArrayBuffer[(Int, Bool)]) = {
       val writer = new PrintWriter(new File(config.buildPath + filename))
       println(s"Generate ${filename}")
 
@@ -188,11 +188,11 @@ endif
               case _: Apb3Uart =>
                 val ip = parent.asInstanceOf[Apb3Uart]
                 val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTree(parent.toString(), regAddress, size.size, clockDomain, irqNumber(0)._1)
+                ip.deviceTree(parent.toString(), regAddress, size.size, irqNumber(0)._1)
               case _: Apb3I2cController =>
                 val ip = parent.asInstanceOf[Apb3I2cController]
                 val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTree(parent.toString(), regAddress, size.size, clockDomain, irqNumber(0)._1)
+                ip.deviceTree(parent.toString(), regAddress, size.size, irqNumber(0)._1)
               case _: Apb3SpiMaster =>
                 val ip = parent.asInstanceOf[Apb3SpiMaster]
                 val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)

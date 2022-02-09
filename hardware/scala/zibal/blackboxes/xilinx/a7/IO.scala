@@ -10,11 +10,16 @@ abstract class XilinxIo(pin: String) extends Bundle {
   var pinName = pin
 
   var ioStandardName = ""
+  var ioTerm = ""
+  var ioSlew = ""
   var clockSpeed: HertzNumber = 1 Hz
+  var dedicatedClockRoute = true
   var comment_ = ""
 
   def getPin() = this.pinName
   def getIoStandard() = this.ioStandardName
+  def getTerm() = this.ioTerm
+  def getSlew() = this.ioSlew
   def getClockSpeed() = this.clockSpeed
 }
 
@@ -30,6 +35,18 @@ object XilinxCmosIo {
     }
     def clock(speed: HertzNumber) = {
       this.clockSpeed = speed
+      this
+    }
+    def disableDedicatedClockRoute = {
+      this.dedicatedClockRoute = false
+      this
+    }
+    def inTerm(term: String) = {
+      this.ioTerm = term
+      this
+    }
+    def slew(slew: String) = {
+      this.ioSlew = slew
       this
     }
     def comment(comment: String) = {
@@ -57,6 +74,18 @@ object XilinxLvdsInput {
       this.clockSpeed = speed
       this
     }
+    def disableDedicatedClockRoute = {
+      this.dedicatedClockRoute = false
+      this
+    }
+    def inTerm(term: String) = {
+      this.ioTerm = term
+      this
+    }
+    def slew(slew: String) = {
+      this.ioSlew = slew
+      this
+    }
     def comment(comment: String) = {
       this.comment_ = comment
       this
@@ -72,6 +101,18 @@ object XilinxLvdsInput {
     }
     def clock(speed: HertzNumber) = {
       this.clockSpeed = speed
+      this
+    }
+    def disableDedicatedClockRoute = {
+      this.dedicatedClockRoute = false
+      this
+    }
+    def inTerm(term: String) = {
+      this.ioTerm = term
+      this
+    }
+    def slew(slew: String) = {
+      this.ioSlew = slew
       this
     }
     def comment(comment: String) = {
@@ -94,6 +135,18 @@ object XilinxLvdsOutput {
       this.clockSpeed = speed
       this
     }
+    def disableDedicatedClockRoute = {
+      this.dedicatedClockRoute = false
+      this
+    }
+    def inTerm(term: String) = {
+      this.ioTerm = term
+      this
+    }
+    def slew(slew: String) = {
+      this.ioSlew = slew
+      this
+    }
     def comment(comment: String) = {
       this.comment_ = comment
       this
@@ -109,6 +162,18 @@ object XilinxLvdsOutput {
     }
     def clock(speed: HertzNumber) = {
       this.clockSpeed = speed
+      this
+    }
+    def disableDedicatedClockRoute = {
+      this.dedicatedClockRoute = false
+      this
+    }
+    def inTerm(term: String) = {
+      this.ioTerm = term
+      this
+    }
+    def slew(slew: String) = {
+      this.ioSlew = slew
       this
     }
     def comment(comment: String) = {
@@ -432,20 +497,6 @@ object PLL {
       val divide = (multipliedFrequency / desiredFrequency).toInt
       this.addClock(this.CLKOUT5, 5, divide, phase, dutyCycle)
       this.CLKOUT5
-    }
-
-    def simClock(frequency: HertzNumber, clock: Bool) {
-      val sleepPeriod = frequency.toTime.decompose._1.toInt
-      fork {
-        clock #= false
-        sleep(100 * 1000)
-        while(true) {
-          clock #= true
-          sleep((sleepPeriod / 2) * 1000)
-          clock #= false
-          sleep((sleepPeriod / 2) * 1000)
-        }
-      }
     }
   }
 }

@@ -10,9 +10,13 @@ object XilinxTools {
 
   case class Xdc(config: ElementsConfig.ElementsConfig) {
     var clocks = List[(String, String)]()
+    var vrefs = List[(Int, Double)]()
     def addGeneratedClock(clock: Bool) = {
       val path = clock.getComponent().getPath().split("/", 2)(1)
       clocks = clocks :+ (clock.getName(), path+"/"+clock.getName())
+    }
+    def addInternalVref(bank: Int, vref: Double) = {
+      vrefs = vrefs :+ (bank, vref)
     }
     def generate(io: Data, emitVoltage: Boolean = true, emitSpi: Boolean = false) = {
       val file = s"${config.zibalBuildPath}${config.className}.xdc"
@@ -29,6 +33,9 @@ object XilinxTools {
         writer.write("set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]\n")
       }
       writer.write("# IOs\n")
+      for ((bank, vref) <- vrefs) {
+        writer.write(s"set_property INTERNAL_VREF ${vref} [get_iobanks ${bank}]\n")
+      }
       io.component.getOrdredNodeIo.foreach { baseType =>
         val name = baseType.getName()
         val instance = baseType.parent match {
@@ -45,15 +52,24 @@ object XilinxTools {
           val time = (clockSpeed / 1.0e-9).floatValue()
           writer.write(s"create_clock -name ${name}_pin -period $time [get_ports {$name}]\n")
         }
-        for ((name, pin) <- clocks) {
-          writer.write(s"create_generated_clock -name clk_${name} [get_pins ${pin}]\n")
+        if (!instance.dedicatedClockRoute) {
+          writer.write(s"set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {$name}]\n")
         }
-
+        if (!instance.ioSlew.equals("")) {
+          writer.write(s"set_property SLEW ${instance.ioSlew} [get_ports {$name}]\n")
+        }
+        if (!instance.ioTerm.equals("")) {
+          writer.write(s"set_property IN_TERM ${instance.ioTerm} [get_ports {$name}]\n")
+        }
         writer.write(s"set_property PACKAGE_PIN $pin [get_ports {$name}]\n")
         writer.write(s"set_property IOSTANDARD $ioStandard [get_ports {$name}]\n")
         if (!instance.comment_.equals("")) {
           writer.write(s"${instance.comment_}\n")
         }
+      }
+      writer.write("# GENERATED CLOCKs\n")
+      for ((name, pin) <- clocks) {
+        writer.write(s"create_generated_clock -name clk_${name} [get_pins ${pin}]\n")
       }
       writer.close()
     }
