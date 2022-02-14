@@ -118,18 +118,6 @@ object TestCases {
     }
 
     def frequency(frequencyPin: Bool, clock: HertzNumber, txd: Bool, baudPeriod: Int) {
-
-      def decompose(value: BigDecimal): (BigDecimal, String) = value match {
-        case d if d > 1.0e18 => (value / 1.0e18, "EHz")
-        case d if d > 1.0e15 => (value / 1.0e15, "PHz")
-        case d if d > 1.0e12 => (value / 1.0e12, "THz")
-        case d if d > 1.0e9  => (value / 1.0e9,  "GHz")
-        case d if d > 1.0e6  => (value / 1.0e6,  "MHz")
-        case d if d > 1.0e3  => (value / 1.0e3,  "kHz")
-        case d if d > 1.0    => (value / 1.0,    "Hz")
-        case _               => (value,          "Unknown")
-      }
-
       val (clockPeriod, unit) = clock.toTime.decompose
       require (unit == "ns")
       val clockDuration = (clock / (1 sec).toHertz).toInt
@@ -147,9 +135,7 @@ object TestCases {
           SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
           stdout += SimulationHelper.uartReceive(txd, baudPeriod).toChar
         }
-        val frequencyMatch = decompose(clock.toBigDecimal)._1
-        // TODO Wait for upstream patch
-        //val frequencyMatch = clock.decompose._1
+        val frequencyMatch = clock.decompose._1
         println(s"Received stdout: ${stdout}")
         f"${frequencyMatch}\\d{6} Hz".r findFirstIn stdout match {
           case Some(_) => simSuccess
