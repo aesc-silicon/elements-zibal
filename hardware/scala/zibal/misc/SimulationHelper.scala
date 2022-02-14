@@ -39,7 +39,7 @@ object SimulationHelper {
   def wait(duration: TimeNumber) {
     val durationCycles = (duration.toDouble * 1000000000).toInt
     println(s"Sleep for ${durationCycles} cycles")
-    sleep(durationCycles * 1000)
+    0 until 1000 foreach { _ => sleep(durationCycles) }
   }
   def waitUntilOrFail(cond: => Boolean, duration: TimeNumber, checks: TimeNumber): Boolean = {
     val durationCycles = (duration.toDouble * 1000000000).toInt
@@ -50,7 +50,7 @@ object SimulationHelper {
       if (cond) {
         return true
       }
-      sleep(checkCycles * 1000)
+      0 until 1000 foreach { _ => sleep(checkCycles) }
     }
     assert(false, s"waitUntil failed because condtition not happend after ${sleepDuration} checks.")
     false
