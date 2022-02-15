@@ -121,17 +121,17 @@ object Helium {
       })
 
       axiCrossbar.addPipelining(onChipRamAxiPort)((crossbar, ctrl) => {
-        crossbar.sharedCmd.halfPipe() >> ctrl.sharedCmd
+        crossbar.sharedCmd >/-> ctrl.sharedCmd
         crossbar.writeData >/-> ctrl.writeData
-        crossbar.writeRsp << ctrl.writeRsp
-        crossbar.readRsp << ctrl.readRsp
+        crossbar.writeRsp <-/< ctrl.writeRsp
+        crossbar.readRsp <-/< ctrl.readRsp
       })
 
       axiCrossbar.addPipelining(core.dBus)((cpu, crossbar) => {
-        cpu.sharedCmd >> crossbar.sharedCmd
-        cpu.writeData >> crossbar.writeData
-        cpu.writeRsp << crossbar.writeRsp
-        cpu.readRsp <-< crossbar.readRsp //Data cache directly use read responses without buffering, so pipeline it for FMax
+        cpu.sharedCmd >/-> crossbar.sharedCmd
+        cpu.writeData >/-> crossbar.writeData
+        cpu.writeRsp <-/< crossbar.writeRsp
+        cpu.readRsp <-/< crossbar.readRsp
       })
 
       axiCrossbar.build()
