@@ -128,7 +128,9 @@ object AX7101Top {
         case _ =>
           val top = AX7101Top(getConfig)
           top.soc.initOnChipRam(elementsConfig.zephyrBuildPath + "/zephyr.bin")
-          XilinxTools.Xdc(elementsConfig).generate(top.io)
+          val xdc = XilinxTools.Xdc(elementsConfig)
+          top.soc.clockCtrl.generatedClocks foreach { clock => xdc.addGeneratedClock(clock) }
+          xdc.generate(top.io)
           top
       }
     })

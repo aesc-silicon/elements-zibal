@@ -42,6 +42,7 @@ object ClockControllerCtrl {
     }
     io.clocks := io.buildConnection.clocks
 
+    var generatedClocks = List[Bool]()
     var clockDict = Map[String, ClockDomain]()
     for ((domain, index) <- parameter.domains.zipWithIndex) {
       clockDict += domain.name -> {
@@ -58,6 +59,7 @@ object ClockControllerCtrl {
       }
     }
     def getClockDomainByName(name: String): ClockDomain = clockDict.get(name).get
+
 
     def buildXilinxPll(
       clock: Bool,
@@ -85,10 +87,19 @@ object ClockControllerCtrl {
         case 4 => clockCtrl.pll.addClock4(frequency)
         case 5 => clockCtrl.pll.addClock5(frequency)
       }
+      def getClockPin(index: Int) = index match {
+        case 0 => clockCtrl.pll.CLKOUT0
+        case 1 => clockCtrl.pll.CLKOUT1
+        case 2 => clockCtrl.pll.CLKOUT2
+        case 3 => clockCtrl.pll.CLKOUT3
+        case 4 => clockCtrl.pll.CLKOUT4
+        case 5 => clockCtrl.pll.CLKOUT5
+      }
 
       for ((clock, index) <- clocks.zipWithIndex) {
         val (domainIndex, domain) = parameter.getDomainByName(clock)
-        io. buildConnection.clocks(domainIndex) := addClock(index, domain.frequency)
+        io.buildConnection.clocks(domainIndex) := addClock(index, domain.frequency)
+        generatedClocks = generatedClocks :+ getClockPin(index)
       }
     }
 
