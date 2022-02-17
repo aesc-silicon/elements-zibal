@@ -5,35 +5,37 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.sim._
 import spinal.core._
 import spinal.core.sim._
+import zibal.CheckTester._
 import spinal.lib.bus.amba3.apb.sim.Apb3Driver
 
 
 class Apb3UartTest extends AnyFunSuite {
   test("basic") {
     val compiled = SimConfig.withWave.compile {
-      /* TODO: InitParameter will throwe an exception because no ClockDomain is defined */
-      val dut = Apb3Uart(
-        UartCtrl.Parameter(
-          UartCtrl.PermissionParameter.full,
-          UartCtrl.MemoryMappedParameter.default
-        )
-      )
-      dut
+      val cd = ClockDomain.current.copy(frequency = FixedFrequency(100 MHz))
+      val area = new ClockingArea(cd) {
+        val dut = Apb3Uart(UartCtrl.Parameter.default)
+      }
+      area.dut
     }
     compiled.doSim("testIO") { dut =>
-      dut.clockDomain.forkStimulus(10)
+      dut.clockDomain.forkStimulus(10 * 1000)
       fork {
         dut.clockDomain.fallingEdge()
-        sleep(10)
+        sleep(10 * 1000)
         while (true) {
           dut.clockDomain.clockToggle()
-          sleep(5)
+          sleep(5 * 1000)
         }
       }
 
       val apb = new Apb3Driver(dut.io.bus, dut.clockDomain)
       dut.io.uart.rxd #= true
       dut.io.uart.cts #= false
+
+      dut.clockDomain.assertReset()
+      sleep(100 * 1000)
+      dut.clockDomain.deassertReset()
 
       /* Init IP-Core */
       apb.write(BigInt("08", 16), BigInt("0000006B", 16))
@@ -53,19 +55,23 @@ class Apb3UartTest extends AnyFunSuite {
 
     }
     compiled.doSim("testIRQ") { dut =>
-      dut.clockDomain.forkStimulus(10)
+      dut.clockDomain.forkStimulus(10 * 1000)
       fork {
         dut.clockDomain.fallingEdge()
-        sleep(10)
+        sleep(10 * 1000)
         while (true) {
           dut.clockDomain.clockToggle()
-          sleep(5)
+          sleep(5 * 1000)
         }
       }
 
       val apb = new Apb3Driver(dut.io.bus, dut.clockDomain)
       dut.io.uart.rxd #= true
       dut.io.uart.cts #= false
+
+      dut.clockDomain.assertReset()
+      sleep(100 * 1000)
+      dut.clockDomain.deassertReset()
 
       /* Init IP-Core */
       apb.write(BigInt("08", 16), BigInt("0000006B", 16))

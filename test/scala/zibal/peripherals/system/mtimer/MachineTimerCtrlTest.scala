@@ -1,4 +1,4 @@
-package zibal.peripherals.misc.mtimer
+package zibal.peripherals.system.mtimer
 
 import org.scalatest.funsuite.AnyFunSuite
 

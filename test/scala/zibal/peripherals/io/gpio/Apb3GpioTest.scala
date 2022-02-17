@@ -5,9 +5,20 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.sim._
 import spinal.core._
 import spinal.core.sim._
+import zibal.CheckTester._
 import spinal.lib.bus.amba3.apb.sim.Apb3Driver
 
 class Apb3GpioTest extends AnyFunSuite {
+  test("parameters") {
+    generationShouldPass(Apb3Gpio(GpioCtrl.Parameter.default))
+    generationShouldPass(Apb3Gpio(GpioCtrl.Parameter.full()))
+    generationShouldPass(Apb3Gpio(GpioCtrl.Parameter.noInterrupt()))
+    generationShouldPass(Apb3Gpio(GpioCtrl.Parameter.onlyOutput()))
+    generationShouldPass(Apb3Gpio(GpioCtrl.Parameter.onlyInput()))
+
+    generationShouldFail(Apb3Gpio(GpioCtrl.Parameter.full(33)))
+  }
+
   test("basic") {
     val compiled = SimConfig.withWave.compile {
       val dut = Apb3Gpio(GpioCtrl.Parameter(

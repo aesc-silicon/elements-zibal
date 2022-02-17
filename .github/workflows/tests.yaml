@@ -4,8 +4,6 @@ name: Zibal Tests
 
 on:
   push:
-    paths:
-      - '.github/workflows/tests.yaml'
     branches:
       - 'main'
   pull_request:
