@@ -10,6 +10,14 @@ import spinal.lib.io.{TriStateArray, TriState}
 object GpioCtrl {
   def apply(p: Parameter = Parameter.default) = GpioCtrl(p)
 
+  /** Parameters for GPIO controller.
+   *
+   *  @param width bit width of the controller and therefore the number of GPIOs.
+   *  @param readBufferDepth register depth for reading values. Disabled when 0. Defaults to 0.
+   *  @param output list of pin numbers which can drive an output signal. Defaults to null.
+   *  @param input list of pin numbers which can read ana input signal. Defaults to null
+   *  @param interrupt list of pin numbers which are interrupt capable. Defaults to null.
+   */
   case class Parameter(
     width: Int,
     readBufferDepth: Int = 0,
@@ -17,6 +25,7 @@ object GpioCtrl {
     var input: Seq[Int] = null,
     var interrupt: Seq[Int] = null
   ) {
+    require(width < 33, "Only up to 32 GPIOs are allowed.")
     if (output == null)
       output = (0 until width)
     if (input == null)
@@ -26,17 +35,15 @@ object GpioCtrl {
   }
   object Parameter {
     def default = Parameter(32, 1, null, null, null)
+    def full(width: Int = 32) = Parameter(width, 1, null, null, null)
+    def noInterrupt(width: Int = 32) = Parameter(width, 1, null, null, Seq[Int]())
+    def onlyOutput(width: Int = 32) = Parameter(width, 0, null, Seq[Int](), Seq[Int]())
+    def onlyInput(width: Int = 32) = Parameter(width, 0, Seq[Int](), null, null)
   }
 
   case class Config(p: Parameter) extends Bundle {
     val write = Bits(p.width bits)
     val direction = Bits(p.width bits)
-  }
-  case class EnableConfig(p: Parameter) extends Bundle {
-    val high = Bits(p.width bits)
-    val low = Bits(p.width bits)
-    val rise = Bits(p.width bits)
-    val fall = Bits(p.width bits)
   }
   case class InterruptConfig(p: Parameter) extends Bundle {
     val valid = out(Bits(p.width bits))
@@ -47,8 +54,6 @@ object GpioCtrl {
     val gpio = Gpio.Io(p)
     val config = in(Config(p))
     val value = out(Bits(p.width bits))
-    /* TODO: enable is unused */
-    val enable = in(EnableConfig(p))
     val interrupt = out(Bool)
     val irqHigh = InterruptConfig(p)
     val irqLow = InterruptConfig(p)
@@ -79,6 +84,29 @@ object GpioCtrl {
                     io.irqRise.pending | io.irqFall.pending).orR
   }
 
+  /** Register mapping
+    *
+    * 0x0000|Rx: Input level of each pin. 0 when no input pin added.
+    * 0x0004|RW: Output level of each pin. Always returns 0 when no output pin added.
+    * 0x0008|RW: Direction of each pin. High means output, low input. Always return 0 when n
+    *            output pin added.
+    * 0x0010|RW: Input high interrupt pending.
+    *            Returns pending interrupts for each pin during read.
+    *            Clears interrupts during write.
+    * 0x0014|RW: Input high interrupt mask.
+    * 0x0018|RW: Input low interrupt pending.
+    *            Returns pending interrupts for each pin during read.
+    *            Clears interrupts during write.
+    * 0x001C|RW: Input low interrupt mask.
+    * 0x0020|RW: Input rising edge interrupt pending.
+    *            Returns pending interrupts for each pin during read.
+    *            Clears interrupts during write.
+    * 0x0024|RW: Input rising edge interrupt mask.
+    * 0x0028|RW: Input falling edge interrupt pending.
+    *            Returns pending interrupts for each pin during read.
+    *            Clears interrupts during write.
+    * 0x002C|RW: Input falling edge interrupt mask.
+    */
   case class Mapper(
     busCtrl: BusSlaveFactory,
     ctrl: Io,
