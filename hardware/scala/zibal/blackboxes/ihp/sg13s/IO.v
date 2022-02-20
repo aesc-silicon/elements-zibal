@@ -41,3 +41,12 @@ module INVJILTX2 (
 assign Q = !A;
 
 endmodule
+
+module INVJIX12 (
+  input  A,
+  output Q
+);
+
+assign Q = !A;
+
+endmodule
