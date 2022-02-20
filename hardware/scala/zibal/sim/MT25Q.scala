@@ -17,8 +17,8 @@ object MT25Q {
       val reset = in(Bool)
       val chipSelect = in(Bool)
       val dataClock = in(Bool)
-      val dataIn = in(Bool)
-      val dataOut = out(Bool)
+      val dataIn = in(Bool).addTag(crossClockDomain)
+      val dataOut = out(Bool).addTag(crossClockDomain)
     }
 
     val chipSelect = !io.chipSelect

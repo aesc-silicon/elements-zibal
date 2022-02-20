@@ -36,7 +36,7 @@ object DH012Board {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, DH012.quartzFrequency, 1 ms)
+          testCases.addClock(dut.io.clock, DH012.quartzFrequency, 150 ms)
           testCases.addReset(dut.io.reset, 1 us)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }

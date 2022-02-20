@@ -121,8 +121,8 @@ object SpiMasterCtrl {
     val config = new Area {
       val cfg = Reg(ctrl.config)
       cfg.ss.activeHigh init(0)
-      if (p.init.clockDivider > 0) {
-        val clock = U(ClockDomain.current.frequency.getValue.toLong / p.init.clockDivider / 2,
+      if (p.init.frequency.toLong > 1) {
+        val clock = U(ClockDomain.current.frequency.getValue.toLong / p.init.frequency.toLong / 2,
                       p.timerWidth bits)
         cfg.clockDivider init(clock)
         cfg.ss.setup init(clock)

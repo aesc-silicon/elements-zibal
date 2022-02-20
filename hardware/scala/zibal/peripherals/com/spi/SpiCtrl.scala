@@ -1,14 +1,17 @@
 package zibal.peripherals.com.spi
 
+import spinal.core._
+
+
 object SpiCtrl {
   case class InitParameter(
     cpol: Boolean = false,
     cpha: Boolean = false,
-    clockDivider: Int = 0
+    frequency: HertzNumber = 1 Hz
   )
   object InitParameter {
-    def default = InitParameter(false, false, 0)
-    def xip = InitParameter(false, false, 1000000)
+    def default = InitParameter(false, false, 100 kHz)
+    def xip = InitParameter(false, false, 1 MHz)
   }
 
   case class PermissionParameter(
