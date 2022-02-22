@@ -8,6 +8,7 @@ import spinal.lib.bus.avalon._
 import spinal.lib.bus.wishbone._
 import zibal.multimedia.{Rgb, MultimediaStream}
 
+
 object Vga {
   case class Io(p: VgaCtrl.Parameter) extends Bundle with IMasterSlave {
     val pixels = Rgb(p.multimediaConfig.rgbConfig)
@@ -37,42 +38,6 @@ object Vga {
     ctrl.io.stream <> io.stream
 
     val mapper = VgaCtrl.Mapper(factory(io.bus), ctrl.io, p)
-/*
-
-    def content = for (index <- 0 until 20 * 15) yield {
-      val foo = Rgb(p.rgbConfig)
-      foo.r := 0
-      foo.g := 0
-      foo.b := 0
-      foo
-    }
-
-    val data = Stream(Rgb(p.rgbConfig))
-
-    val framebuffer = Mem(Rgb(p.rgbConfig), content)
-    val addressX = (ctrl.io.pixelX / 40)
-    val addressY = 20 * (ctrl.io.pixelY / 40)
-    val address = addressX + addressY
-    data.payload := framebuffer(address(0, 9 bits))
-
-    val addr = Reg(UInt(9 bits))
-    val pixel = Reg(Rgb(p.rgbConfig))
-    val write = Bool
-    framebuffer.write(addr, pixel, write)
-
-    ctrl.io.data <> data
-
-
-
-
-
-
-
-
-    mapper.busCtrl.write(addr, 0x0)
-    mapper.busCtrl.write(pixel, 0x4)
-    write := mapper.busCtrl.isWriting(0x8)
-*/
   }
 }
 

@@ -5,6 +5,7 @@ import spinal.lib._
 
 import zibal.multimedia.TimingsConfig
 
+
 object SyncPulse {
 
   case class Engine(timings: TimingsConfig, enable: Bool) extends Area {

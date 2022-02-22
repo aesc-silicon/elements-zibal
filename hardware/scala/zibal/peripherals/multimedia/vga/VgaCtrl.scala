@@ -6,12 +6,13 @@ import spinal.lib.bus.misc.BusSlaveFactory
 import zibal.multimedia.{Rgb, MultimediaConfig, MultimediaStream}
 import zibal.peripherals.multimedia.SyncPulse
 
+
 object VgaCtrl {
   def apply(p: Parameter = Parameter.default) = VgaCtrl(p)
 
   case class Parameter(
     multimediaConfig: MultimediaConfig
-  ) {}
+  )
   object Parameter {
     def default = Parameter(MultimediaConfig.default())
     def full = Parameter(MultimediaConfig.full())
