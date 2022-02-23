@@ -34,21 +34,21 @@ object AX7035Board {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, AX7035.quartzFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, AX7035.oscillatorFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, AX7035.quartzFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, AX7035.oscillatorFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, AX7035.quartzFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, AX7035.oscillatorFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -109,7 +109,7 @@ object AX7035Top {
     Helium.Parameter(socParameter, 128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getQuartzFrequency,
+        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
           List("system", "debug"), 21)
       })
   }
@@ -138,7 +138,7 @@ object AX7035Top {
   case class AX7035Top(parameter: Helium.Parameter) extends Component {
     var boardParameter = parameter.getBoardParameter.asInstanceOf[AX7035.Parameter]
     val io = new Bundle {
-      val clock = XilinxCmosIo("Y18").clock(boardParameter.getQuartzFrequency)
+      val clock = XilinxCmosIo("Y18").clock(boardParameter.getOscillatorFrequency)
       val uartStd = new Bundle {
         val txd = XilinxCmosIo("G16")
         val rxd = XilinxCmosIo("G15")

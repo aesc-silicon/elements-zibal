@@ -34,21 +34,21 @@ object AX7101Board {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, AX7101.quartzFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, AX7101.oscillatorFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, AX7101.quartzFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, AX7101.oscillatorFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, AX7101.quartzFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, AX7101.oscillatorFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -110,7 +110,7 @@ object AX7101Top {
     Helium.Parameter(socParameter, 128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getQuartzFrequency,
+        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
           List("system", "debug"), 5)
       })
   }
@@ -139,7 +139,7 @@ object AX7101Top {
   case class AX7101Top(parameter: Helium.Parameter) extends Component {
     var boardParameter = parameter.getBoardParameter.asInstanceOf[AX7101.Parameter]
     val io = new Bundle {
-      val clockPos = XilinxLvdsInput.Pos("R4").clock(boardParameter.getQuartzFrequency).ioStandard("DIFF_SSTL15")
+      val clockPos = XilinxLvdsInput.Pos("R4").clock(boardParameter.getOscillatorFrequency).ioStandard("DIFF_SSTL15")
       val clockNeg = XilinxLvdsInput.Neg("T4").ioStandard("DIFF_SSTL15")
       val uartStd = new Bundle {
         val txd = XilinxCmosIo("AB15")

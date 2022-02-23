@@ -9,9 +9,9 @@ case class KitParameter(
   clocks: List[ClockParameter]
 )
 
-abstract class BoardParameter(kitParameter: KitParameter, quartzFrequency: HertzNumber) {
+abstract class BoardParameter(kitParameter: KitParameter, oscillatorFrequency: HertzNumber) {
   def getKitParameter = kitParameter
-  def getQuartzFrequency = quartzFrequency
+  def getOscillatorFrequency = oscillatorFrequency
 }
 
 case class ClockParameter(

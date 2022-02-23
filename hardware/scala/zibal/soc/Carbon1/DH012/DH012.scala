@@ -36,7 +36,7 @@ object DH012Board {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, DH012.quartzFrequency, 150 ms)
+          testCases.addClock(dut.io.clock, DH012.oscillatorFrequency, 150 ms)
           testCases.addReset(dut.io.reset, 1 us)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
@@ -175,7 +175,7 @@ object DH012Top {
           io.addCorner("topleft", 180, "corner")
           io.generate(top.io, elementsConfig.zibalBuildPath)
           val sdc = CadenceTools.Sdc(elementsConfig)
-          sdc.addClock(top.io.clock.PAD, top.boardParameter.getQuartzFrequency)
+          sdc.addClock(top.io.clock.PAD, top.boardParameter.getOscillatorFrequency)
           sdc.addClock(top.io.jtag.tck.PAD, top.boardParameter.getJtagFrequency)
           sdc.generate(elementsConfig.zibalBuildPath)
           top

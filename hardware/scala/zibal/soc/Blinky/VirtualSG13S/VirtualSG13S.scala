@@ -25,7 +25,7 @@ object VirtualSG13SBoard {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, Nexys4DDR.quartzFrequency, 3 ms)
+          testCases.addClock(dut.io.clock, Nexys4DDR.oscillatorFrequency, 3 ms)
           testCases.addReset(dut.io.reset, 1 us)
         }
       case _ =>
@@ -81,7 +81,7 @@ object VirtualSG13STop {
           io.addCorner("topleft", 180, "corner")
           io.generate(top.io, elementsConfig.zibalBuildPath)
           val sdc = CadenceTools.Sdc(elementsConfig)
-          sdc.addClock(top.io.clock.PAD, Nexys4DDR.quartzFrequency)
+          sdc.addClock(top.io.clock.PAD, Nexys4DDR.oscillatorFrequency)
           sdc.generate(elementsConfig.zibalBuildPath)
           top
         })

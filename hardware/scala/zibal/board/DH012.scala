@@ -6,13 +6,13 @@ import spinal.lib._
 
 object DH012 {
 
-  val quartzFrequency = 50 MHz
+  val oscillatorFrequency = 50 MHz
 
   case class Parameter(
     kitParameter: KitParameter
   ) extends BoardParameter(
     kitParameter,
-    quartzFrequency
+    oscillatorFrequency
   ) {
     def getJtagFrequency = 10 MHz
   }

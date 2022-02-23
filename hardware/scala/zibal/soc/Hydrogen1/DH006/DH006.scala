@@ -34,21 +34,21 @@ object DH006Board {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, DH006.quartzFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, DH006.oscillatorFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, DH006.quartzFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, DH006.oscillatorFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, DH006.quartzFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, DH006.oscillatorFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -120,7 +120,7 @@ object DH006Top {
     Hydrogen.Parameter(socParameter, 128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getQuartzFrequency,
+        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
           List("system", "debug"), 9)
       })
   }
@@ -150,7 +150,7 @@ object DH006Top {
   case class DH006Top(parameter: Hydrogen.Parameter) extends Component {
     var boardParameter = parameter.getBoardParameter.asInstanceOf[DH006.Parameter]
     val io = new Bundle {
-      val clock = XilinxCmosIo("E12").clock(boardParameter.getQuartzFrequency)
+      val clock = XilinxCmosIo("E12").clock(boardParameter.getOscillatorFrequency)
       val jtag = new Bundle {
         val tms = XilinxCmosIo("R13")
         val tdi = XilinxCmosIo("N13")

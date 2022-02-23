@@ -34,21 +34,21 @@ object Nexys4DDRBoard {
         compiled.doSimUntilVoid("simulate") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, Nexys4DDR.quartzFrequency, 10 ms)
+          testCases.addClock(dut.io.clock, Nexys4DDR.oscillatorFrequency, 10 ms)
           testCases.dump(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "boot" =>
         compiled.doSimUntilVoid("boot") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.quartzFrequency, 10 ms)
+          testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.oscillatorFrequency, 10 ms)
           testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
         }
       case "mtimer" =>
         compiled.doSimUntilVoid("mtimer") { dut =>
           dut.simHook()
           val testCases = TestCases()
-          testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.quartzFrequency, 400 ms)
+          testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.oscillatorFrequency, 400 ms)
           testCases.heartbeat(dut.io.gpioStatus(0))
         }
       case _ =>
@@ -120,7 +120,7 @@ object Nexys4DDRTop {
     Helium.Parameter(socParameter, 128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getQuartzFrequency,
+        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
           List("system", "debug"), 9)
       })
   }
@@ -149,7 +149,7 @@ object Nexys4DDRTop {
   case class Nexys4DDRTop(parameter: Helium.Parameter) extends Component {
     var boardParameter = parameter.getBoardParameter.asInstanceOf[Nexys4DDR.Parameter]
     val io = new Bundle {
-      val clock = XilinxCmosIo("E3").clock(boardParameter.getQuartzFrequency)
+      val clock = XilinxCmosIo("E3").clock(boardParameter.getOscillatorFrequency)
       val jtag = new Bundle {
         val tms = XilinxCmosIo("H2")
         val tdi = XilinxCmosIo("G4")

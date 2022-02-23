@@ -24,7 +24,7 @@ object Nexys4DDRBoard {
       case "simulate" =>
         compiled.doSimUntilVoid("simulate") { dut =>
           val testCases = TestCases()
-          testCases.addClock(dut.io.clock, Nexys4DDR.quartzFrequency, 1 ms)
+          testCases.addClock(dut.io.clock, Nexys4DDR.oscillatorFrequency, 1 ms)
           testCases.addReset(dut.io.reset, 1 us)
         }
       case _ =>
@@ -76,7 +76,7 @@ object Nexys4DDRTop {
 
   case class Nexys4DDRTop() extends Component {
     val io = new Bundle {
-      val clock = XilinxCmosIo("E3").clock(Nexys4DDR.quartzFrequency)
+      val clock = XilinxCmosIo("E3").clock(Nexys4DDR.oscillatorFrequency)
       val reset = XilinxCmosIo("C12")
       val led = Vec(
         XilinxCmosIo("H17"),
