@@ -15,6 +15,7 @@ abstract class XilinxIo(pin: String) extends Bundle {
   var clockSpeed: HertzNumber = 1 Hz
   var dedicatedClockRoute = true
   var comment_ = ""
+  var pullType = ""
 
   def getPin() = this.pinName
   def getIoStandard() = this.ioStandardName
@@ -51,6 +52,11 @@ object XilinxCmosIo {
     }
     def comment(comment: String) = {
       this.comment_ = comment
+      this
+    }
+    // Only valid for IBUF, OBUFT and IOBUF!
+    def pull(pull: String) = {
+      this.pullType = pull
       this
     }
     def <>(that: IOBUF.IOBUF) = that.IO := this.PAD

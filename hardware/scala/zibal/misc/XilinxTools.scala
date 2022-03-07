@@ -61,6 +61,9 @@ object XilinxTools {
         if (!instance.ioTerm.equals("")) {
           writer.write(s"set_property IN_TERM ${instance.ioTerm} [get_ports {$name}]\n")
         }
+        if (!instance.pullType.equals("")) {
+          writer.write(s"set_property ${instance.pullType} TRUE [get_ports {$name}]\n")
+        }
         writer.write(s"set_property PACKAGE_PIN $pin [get_ports {$name}]\n")
         writer.write(s"set_property IOSTANDARD $ioStandard [get_ports {$name}]\n")
         if (!instance.comment_.equals("")) {
