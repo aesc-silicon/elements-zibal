@@ -31,16 +31,16 @@ object Helium2 {
     board.addLed("ok", soc.peripherals.gpioStatusCtrl, 1)
     board.addLed("error", soc.peripherals.gpioStatusCtrl, 2)
     board.addKey("reset", soc.peripherals.gpioStatusCtrl, 3)
-    board.addKey("player1_arrow_right", soc.peripherals.gpioACtrl, 0)
-    board.addKey("player1_arrow_up", soc.peripherals.gpioACtrl, 1)
-    board.addKey("player1_arrow_left", soc.peripherals.gpioACtrl, 2)
-    board.addKey("player1_arrow_down", soc.peripherals.gpioACtrl, 3)
-    board.addKey("player1_back_left", soc.peripherals.gpioACtrl, 4)
-    board.addKey("player1_back_right", soc.peripherals.gpioACtrl, 5)
-    board.addKey("player1_a", soc.peripherals.gpioACtrl, 6)
-    board.addKey("player1_b", soc.peripherals.gpioACtrl, 7)
-    board.addKey("player1_x", soc.peripherals.gpioACtrl, 8)
-    board.addKey("player1_y", soc.peripherals.gpioACtrl, 9)
+    board.addKey("player1_back_left", soc.peripherals.gpioACtrl, 0)
+    board.addKey("player1_back_right", soc.peripherals.gpioACtrl, 1)
+    board.addKey("player1_arrow_down", soc.peripherals.gpioACtrl, 2)
+    board.addKey("player1_arrow_left", soc.peripherals.gpioACtrl, 3)
+    board.addKey("player1_arrow_up", soc.peripherals.gpioACtrl, 4)
+    board.addKey("player1_arrow_right", soc.peripherals.gpioACtrl, 5)
+    board.addKey("player1_b", soc.peripherals.gpioACtrl, 6)
+    board.addKey("player1_a", soc.peripherals.gpioACtrl, 7)
+    board.addKey("player1_y", soc.peripherals.gpioACtrl, 8)
+    board.addKey("player1_x", soc.peripherals.gpioACtrl, 9)
     board.addKey("player1_select", soc.peripherals.gpioACtrl, 10)
     board.addKey("player1_start", soc.peripherals.gpioACtrl, 11)
     board.generateDeviceTree(soc.peripherals.uartStdCtrl)
@@ -51,7 +51,13 @@ object Helium2 {
   }
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 3) {
-    val uartStd = UartCtrl.Parameter.full
+    val uartStd = UartCtrl.Parameter(
+      permission = UartCtrl.PermissionParameter.full,
+      memory = UartCtrl.MemoryMappedParameter.full,
+      init = UartCtrl.InitParameter.default(115200),
+      flowControl = false
+    )
+
     val gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3))
     val gpioA = GpioCtrl.Parameter(12, 2, null, null, null)
     val vgaA = VgaCtrl.Parameter.default

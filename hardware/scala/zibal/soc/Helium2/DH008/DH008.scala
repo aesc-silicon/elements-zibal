@@ -163,7 +163,7 @@ object DH008Top {
           top.soc.initOnChipRam(elementsConfig.zephyrBuildPath + "/zephyr.bin")
           val xdc = XilinxTools.Xdc(elementsConfig)
           top.soc.clockCtrl.generatedClocks foreach { clock => xdc.addGeneratedClock(clock) }
-          xdc.generate(top.io)
+          xdc.generate(top.io, true, true)
           top
       }
     })
@@ -187,20 +187,22 @@ object DH008Top {
       }
       val gpioStatus = Vec(XilinxCmosIo("K12"), XilinxCmosIo("L13"), XilinxCmosIo("K13"),
                            XilinxCmosIo("G11"))
-      val gpioA = Vec(XilinxCmosIo("F2"), XilinxCmosIo("E1"), XilinxCmosIo("G5"),
-                      XilinxCmosIo("G4"), XilinxCmosIo("G1"), XilinxCmosIo("G2"),
-                      XilinxCmosIo("T15"), XilinxCmosIo("R15"), XilinxCmosIo("L5"),
-                      XilinxCmosIo("T14"), XilinxCmosIo("R10"), XilinxCmosIo("R11"))
+      val gpioA = Vec(XilinxCmosIo("F2").pull("PULLDOWN"), XilinxCmosIo("E1").pull("PULLDOWN"),
+                      XilinxCmosIo("G5").pull("PULLDOWN"), XilinxCmosIo("G4").pull("PULLDOWN"),
+                      XilinxCmosIo("G1").pull("PULLDOWN"), XilinxCmosIo("G2").pull("PULLDOWN"),
+                      XilinxCmosIo("L5").pull("PULLDOWN"), XilinxCmosIo("T14").pull("PULLDOWN"),
+                      XilinxCmosIo("T15").pull("PULLDOWN"), XilinxCmosIo("R15").pull("PULLDOWN"),
+                      XilinxCmosIo("R10").pull("PULLDOWN"), XilinxCmosIo("R11").pull("PULLDOWN"))
       val vgaA = new Bundle {
-        val hSync = XilinxCmosIo("T9")
-        val vSync = XilinxCmosIo("T10")
+        val hSync = XilinxCmosIo("K1")
+        val vSync = XilinxCmosIo("J1")
         val enable = XilinxCmosIo("N16")
-        val red = Vec(XilinxCmosIo("K3"), XilinxCmosIo("K2"), XilinxCmosIo("R5"),
-                      XilinxCmosIo("T5"))
-        val green = Vec(XilinxCmosIo("P4"), XilinxCmosIo("P3"), XilinxCmosIo("P10"),
-                        XilinxCmosIo("P11"))
-        val blue = Vec(XilinxCmosIo("R6"), XilinxCmosIo("R7"), XilinxCmosIo("H11"),
-                       XilinxCmosIo("G12"))
+        val red = Vec(XilinxCmosIo("L2"), XilinxCmosIo("L3"), XilinxCmosIo("K2"),
+                      XilinxCmosIo("K3"))
+        val green = Vec(XilinxCmosIo("P11"), XilinxCmosIo("P10"), XilinxCmosIo("P3"),
+                        XilinxCmosIo("P4"))
+        val blue = Vec(XilinxCmosIo("G12"), XilinxCmosIo("H11"), XilinxCmosIo("R7"),
+                       XilinxCmosIo("R6"))
       }
     }
 
@@ -226,10 +228,9 @@ object DH008Top {
       io.gpioA(index) <> IOBUF(soc.io_per.gpioA.pins(index))
     }
 
-    val vgaEnable = True
     io.vgaA.hSync <> OBUF(soc.io_per.vgaA.hSync)
     io.vgaA.vSync <> OBUF(soc.io_per.vgaA.vSync)
-    io.vgaA.enable <> OBUF(vgaEnable)
+    io.vgaA.enable <> OBUF(True)
     for (index <- 0 until 4) {
       io.vgaA.red(index) <> OBUF(soc.io_per.vgaA.pixels.r(index))
       io.vgaA.green(index) <> OBUF(soc.io_per.vgaA.pixels.g(index))

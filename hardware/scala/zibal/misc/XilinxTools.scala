@@ -13,7 +13,9 @@ object XilinxTools {
     var vrefs = List[(Int, Double)]()
     def addGeneratedClock(clock: Bool) = {
       val path = clock.getComponent().getPath().split("/", 2)(1)
-      clocks = clocks :+ (clock.getName(), path+"/"+clock.getName())
+      // FIXME: PLLE2_BASE is not named: soc/[PLLE2_BASE]/CLKOUT0
+      // core/Component.scala L285
+      // clocks = clocks :+ (clock.getName(), path+"/"+clock.getName())
     }
     def addInternalVref(bank: Int, vref: Double) = {
       vrefs = vrefs :+ (bank, vref)
