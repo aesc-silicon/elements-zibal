@@ -78,7 +78,7 @@ object TestCases {
         rxd #= true
         // Check at least something is sent
         SimulationHelper.waitUntilOrFail(txd.toBoolean == true, 1 us, 100 ns)
-        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
+        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 500 us, 100 ns)
         // Check successful transmission
         val receiveChar = SimulationHelper.uartReceive(txd, baudPeriod)
         assert(receiveChar == 'X')
@@ -96,7 +96,7 @@ object TestCases {
         rxd #= true
         // Check at least something is sent
         SimulationHelper.waitUntilOrFail(txd.toBoolean == true, 1 us, 100 ns)
-        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 200 us, 100 ns)
+        SimulationHelper.waitUntilOrFail(txd.toBoolean == false, 500 us, 100 ns)
         // Check successful transmission
         val receiveChar = SimulationHelper.uartReceive(txd, baudPeriod)
         assert(receiveChar == 'X')
