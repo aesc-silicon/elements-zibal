@@ -27,16 +27,14 @@ jobs:
           ref: stable
           path: vexriscv
 
+      - name: Checkout Nafarr
+        uses: actions/checkout@v2
+        with:
+          repository: aesc-silicon/elements-nafarr
+          ref: main
+          path: nafarr
+
       - name: Compile
         run: |
           cd zibal
           sbt compile
-
-      - name: Install verilator
-        run: |
-          sudo apt install -y verilator
-
-      - name: Run tests
-        run: |
-          cd zibal
-          sbt test

@@ -7,15 +7,17 @@ import spinal.lib._
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
-import zibal.peripherals.system.reset.ResetControllerCtrl.ResetControllerCtrl
-import zibal.peripherals.system.clock.ClockControllerCtrl.ClockControllerCtrl
+import nafarr.peripherals.system.reset._
+import nafarr.peripherals.system.reset.ResetControllerCtrl._
+import nafarr.peripherals.system.clock._
+import nafarr.peripherals.system.clock.ClockControllerCtrl._
+import nafarr.blackboxes.ihp.sg13s._
 
-import zibal.board.{KitParameter, BoardParameter, ResetParameter, ClockParameter}
+import zibal.board.{KitParameter, BoardParameter}
 import zibal.board.DH012
 import zibal.platform.Carbon
 import zibal.soc.Carbon1
 import zibal.misc.{BinTools, CadenceTools, SimulationHelper, ElementsConfig, TestCases}
-import zibal.blackboxes.ihp.sg13s._
 
 import zibal.sim.MT25Q
 

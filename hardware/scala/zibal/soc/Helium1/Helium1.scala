@@ -12,8 +12,8 @@ import zibal.misc.{ElementsConfig, ZephyrTools, EmbenchIotTools}
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
-import zibal.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
-import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
+import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
+import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 
 
 object Helium1 {

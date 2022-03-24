@@ -12,11 +12,11 @@ import zibal.misc.{ElementsConfig, ZephyrTools, EmbenchIotTools}
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
-import zibal.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
-import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
-import zibal.peripherals.multimedia.vga.{Apb3Vga, Vga, VgaCtrl}
-import zibal.multimedia.PixelScaler
-import zibal.multimedia.framebuffer.Apb3SlowFramebuffer
+import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
+import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
+import nafarr.peripherals.multimedia.vga.{Apb3Vga, Vga, VgaCtrl}
+import nafarr.multimedia.PixelScaler
+import nafarr.multimedia.framebuffer.Apb3SlowFramebuffer
 
 
 object Helium2 {

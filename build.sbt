@@ -17,9 +17,10 @@ lazy val root = (project in file(".")).
     name := "Zibal",
     scalaSource in Compile := baseDirectory.value / "hardware" / "scala",
     scalaSource in Test    := baseDirectory.value / "test" / "scala"
-  ).dependsOn(vexRiscv)
+  ).dependsOn(vexRiscv, nafarr)
 
 lazy val vexRiscv = RootProject(file("../vexriscv/"))
+lazy val nafarr = RootProject(file("../nafarr/"))
 
 connectInput in run := true
 fork := true

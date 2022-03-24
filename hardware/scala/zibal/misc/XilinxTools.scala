@@ -3,7 +3,7 @@ package zibal.misc
 import java.io._
 import spinal.core._
 import scala.collection.mutable
-import zibal.blackboxes.xilinx.a7._
+import nafarr.blackboxes.xilinx.a7._
 
 
 object XilinxTools {

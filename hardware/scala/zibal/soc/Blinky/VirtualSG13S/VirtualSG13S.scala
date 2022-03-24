@@ -4,10 +4,11 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import nafarr.blackboxes.ihp.sg13s._
+
 import zibal.board.Nexys4DDR
 import zibal.soc.Blinky
 import zibal.misc.{CadenceTools, SimulationHelper, ElementsConfig, TestCases}
-import zibal.blackboxes.ihp.sg13s._
 
 
 object VirtualSG13SBoard {

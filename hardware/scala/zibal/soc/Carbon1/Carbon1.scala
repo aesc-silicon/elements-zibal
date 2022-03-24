@@ -12,10 +12,10 @@ import zibal.misc.{ElementsConfig, EmbenchIotTools}
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
-import zibal.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
-import zibal.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
-import zibal.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
-import zibal.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
+import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
+import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
+import nafarr.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
+import nafarr.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
 
 
 object Carbon1 {

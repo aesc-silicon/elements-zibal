@@ -2,7 +2,7 @@ package zibal.misc
 
 import java.io._
 import spinal.core._
-import zibal.blackboxes.ihp.sg13s._
+import nafarr.blackboxes.ihp.sg13s._
 import scala.collection.mutable.Map
 
 

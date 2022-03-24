@@ -4,15 +4,17 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
-import zibal.peripherals.system.reset.ResetControllerCtrl.ResetControllerCtrl
-import zibal.peripherals.system.clock.ClockControllerCtrl.ClockControllerCtrl
+import nafarr.peripherals.system.reset._
+import nafarr.peripherals.system.reset.ResetControllerCtrl._
+import nafarr.peripherals.system.clock._
+import nafarr.peripherals.system.clock.ClockControllerCtrl._
+import nafarr.blackboxes.xilinx.a7._
 
-import zibal.board.{KitParameter, BoardParameter, ResetParameter, ClockParameter}
+import zibal.board.{KitParameter, BoardParameter}
 import zibal.board.Nexys4DDR
 import zibal.platform.Hydrogen
 import zibal.soc.HydrogenTest
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
-import zibal.blackboxes.xilinx.a7._
 
 
 object Nexys4DDRBoard {

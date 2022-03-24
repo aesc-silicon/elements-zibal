@@ -7,11 +7,11 @@ import scala.collection.mutable.{ArrayBuffer, Set, Map}
 import spinal.lib.bus.amba4.axi._
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.misc.SizeMapping
-import zibal.peripherals.io.gpio.Apb3Gpio
-import zibal.peripherals.com.uart.Apb3Uart
-import zibal.peripherals.com.spi.Apb3SpiMaster
-import zibal.peripherals.com.spi.Axi4SharedSpiXipMaster
-import zibal.peripherals.com.i2c.Apb3I2cController
+import nafarr.peripherals.io.gpio.Apb3Gpio
+import nafarr.peripherals.com.uart.Apb3Uart
+import nafarr.peripherals.com.spi.Apb3SpiMaster
+import nafarr.peripherals.com.spi.Axi4SharedSpiXipMaster
+import nafarr.peripherals.com.i2c.Apb3I2cController
 
 
 object ZephyrTools {

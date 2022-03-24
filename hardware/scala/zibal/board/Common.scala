@@ -3,6 +3,8 @@ package zibal.board
 import spinal.core._
 import spinal.lib._
 
+import nafarr.peripherals.system.reset.ResetParameter
+import nafarr.peripherals.system.clock.ClockParameter
 
 case class KitParameter(
   resets: List[ResetParameter],
@@ -13,13 +15,3 @@ abstract class BoardParameter(kitParameter: KitParameter, oscillatorFrequency: H
   def getKitParameter = kitParameter
   def getOscillatorFrequency = oscillatorFrequency
 }
-
-case class ClockParameter(
-  name: String,
-  frequency: HertzNumber,
-  reset: String = "",
-  resetConfig: ClockDomainConfig =
-    ClockDomainConfig(resetKind = spinal.core.SYNC, resetActiveLevel = LOW),
-  synchronousWith: String = ""
-)
-case class ResetParameter(name: String, delay: Int)

@@ -4,10 +4,11 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
+import nafarr.blackboxes.xilinx.a7._
+
 import zibal.board.Nexys4DDR
 import zibal.soc.Blinky
 import zibal.misc.{ElementsConfig, XilinxTools, SimulationHelper, TestCases}
-import zibal.blackboxes.xilinx.a7._
 
 
 object Nexys4DDRBoard {

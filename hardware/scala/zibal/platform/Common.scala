@@ -11,7 +11,7 @@ import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 import spinal.lib.bus.misc.SizeMapping
 
-import zibal.peripherals.system.plic.Apb3Plic
+import nafarr.peripherals.system.plic.Apb3Plic
 
 
 abstract class PlatformParameter(socParameter: SocParameter) {

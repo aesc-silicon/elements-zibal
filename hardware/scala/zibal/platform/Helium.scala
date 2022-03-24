@@ -10,10 +10,10 @@ import zibal.misc.BinTools
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
-import zibal.peripherals.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
-import zibal.peripherals.system.plic.{Apb3Plic, Plic, PlicCtrl}
-import zibal.peripherals.system.reset.{Apb3ResetController, ResetControllerCtrl}
-import zibal.peripherals.system.clock.{Apb3ClockController, ClockControllerCtrl}
+import nafarr.peripherals.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
+import nafarr.peripherals.system.plic.{Apb3Plic, Plic, PlicCtrl}
+import nafarr.peripherals.system.reset.{Apb3ResetController, ResetControllerCtrl}
+import nafarr.peripherals.system.clock.{Apb3ClockController, ClockControllerCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
