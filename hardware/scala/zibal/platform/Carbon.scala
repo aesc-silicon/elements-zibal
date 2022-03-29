@@ -9,10 +9,10 @@ import zibal.soc.SocParameter
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
-import nafarr.peripherals.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
-import nafarr.peripherals.system.plic.{Apb3Plic, Plic, PlicCtrl}
-import nafarr.peripherals.system.reset.{Apb3ResetController, ResetControllerCtrl}
-import nafarr.peripherals.system.clock.{Apb3ClockController, ClockControllerCtrl}
+import nafarr.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
+import nafarr.system.plic.{Apb3Plic, Plic, PlicCtrl}
+import nafarr.system.reset.{Apb3ResetController, ResetControllerCtrl}
+import nafarr.system.clock.{Apb3ClockController, ClockControllerCtrl}
 import nafarr.peripherals.com.spi.{Axi4SharedSpiXipMaster, Spi, SpiCtrl}
 import spinal.lib.com.jtag.Jtag
 

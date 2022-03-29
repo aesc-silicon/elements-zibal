@@ -7,10 +7,10 @@ import spinal.lib._
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
-import nafarr.peripherals.system.reset._
-import nafarr.peripherals.system.reset.ResetControllerCtrl._
-import nafarr.peripherals.system.clock._
-import nafarr.peripherals.system.clock.ClockControllerCtrl._
+import nafarr.system.reset._
+import nafarr.system.reset.ResetControllerCtrl._
+import nafarr.system.clock._
+import nafarr.system.clock.ClockControllerCtrl._
 import nafarr.blackboxes.ihp.sg13s._
 
 import zibal.board.{KitParameter, BoardParameter}

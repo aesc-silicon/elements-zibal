@@ -3,8 +3,8 @@ package zibal.board
 import spinal.core._
 import spinal.lib._
 
-import nafarr.peripherals.system.reset.ResetParameter
-import nafarr.peripherals.system.clock.ClockParameter
+import nafarr.system.reset.ResetParameter
+import nafarr.system.clock.ClockParameter
 
 case class KitParameter(
   resets: List[ResetParameter],

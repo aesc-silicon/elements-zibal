@@ -4,10 +4,10 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
 
-import nafarr.peripherals.system.reset._
-import nafarr.peripherals.system.reset.ResetControllerCtrl._
-import nafarr.peripherals.system.clock._
-import nafarr.peripherals.system.clock.ClockControllerCtrl._
+import nafarr.system.reset._
+import nafarr.system.reset.ResetControllerCtrl._
+import nafarr.system.clock._
+import nafarr.system.clock.ClockControllerCtrl._
 import nafarr.blackboxes.xilinx.a7._
 
 import zibal.board.{KitParameter, BoardParameter}
