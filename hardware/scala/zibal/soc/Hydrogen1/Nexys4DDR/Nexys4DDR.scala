@@ -16,7 +16,6 @@ import zibal.platform.Hydrogen
 import zibal.soc.Hydrogen1
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 
-
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
 
@@ -105,7 +104,6 @@ object Nexys4DDRBoard {
   }
 }
 
-
 object Nexys4DDRTop {
   def apply() = Nexys4DDRTop(getConfig)
 
@@ -119,12 +117,19 @@ object Nexys4DDRTop {
     val kitParameter = KitParameter(resets, clocks)
     val boardParameter = Nexys4DDR.Parameter(kitParameter)
     val socParameter = Hydrogen1.Parameter(boardParameter)
-    Hydrogen.Parameter(socParameter, 128 kB,
+    Hydrogen.Parameter(
+      socParameter,
+      128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
-          List("system", "debug"), 9)
-      })
+        clockCtrl.buildXilinxPll(
+          clock,
+          boardParameter.getOscillatorFrequency,
+          List("system", "debug"),
+          9
+        )
+      }
+    )
   }
 
   def main(args: Array[String]) {
@@ -156,7 +161,8 @@ object Nexys4DDRTop {
         val tms = XilinxCmosIo("H2")
         val tdi = XilinxCmosIo("G4")
         val tdo = XilinxCmosIo("G2")
-        val tck = XilinxCmosIo("F3").clock(boardParameter.getJtagFrequency).disableDedicatedClockRoute
+        val tck =
+          XilinxCmosIo("F3").clock(boardParameter.getJtagFrequency).disableDedicatedClockRoute
       }
       val uartStd = new Bundle {
         val txd = XilinxCmosIo("D4")

@@ -16,7 +16,6 @@ import zibal.platform.Hydrogen
 import zibal.soc.Hydrogen1
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 
-
 object AX7035Board {
   def apply(source: String) = AX7035Board(source)
 
@@ -94,7 +93,6 @@ object AX7035Board {
   }
 }
 
-
 object AX7035Top {
   def apply() = AX7035Top(getConfig)
 
@@ -108,12 +106,19 @@ object AX7035Top {
     val kitParameter = KitParameter(resets, clocks)
     val boardParameter = AX7035.Parameter(kitParameter)
     val socParameter = Hydrogen1.Parameter(boardParameter)
-    Hydrogen.Parameter(socParameter, 128 kB,
+    Hydrogen.Parameter(
+      socParameter,
+      128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
-          List("system", "debug"), 21)
-      })
+        clockCtrl.buildXilinxPll(
+          clock,
+          boardParameter.getOscillatorFrequency,
+          List("system", "debug"),
+          21
+        )
+      }
+    )
   }
 
   def main(args: Array[String]) {

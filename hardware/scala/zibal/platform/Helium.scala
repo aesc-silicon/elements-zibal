@@ -23,19 +23,22 @@ import vexriscv.plugin._
 object Helium {
 
   case class Parameter(
-    socParameter: SocParameter,
-    onChipRamSize: BigInt,
-    resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
-    clockLogic: (ClockControllerCtrl.ClockControllerCtrl, ResetControllerCtrl.ResetControllerCtrl,
-                 Bool) => Unit,
-    onChipRamLogic: (BigInt) => (Axi4Shared, Mem[Bits]) = (onChipRamSize: BigInt) => {
-      val ram = Axi4SharedOnChipRam(
-        dataWidth = 32,
-        byteCount = onChipRamSize,
-        idWidth = 4
-      )
-      (ram.io.axi, ram.ram)
-    }
+      socParameter: SocParameter,
+      onChipRamSize: BigInt,
+      resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
+      clockLogic: (
+          ClockControllerCtrl.ClockControllerCtrl,
+          ResetControllerCtrl.ResetControllerCtrl,
+          Bool
+      ) => Unit,
+      onChipRamLogic: (BigInt) => (Axi4Shared, Mem[Bits]) = (onChipRamSize: BigInt) => {
+        val ram = Axi4SharedOnChipRam(
+          dataWidth = 32,
+          byteCount = onChipRamSize,
+          idWidth = 4
+        )
+        (ram.io.axi, ram.ram)
+      }
   ) extends PlatformParameter(socParameter) {
     val core = VexRiscvCoreParameter.mcu(0x80000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
@@ -105,7 +108,7 @@ object Helium {
 
       axiCrossbar.addSlaves(
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
-        apbBridge.io.axi -> (0xF0000000L, 1 MB)
+        apbBridge.io.axi -> (0xf0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
@@ -139,7 +142,7 @@ object Helium {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0xF0000, 64 kB)
+      addApbDevice(plicCtrl.io.bus, 0xf0000, 64 kB)
       addInterrupt(False)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)

@@ -4,8 +4,11 @@ import java.io.FileInputStream
 import spinal.core.{Data, Mem}
 
 object BinTools {
-  def initRam[T <: Data](ram : Mem[T], onChipRamBinFile : String,
-                         swapEndianness: Boolean = false): Unit ={
+  def initRam[T <: Data](
+      ram: Mem[T],
+      onChipRamBinFile: String,
+      swapEndianness: Boolean = false
+  ): Unit = {
     val initContent = Array.fill[BigInt](ram.wordCount)(0)
     val readTmp = Array.fill[Byte](ram.width / 8)(0)
     val initFile = new FileInputStream(onChipRamBinFile)

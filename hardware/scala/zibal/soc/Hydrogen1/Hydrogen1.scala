@@ -15,14 +15,19 @@ import spinal.lib.bus.amba4.axi._
 import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
 import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 
-
 object Hydrogen1 {
   def apply(parameter: Hydrogen.Parameter) = Hydrogen1(parameter)
 
   def prepare(soc: Hydrogen1, elementsConfig: ElementsConfig.ElementsConfig) {
     val dt = ZephyrTools.DeviceTree(elementsConfig)
-    dt.generate("hydrogen1.dtsi", "hydrogen", soc.system.axiCrossbar.slavesConfigs,
-                soc.system.apbBridge.io.axi, soc.apbMapping, soc.irqMapping)
+    dt.generate(
+      "hydrogen1.dtsi",
+      "hydrogen",
+      soc.system.axiCrossbar.slavesConfigs,
+      soc.system.apbBridge.io.axi,
+      soc.apbMapping,
+      soc.irqMapping
+    )
     val board = ZephyrTools.Board(elementsConfig)
     board.addLed("heartbeat", soc.peripherals.gpioStatusCtrl, 0)
     board.addLed("ok", soc.peripherals.gpioStatusCtrl, 1)

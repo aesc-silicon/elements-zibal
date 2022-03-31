@@ -5,7 +5,6 @@ import spinal.core._
 import scala.collection.mutable
 import nafarr.blackboxes.xilinx.a7._
 
-
 case class EmbenchIotTools(config: ElementsConfig.ElementsConfig) {
   def generate(cpuFrequency: HertzNumber) = {
     val file = s"${config.zibalBuildPath}${config.className}.yaml"

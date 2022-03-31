@@ -35,7 +35,7 @@ object MT25Q {
 
     val dummyReset = new ClockingArea(dummyClockDomain) {
       val counter = Counter(5)
-      when (counter =/= 4) {
+      when(counter =/= 4) {
         chipReset := counter.value.lsb
         counter.increment()
       }
@@ -62,8 +62,8 @@ object MT25Q {
 
     val deviceIn = new ClockingArea(risingClockDomain) {
       val state = RegInit(SpiState.COMMAND)
-      val command = Reg(UInt(8 bits)) init(0)
-      val address = Reg(UInt(24 bits)) init(0)
+      val command = Reg(UInt(8 bits)).init(0)
+      val address = Reg(UInt(24 bits)).init(0)
       val counter = CounterFreeRun(8)
 
       val samples = History(
@@ -105,11 +105,11 @@ object MT25Q {
 
     }
     val deviceOut = new ClockingArea(fallingClockDomain) {
-      val offset = Reg(UInt(24 bits)) init(0)
+      val offset = Reg(UInt(24 bits)).init(0)
       val response = UInt(8 bits)
       val counter = Counter(8)
       val data = Mem(UInt(8 bits), 16777216)
-      val output = Reg(Bool) init(False)
+      val output = Reg(Bool).init(False)
       io.dataOut := output
 
       response := data.readAsync(deviceIn.address + offset)

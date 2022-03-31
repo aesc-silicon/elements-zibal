@@ -16,7 +16,6 @@ import zibal.platform.Helium
 import zibal.soc.Helium2
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 
-
 object DH008Board {
   def apply(source: String) = DH008Board(source)
 
@@ -127,7 +126,6 @@ object DH008Board {
   }
 }
 
-
 object DH008Top {
   def apply() = DH008Top(getConfig)
 
@@ -141,14 +139,20 @@ object DH008Top {
     val kitParameter = KitParameter(resets, clocks)
     val boardParameter = DH008.Parameter(kitParameter)
     val socParameter = Helium2.Parameter(boardParameter)
-    Helium.Parameter(socParameter, 128 kB,
+    Helium.Parameter(
+      socParameter,
+      128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
-          List("system", "debug"), 10)
-      })
+        clockCtrl.buildXilinxPll(
+          clock,
+          boardParameter.getOscillatorFrequency,
+          List("system", "debug"),
+          10
+        )
+      }
+    )
   }
-
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
@@ -187,24 +191,32 @@ object DH008Top {
         val rts = XilinxCmosIo("M2")
         val cts = XilinxCmosIo("M1")
       }
-      val gpioStatus = Vec(XilinxCmosIo("K12"), XilinxCmosIo("L13"), XilinxCmosIo("K13"),
-                           XilinxCmosIo("G11"))
-      val gpioA = Vec(XilinxCmosIo("F2").pull("PULLDOWN"), XilinxCmosIo("E1").pull("PULLDOWN"),
-                      XilinxCmosIo("G5").pull("PULLDOWN"), XilinxCmosIo("G4").pull("PULLDOWN"),
-                      XilinxCmosIo("G1").pull("PULLDOWN"), XilinxCmosIo("G2").pull("PULLDOWN"),
-                      XilinxCmosIo("L5").pull("PULLDOWN"), XilinxCmosIo("T14").pull("PULLDOWN"),
-                      XilinxCmosIo("T15").pull("PULLDOWN"), XilinxCmosIo("R15").pull("PULLDOWN"),
-                      XilinxCmosIo("R10").pull("PULLDOWN"), XilinxCmosIo("R11").pull("PULLDOWN"))
+      val gpioStatus =
+        Vec(XilinxCmosIo("K12"), XilinxCmosIo("L13"), XilinxCmosIo("K13"), XilinxCmosIo("G11"))
+      val gpioA = Vec(
+        XilinxCmosIo("F2").pull("PULLDOWN"),
+        XilinxCmosIo("E1").pull("PULLDOWN"),
+        XilinxCmosIo("G5").pull("PULLDOWN"),
+        XilinxCmosIo("G4").pull("PULLDOWN"),
+        XilinxCmosIo("G1").pull("PULLDOWN"),
+        XilinxCmosIo("G2").pull("PULLDOWN"),
+        XilinxCmosIo("L5").pull("PULLDOWN"),
+        XilinxCmosIo("T14").pull("PULLDOWN"),
+        XilinxCmosIo("T15").pull("PULLDOWN"),
+        XilinxCmosIo("R15").pull("PULLDOWN"),
+        XilinxCmosIo("R10").pull("PULLDOWN"),
+        XilinxCmosIo("R11").pull("PULLDOWN")
+      )
       val vgaA = new Bundle {
         val hSync = XilinxCmosIo("K1")
         val vSync = XilinxCmosIo("J1")
         val enable = XilinxCmosIo("N16")
-        val red = Vec(XilinxCmosIo("L2"), XilinxCmosIo("L3"), XilinxCmosIo("K2"),
-                      XilinxCmosIo("K3"))
-        val green = Vec(XilinxCmosIo("P11"), XilinxCmosIo("P10"), XilinxCmosIo("P3"),
-                        XilinxCmosIo("P4"))
-        val blue = Vec(XilinxCmosIo("G12"), XilinxCmosIo("H11"), XilinxCmosIo("R7"),
-                       XilinxCmosIo("R6"))
+        val red =
+          Vec(XilinxCmosIo("L2"), XilinxCmosIo("L3"), XilinxCmosIo("K2"), XilinxCmosIo("K3"))
+        val green =
+          Vec(XilinxCmosIo("P11"), XilinxCmosIo("P10"), XilinxCmosIo("P3"), XilinxCmosIo("P4"))
+        val blue =
+          Vec(XilinxCmosIo("G12"), XilinxCmosIo("H11"), XilinxCmosIo("R7"), XilinxCmosIo("R6"))
       }
     }
 

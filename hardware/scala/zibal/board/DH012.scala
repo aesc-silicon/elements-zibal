@@ -3,17 +3,16 @@ package zibal.board
 import spinal.core._
 import spinal.lib._
 
-
 object DH012 {
 
   val oscillatorFrequency = 50 MHz
 
   case class Parameter(
-    kitParameter: KitParameter
+      kitParameter: KitParameter
   ) extends BoardParameter(
-    kitParameter,
-    oscillatorFrequency
-  ) {
+        kitParameter,
+        oscillatorFrequency
+      ) {
     def getJtagFrequency = 10 MHz
   }
 }

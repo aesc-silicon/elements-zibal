@@ -17,7 +17,6 @@ import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 import nafarr.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 import nafarr.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
 
-
 object Carbon1 {
   def apply(parameter: Carbon.Parameter) = Carbon1(parameter)
 

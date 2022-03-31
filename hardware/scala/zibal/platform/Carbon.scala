@@ -19,19 +19,21 @@ import spinal.lib.com.jtag.Jtag
 import vexriscv._
 import vexriscv.plugin._
 
-
 object Carbon {
 
   case class Parameter(
-    socParameter: SocParameter,
-    onChipRamSize: BigInt,
-    spiRomSize: BigInt,
-    resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
-    clockLogic: (ClockControllerCtrl.ClockControllerCtrl, ResetControllerCtrl.ResetControllerCtrl,
-                 Bool) => Unit,
-    onChipRamLogic: (BigInt) => Axi4Shared
+      socParameter: SocParameter,
+      onChipRamSize: BigInt,
+      spiRomSize: BigInt,
+      resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
+      clockLogic: (
+          ClockControllerCtrl.ClockControllerCtrl,
+          ResetControllerCtrl.ResetControllerCtrl,
+          Bool
+      ) => Unit,
+      onChipRamLogic: (BigInt) => Axi4Shared
   ) extends PlatformParameter(socParameter) {
-    val core = VexRiscvCoreParameter.realtime(0xA0000000L).plugins
+    val core = VexRiscvCoreParameter.realtime(0xa0000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(1))
     val spiXip = SpiCtrl.Parameter.default
@@ -103,8 +105,8 @@ object Carbon {
 
       axiCrossbar.addSlaves(
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
-        spiXipMasterCtrl.io.dataBus -> (0xA0000000L, parameter.spiRomSize),
-        apbBridge.io.axi -> (0xF0000000L, 1 MB)
+        spiXipMasterCtrl.io.dataBus -> (0xa0000000L, parameter.spiRomSize),
+        apbBridge.io.axi -> (0xf0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
@@ -145,7 +147,7 @@ object Carbon {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0xF0000, 64 kB)
+      addApbDevice(plicCtrl.io.bus, 0xf0000, 64 kB)
       addInterrupt(False)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)

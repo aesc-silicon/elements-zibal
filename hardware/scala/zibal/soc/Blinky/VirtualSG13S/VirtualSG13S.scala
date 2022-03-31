@@ -10,7 +10,6 @@ import zibal.board.Nexys4DDR
 import zibal.soc.Blinky
 import zibal.misc.{CadenceTools, SimulationHelper, ElementsConfig, TestCases}
 
-
 object VirtualSG13SBoard {
   def apply(source: String) = VirtualSG13SBoard(source)
 
@@ -57,7 +56,6 @@ object VirtualSG13SBoard {
   }
 }
 
-
 object VirtualSG13STop {
   def apply() = VirtualSG13STop()
 
@@ -93,9 +91,14 @@ object VirtualSG13STop {
     val io = new Bundle {
       val clock = IhpCmosIo("top", 0)
       val reset = IhpCmosIo("top", 2)
-      val led = Vec(IhpCmosIo("right", 0), IhpCmosIo("right", 2),
-                    IhpCmosIo("bottom", 0), IhpCmosIo("bottom", 2),
-                    IhpCmosIo("left", 0), IhpCmosIo("left", 2))
+      val led = Vec(
+        IhpCmosIo("right", 0),
+        IhpCmosIo("right", 2),
+        IhpCmosIo("bottom", 0),
+        IhpCmosIo("bottom", 2),
+        IhpCmosIo("left", 0),
+        IhpCmosIo("left", 2)
+      )
     }
 
     val soc = Blinky()

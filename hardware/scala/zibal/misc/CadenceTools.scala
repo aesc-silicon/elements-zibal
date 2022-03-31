@@ -5,7 +5,6 @@ import spinal.core._
 import nafarr.blackboxes.ihp.sg13s._
 import scala.collection.mutable.Map
 
-
 object CadenceTools {
 
   case class Sdc(config: ElementsConfig.ElementsConfig) {
@@ -31,7 +30,9 @@ current_design ${TOP}
 
       clocks.foreach { case (name, period) =>
         val halfPeriod = period / 2
-        writer.write(s"""create_clock -period ${period} -name "${name}" -waveform {0.0 ${halfPeriod}} [get_ports ${name}]\n""")
+        writer.write(
+          s"""create_clock -period ${period} -name "${name}" -waveform {0.0 ${halfPeriod}} [get_ports ${name}]\n"""
+        )
       }
 
       writer.close()
@@ -75,11 +76,12 @@ current_design ${TOP}
       writer.write(s"    ($corner\n")
       if (corners.contains(corner)) {
         val data = corners(corner)
-        writer.write(s"""        (inst name="${data._1}" cell="${data._2}" orientation="${data._3}")\n""")
+        writer.write(
+          s"""        (inst name="${data._1}" cell="${data._2}" orientation="${data._3}")\n"""
+        )
       }
       writer.write("    )\n")
     }
-
 
     def generate(io: Data, path: String) = {
       val file = s"${path}${config.className}.io"
@@ -119,4 +121,3 @@ current_design ${TOP}
     }
   }
 }
-

@@ -10,9 +10,9 @@ object Blinky {
   def apply() = Blinky()
 
   case class Io() extends Bundle {
-    val clock = in Bool()
-    val reset = in Bool()
-    val led = out Bits(6 bits)
+    val clock = in Bool ()
+    val reset = in Bool ()
+    val led = out Bits (6 bits)
   }
 
   case class Blinky() extends Component {
@@ -30,16 +30,16 @@ object Blinky {
 
     val logic = new ClockingArea(systemClockDomain) {
       val tick = False
-      val counter = Reg(UInt(27 bits)) init(0)
-      when (counter === U(100000000)) {
+      val counter = Reg(UInt(27 bits)).init(0)
+      when(counter === U(100000000)) {
         counter := 0
         tick := True
       } otherwise {
         counter := counter + 1
       }
 
-      val output = Reg(UInt(6 bits)) init(0)
-      when (tick) {
+      val output = Reg(UInt(6 bits)).init(0)
+      when(tick) {
         output := output + 1
       }
       io.led := output.asBits

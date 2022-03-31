@@ -15,17 +15,26 @@ import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
 import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 import nafarr.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl}
 import nafarr.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl}
-import nafarr.peripherals.misc.frequencycounter.{Apb3FrequencyCounter, FrequencyCounter, FrequencyCounterCtrl}
+import nafarr.peripherals.misc.frequencycounter.{
+  Apb3FrequencyCounter,
+  FrequencyCounter,
+  FrequencyCounterCtrl
+}
 import nafarr.peripherals.io.pio.{Apb3Pio, Pio, PioCtrl}
-
 
 object HydrogenTest {
   def apply(parameter: Hydrogen.Parameter) = HydrogenTest(parameter)
 
   def prepare(soc: HydrogenTest, elementsConfig: ElementsConfig.ElementsConfig) {
     val dt = ZephyrTools.DeviceTree(elementsConfig)
-    dt.generate("hydrogentest.dtsi", "hydrogen", soc.system.axiCrossbar.slavesConfigs,
-                soc.system.apbBridge.io.axi, soc.apbMapping, soc.irqMapping)
+    dt.generate(
+      "hydrogentest.dtsi",
+      "hydrogen",
+      soc.system.axiCrossbar.slavesConfigs,
+      soc.system.apbBridge.io.axi,
+      soc.apbMapping,
+      soc.irqMapping
+    )
     val board = ZephyrTools.Board(elementsConfig)
     board.addLed("heartbeat", soc.peripherals.gpioStatusCtrl, 0)
     board.addLed("ok", soc.peripherals.gpioStatusCtrl, 1)

@@ -16,7 +16,6 @@ import zibal.platform.Helium
 import zibal.soc.Helium1
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 
-
 object AX7101Board {
   def apply(source: String) = AX7101Board(source)
 
@@ -95,7 +94,6 @@ object AX7101Board {
   }
 }
 
-
 object AX7101Top {
   def apply() = AX7101Top(getConfig)
 
@@ -109,12 +107,19 @@ object AX7101Top {
     val kitParameter = KitParameter(resets, clocks)
     val boardParameter = AX7101.Parameter(kitParameter)
     val socParameter = Helium1.Parameter(boardParameter)
-    Helium.Parameter(socParameter, 128 kB,
+    Helium.Parameter(
+      socParameter,
+      128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
-          List("system", "debug"), 5)
-      })
+        clockCtrl.buildXilinxPll(
+          clock,
+          boardParameter.getOscillatorFrequency,
+          List("system", "debug"),
+          5
+        )
+      }
+    )
   }
 
   def main(args: Array[String]) {
@@ -141,7 +146,10 @@ object AX7101Top {
   case class AX7101Top(parameter: Helium.Parameter) extends Component {
     var boardParameter = parameter.getBoardParameter.asInstanceOf[AX7101.Parameter]
     val io = new Bundle {
-      val clockPos = XilinxLvdsInput.Pos("R4").clock(boardParameter.getOscillatorFrequency).ioStandard("DIFF_SSTL15")
+      val clockPos = XilinxLvdsInput
+        .Pos("R4")
+        .clock(boardParameter.getOscillatorFrequency)
+        .ioStandard("DIFF_SSTL15")
       val clockNeg = XilinxLvdsInput.Neg("T4").ioStandard("DIFF_SSTL15")
       val uartStd = new Bundle {
         val txd = XilinxCmosIo("AB15")

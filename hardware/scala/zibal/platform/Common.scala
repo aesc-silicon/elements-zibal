@@ -13,13 +13,11 @@ import spinal.lib.bus.misc.SizeMapping
 
 import nafarr.system.plic.Apb3Plic
 
-
 abstract class PlatformParameter(socParameter: SocParameter) {
   def getKitParameter = socParameter.getKitParameter
   def getBoardParameter = socParameter.getBoardParameter
   def getSocParameter = socParameter
 }
-
 
 abstract class PlatformComponent(parameter: PlatformParameter) extends Component {
   val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()

@@ -5,15 +5,14 @@ import spinal.core.sim._
 import spinal.lib._
 import scala.util.matching.Regex
 
-
 object SimulationHelper {
 
   def generateClock(
-    clock: Bool,
-    period: Int,
-    duration: Int,
-    delay: Int = 0,
-    timeout: Boolean = false
+      clock: Bool,
+      period: Int,
+      duration: Int,
+      delay: Int = 0,
+      timeout: Boolean = false
   ) = {
     fork {
       clock #= true
@@ -34,7 +33,7 @@ object SimulationHelper {
     fork {
       clock #= false
       sleep(delay * 1000)
-      while(true) {
+      while (true) {
         clock #= !clock.toBoolean
         sleep((period / 2.0) * 1000)
       }
@@ -73,8 +72,8 @@ object SimulationHelper {
     sleep(baudPeriod * 1000)
 
     var buffer = 0
-    for(bitId <- 0 to 7) {
-      if(rxd.toBoolean)
+    for (bitId <- 0 to 7) {
+      if (rxd.toBoolean)
         buffer |= 1 << bitId
       sleep(baudPeriod * 1000)
     }
@@ -85,7 +84,7 @@ object SimulationHelper {
     txd #= false
     sleep(baudPeriod * 1000)
 
-    for(bitId <- 0 to 7) {
+    for (bitId <- 0 to 7) {
       txd #= ((character >> bitId) & 1) != 0
       sleep(baudPeriod * 1000)
     }
@@ -95,7 +94,7 @@ object SimulationHelper {
   def dumpStdout(rxd: Bool, baudPeriod: Int) = {
     fork {
       waitUntil(rxd.toBoolean == true)
-      while(true) {
+      while (true) {
         waitUntil(rxd.toBoolean == false)
         val buffer = uartReceive(rxd, baudPeriod)
         print(buffer.toChar)
@@ -105,7 +104,7 @@ object SimulationHelper {
   def dumpCharacters(rxd: Bool, baudPeriod: Int) = {
     fork {
       waitUntil(rxd.toBoolean == true)
-      while(true) {
+      while (true) {
         waitUntil(rxd.toBoolean == false)
         val buffer = uartReceive(rxd, baudPeriod)
         println(buffer.toChar)
@@ -120,7 +119,7 @@ object SimulationHelper {
     fork {
       waitUntil(rxd.toBoolean == true)
 
-      while(run) {
+      while (run) {
         waitUntil(rxd.toBoolean == false)
         val buffer = uartReceive(rxd, baudPeriod)
         assert(rxd.toBoolean == true)

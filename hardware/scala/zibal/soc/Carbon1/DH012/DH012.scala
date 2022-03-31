@@ -21,7 +21,6 @@ import zibal.misc.{BinTools, CadenceTools, SimulationHelper, ElementsConfig, Tes
 
 import zibal.sim.MT25Q
 
-
 object DH012Board {
   def apply(source: String) = DH012Board(source)
 
@@ -46,7 +45,6 @@ object DH012Board {
         println(s"Unknown simulation ${args(1)}")
     }
   }
-
 
   case class DH012Board(source: String) extends Component {
     val io = new Bundle {
@@ -118,7 +116,6 @@ object DH012Board {
   }
 }
 
-
 object DH012Top {
   def apply() = DH012Top(getConfig)
 
@@ -129,7 +126,10 @@ object DH012Top {
     val kitParameter = KitParameter(resets, clocks)
     val boardParameter = DH012.Parameter(kitParameter)
     val socParameter = Carbon1.Parameter(boardParameter)
-    Carbon.Parameter(socParameter, 512 Byte, 4 MB,
+    Carbon.Parameter(
+      socParameter,
+      512 Byte,
+      4 MB,
       (resetCtrl: ResetControllerCtrl, reset: Bool, _) => { resetCtrl.buildDummy(reset) },
       (clockCtrl: ClockControllerCtrl, _, clock: Bool) => { clockCtrl.buildDummy(clock) },
       (onChipRamSize: BigInt) => {
@@ -139,7 +139,8 @@ object DH012Top {
           idWidth = 4
         )
         ram.io.axi
-      })
+      }
+    )
   }
 
   def main(args: Array[String]) {
@@ -212,11 +213,18 @@ object DH012Top {
         val scl = IhpCmosIo("left", 8)
         val sda = IhpCmosIo("left", 9)
       }
-      val gpioStatus = Vec(IhpCmosIo("top", 7), IhpCmosIo("top", 8), IhpCmosIo("top", 9),
-                           IhpCmosIo("top", 10))
-      val gpioA = Vec(IhpCmosIo("right", 8), IhpCmosIo("right", 9), IhpCmosIo("right", 10),
-                      IhpCmosIo("bottom", 0), IhpCmosIo("bottom", 1), IhpCmosIo("bottom", 2),
-                      IhpCmosIo("left", 10), IhpCmosIo("top", 2))
+      val gpioStatus =
+        Vec(IhpCmosIo("top", 7), IhpCmosIo("top", 8), IhpCmosIo("top", 9), IhpCmosIo("top", 10))
+      val gpioA = Vec(
+        IhpCmosIo("right", 8),
+        IhpCmosIo("right", 9),
+        IhpCmosIo("right", 10),
+        IhpCmosIo("bottom", 0),
+        IhpCmosIo("bottom", 1),
+        IhpCmosIo("bottom", 2),
+        IhpCmosIo("left", 10),
+        IhpCmosIo("top", 2)
+      )
     }
 
     val soc = Carbon1(parameter)

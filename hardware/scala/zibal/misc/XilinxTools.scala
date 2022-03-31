@@ -5,7 +5,6 @@ import spinal.core._
 import scala.collection.mutable
 import nafarr.blackboxes.xilinx.a7._
 
-
 object XilinxTools {
 
   case class Xdc(config: ElementsConfig.ElementsConfig) {

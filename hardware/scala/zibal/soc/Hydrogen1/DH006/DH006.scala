@@ -16,7 +16,6 @@ import zibal.platform.Hydrogen
 import zibal.soc.Hydrogen1
 import zibal.misc.{ElementsConfig, BinTools, XilinxTools, SimulationHelper, TestCases}
 
-
 object DH006Board {
   def apply(source: String) = DH006Board(source)
 
@@ -105,7 +104,6 @@ object DH006Board {
   }
 }
 
-
 object DH006Top {
   def apply() = DH006Top(getConfig)
 
@@ -119,14 +117,20 @@ object DH006Top {
     val kitParameter = KitParameter(resets, clocks)
     val boardParameter = DH006.Parameter(kitParameter)
     val socParameter = Hydrogen1.Parameter(boardParameter)
-    Hydrogen.Parameter(socParameter, 128 kB,
+    Hydrogen.Parameter(
+      socParameter,
+      128 kB,
       (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
       (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-        clockCtrl.buildXilinxPll(clock, boardParameter.getOscillatorFrequency,
-          List("system", "debug"), 9)
-      })
+        clockCtrl.buildXilinxPll(
+          clock,
+          boardParameter.getOscillatorFrequency,
+          List("system", "debug"),
+          9
+        )
+      }
+    )
   }
-
 
   def main(args: Array[String]) {
     val elementsConfig = ElementsConfig(this)
@@ -165,8 +169,8 @@ object DH006Top {
         val rts = XilinxCmosIo("M2")
         val cts = XilinxCmosIo("M1")
       }
-      val gpioStatus = Vec(XilinxCmosIo("K12"), XilinxCmosIo("L13"), XilinxCmosIo("K13"),
-                           XilinxCmosIo("G11"))
+      val gpioStatus =
+        Vec(XilinxCmosIo("K12"), XilinxCmosIo("L13"), XilinxCmosIo("K13"), XilinxCmosIo("G11"))
     }
 
     val soc = Hydrogen1(parameter)

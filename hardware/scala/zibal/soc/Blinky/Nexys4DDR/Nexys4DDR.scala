@@ -10,7 +10,6 @@ import zibal.board.Nexys4DDR
 import zibal.soc.Blinky
 import zibal.misc.{ElementsConfig, XilinxTools, SimulationHelper, TestCases}
 
-
 object Nexys4DDRBoard {
   def apply(source: String) = Nexys4DDRBoard(source)
 
@@ -54,7 +53,6 @@ object Nexys4DDRBoard {
     }
   }
 }
-
 
 object Nexys4DDRTop {
   def apply() = Nexys4DDRTop()

@@ -10,19 +10,23 @@ object TestCases {
 
   case class TestCases() {
     def addClock(
-      clock: Bool,
-      frequency: HertzNumber,
-      duration: TimeNumber,
-      timeout: Boolean = false
+        clock: Bool,
+        frequency: HertzNumber,
+        duration: TimeNumber,
+        timeout: Boolean = false
     ) {
       val (clockPeriod, unit) = frequency.toTime.decompose
-      require (unit == "ns")
+      require(unit == "ns")
       val clockDuration = (frequency / duration.toHertz).toInt
 
       println(s"Clock period of ${clockPeriod.toInt} ${unit} for ${clockDuration} cycles")
 
-      SimulationHelper.generateClock(clock, clockPeriod.toInt, clockDuration.toInt,
-        timeout=timeout)
+      SimulationHelper.generateClock(
+        clock,
+        clockPeriod.toInt,
+        clockDuration.toInt,
+        timeout = timeout
+      )
     }
 
     def addClockWithTimeout(clock: Bool, frequency: HertzNumber, duration: TimeNumber) {
@@ -119,7 +123,7 @@ object TestCases {
 
     def frequency(frequencyPin: Bool, clock: HertzNumber, txd: Bool, baudPeriod: Int) {
       val (clockPeriod, unit) = clock.toTime.decompose
-      require (unit == "ns")
+      require(unit == "ns")
       val clockDuration = (clock / (1 sec).toHertz).toInt
 
       println(s"Clock period of ${clockPeriod.toInt} ${unit} for ${clockDuration} cycles")

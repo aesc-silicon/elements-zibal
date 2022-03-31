@@ -18,14 +18,19 @@ import nafarr.peripherals.multimedia.vga.{Apb3Vga, Vga, VgaCtrl}
 import nafarr.multimedia.PixelScaler
 import nafarr.multimedia.framebuffer.Apb3SlowFramebuffer
 
-
 object Helium2 {
   def apply(parameter: Helium.Parameter) = Helium2(parameter)
 
   def prepare(soc: Helium2, elementsConfig: ElementsConfig.ElementsConfig) {
     val dt = ZephyrTools.DeviceTree(elementsConfig)
-    dt.generate("helium2.dtsi", "helium", soc.system.axiCrossbar.slavesConfigs,
-                soc.system.apbBridge.io.axi, soc.apbMapping, soc.irqMapping)
+    dt.generate(
+      "helium2.dtsi",
+      "helium",
+      soc.system.axiCrossbar.slavesConfigs,
+      soc.system.apbBridge.io.axi,
+      soc.apbMapping,
+      soc.irqMapping
+    )
     val board = ZephyrTools.Board(elementsConfig)
     board.addLed("heartbeat", soc.peripherals.gpioStatusCtrl, 0)
     board.addLed("ok", soc.peripherals.gpioStatusCtrl, 1)

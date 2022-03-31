@@ -9,7 +9,7 @@ import vexriscv.plugin._
 import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
 
 case class VexRiscvCoreParameter(
-  plugins: ArrayBuffer[Plugin[VexRiscv]]
+    plugins: ArrayBuffer[Plugin[VexRiscv]]
 ) {}
 
 object VexRiscvCoreParameter {
@@ -29,7 +29,7 @@ object VexRiscvCoreParameter {
         earlyInjection = false
       ),
       new StaticMemoryTranslatorPlugin(
-        ioRange = _(31 downto 28) === 0xF
+        ioRange = _(31 downto 28) === 0xf
       ),
       new DecoderSimplePlugin(
         catchIllegalInstruction = true
@@ -80,15 +80,17 @@ object VexRiscvCoreParameter {
         earlyBranch = false,
         catchAddressMisaligned = true
       ),
-      new YamlPlugin("../build/"+System.getenv("SOC")+"/"+System.getenv("BOARD")+
-                     "/zibal/VexRiscv.yaml")
+      new YamlPlugin(
+        "../build/" + System.getenv("SOC") + "/" + System.getenv("BOARD") +
+          "/zibal/VexRiscv.yaml"
+      )
     )
   )
   def mcu(resetAddress: BigInt) = VexRiscvCoreParameter(
     plugins = ArrayBuffer(
       new IBusCachedPlugin(
         resetVector = resetAddress,
-        //prediction = DYNAMIC_TARGET,
+        // prediction = DYNAMIC_TARGET,
         prediction = DYNAMIC,
         compressedGen = true,
         config = InstructionCacheConfig(
@@ -107,19 +109,19 @@ object VexRiscvCoreParameter {
       ),
       new DBusCachedPlugin(
         config = new DataCacheConfig(
-          cacheSize         = 4096,
-          bytePerLine       = 32,
-          wayCount          = 1,
-          addressWidth      = 32,
-          cpuDataWidth      = 32,
-          memDataWidth      = 32,
-          catchAccessError  = true,
-          catchIllegal      = true,
-          catchUnaligned    = true
+          cacheSize = 4096,
+          bytePerLine = 32,
+          wayCount = 1,
+          addressWidth = 32,
+          cpuDataWidth = 32,
+          memDataWidth = 32,
+          catchAccessError = true,
+          catchIllegal = true,
+          catchUnaligned = true
         )
       ),
       new StaticMemoryTranslatorPlugin(
-        ioRange = _(31 downto 28) === 0xF
+        ioRange = _(31 downto 28) === 0xf
       ),
       new DecoderSimplePlugin(
         catchIllegalInstruction = true
@@ -170,8 +172,10 @@ object VexRiscvCoreParameter {
         earlyBranch = false,
         catchAddressMisaligned = true
       ),
-      new YamlPlugin("../build/"+System.getenv("SOC")+"/"+System.getenv("BOARD")+
-                     "/zibal/VexRiscv.yaml")
+      new YamlPlugin(
+        "../build/" + System.getenv("SOC") + "/" + System.getenv("BOARD") +
+          "/zibal/VexRiscv.yaml"
+      )
     )
   )
 }
@@ -179,7 +183,7 @@ object VexRiscvCoreParameter {
 object VexRiscvCore extends App {
   def cpu() = new VexRiscv(
     config = VexRiscvConfig(
-      plugins = VexRiscvCoreParameter.realtime(0x80000000l).plugins
+      plugins = VexRiscvCoreParameter.realtime(0x80000000L).plugins
     )
   )
   SpinalVerilog(cpu())
