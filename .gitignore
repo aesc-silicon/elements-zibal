@@ -1,5 +1,6 @@
 verbose.log
-project/*
+project/project/*
+project/target/*
 target/*
 simWorkspace/
 tmp/
