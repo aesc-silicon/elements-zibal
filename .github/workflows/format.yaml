@@ -1,6 +1,6 @@
 # This workflow checks the scala format
 
-name: Zibal Format
+name: Scala Format Check
 
 on:
   push:
@@ -17,7 +17,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          path: zibal
+
+      - name: Checkout SpinalCrypto
+        uses: actions/checkout@v2
+        with:
+          repository: SpinalHDL/SpinalCrypto
+          ref: master
+          path: SpinalCrypto
 
       - name: Check Format
         run: |
+          cd zibal
           sbt scalafmtCheck

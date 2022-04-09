@@ -34,6 +34,13 @@ jobs:
           ref: main
           path: nafarr
 
+      - name: Checkout SpinalCrypto
+        uses: actions/checkout@v2
+        with:
+          repository: SpinalHDL/SpinalCrypto
+          ref: master
+          path: SpinalCrypto
+
       - name: Compile
         run: |
           cd zibal

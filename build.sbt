@@ -1,4 +1,4 @@
-val spinalVersion = "1.6.2"
+val spinalVersion = "1.6.4"
 
 lazy val root = (project in file("."))
   .settings(
@@ -17,13 +17,14 @@ lazy val root = (project in file("."))
       "org.yaml" % "snakeyaml" % "1.8"
     ),
     name := "Zibal",
-    scalaSource in Compile := baseDirectory.value / "hardware" / "scala",
-    scalaSource in Test := baseDirectory.value / "test" / "scala"
+    Compile / scalaSource := baseDirectory.value / "hardware" / "scala",
+    Test / scalaSource := baseDirectory.value / "test" / "scala"
   )
-  .dependsOn(vexRiscv, nafarr)
+  .dependsOn(vexRiscv, nafarr, spinalCrypto)
 
 lazy val vexRiscv = RootProject(file("../vexriscv/"))
 lazy val nafarr = RootProject(file("../nafarr/"))
+lazy val spinalCrypto = RootProject(file("../SpinalCrypto/"))
 
-connectInput in run := true
+run / connectInput := true
 fork := true
