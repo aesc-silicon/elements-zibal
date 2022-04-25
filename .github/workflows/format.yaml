@@ -20,11 +20,18 @@ jobs:
         with:
           path: zibal
 
+      - name: Checkout VexRiscv
+        uses: actions/checkout@v2
+        with:
+          repository: aesc-silicon/elements-vexriscv
+          ref: main
+          path: vexriscv
+
       - name: Checkout Nafarr
         uses: actions/checkout@v2
         with:
           repository: aesc-silicon/elements-nafarr
-          ref: master
+          ref: main
           path: nafarr
 
       - name: Checkout SpinalCrypto
