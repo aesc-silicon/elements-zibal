@@ -19,7 +19,7 @@ object CadenceTools {
     def generate(path: String) = {
       val file = s"${path}${config.className}.sdc"
       val writer = new PrintWriter(new File(file))
-      println(s"Generate ${config.className}.sdc")
+      SpinalInfo(s"Generate ${config.className}.sdc")
 
       writer.write("""set sdc_version 2.0
 set_units -capacitance 1000fF
@@ -86,7 +86,7 @@ current_design ${TOP}
     def generate(io: Data, path: String) = {
       val file = s"${path}${config.className}.io"
       val writer = new PrintWriter(new File(file))
-      println(s"Generate ${config.className}.io")
+      SpinalInfo(s"Generate ${config.className}.io")
 
       io.component.getOrdredNodeIo.foreach { baseType =>
         val instance = baseType.parent.asInstanceOf[IhpCmosIo.IhpCmosIo]

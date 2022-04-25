@@ -9,14 +9,27 @@ object ElementsConfig {
     val socName = System.getenv("SOC")
     val boardName = System.getenv("BOARD")
     val socBoard = socName + "/" + boardName
-    val buildPath = "./../build/" + socBoard + "/"
-    val zibalBuildPath = buildPath + "/zibal/"
-    val zephyrBuildPath = buildPath + "/zephyr/zephyr/"
-    val zephyrBoardPath = buildPath + "/zephyr-boards/boards/riscv/" + socName
-    val symbiflowBuildPath = buildPath + "/symbiflow/"
-    val vivadoBuildPath = buildPath + "/vivado/syn/"
-    val fplBuildPath = buildPath + "/fpl/"
-    val className = top.getClass().getName().stripSuffix("$").split("\\.").last.split("\\$").last
+    val buildPath = "./build/" + socBoard + "/"
+    val zibalBuildPath = buildPath + "zibal/"
+    val symbiflowBuildPath = buildPath + "symbiflow/"
+    val vivadoBuildPath = buildPath + "vivado/syn/"
+    val softwareBuildPath = buildPath + "software/"
+    def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
+    def swStorageZephyrBinary(name: String) = swStorageBuildPath(name) + "zephyr/zephyr/zephyr.bin"
+    def swStorageZephyrBoardPath(name: String) =
+      swStorageBuildPath(name) + "zephyr-boards/boards/riscv/" + socName
+    def swStorageBaremetalBinary(name: String) = swStorageBuildPath(name) + "kernel.rom"
+
+    // Prepare class will create files and therefore  replace with Top
+    val className = top
+      .getClass()
+      .getName()
+      .stripSuffix("$")
+      .split("\\.")
+      .last
+      .split("\\$")
+      .last
+      .replace("Prepare", "Top")
     def genFPGASpinalConfig = SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath)
     def genFPGASimConfig = SimConfig
       .withConfig(this.genFPGASpinalConfig)

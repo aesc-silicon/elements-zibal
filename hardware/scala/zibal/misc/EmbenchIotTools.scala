@@ -1,16 +1,28 @@
 package zibal.misc
 
-import java.io._
+import java.io.FileWriter
+import java.util.HashMap
 import spinal.core._
 import scala.collection.mutable
-import nafarr.blackboxes.xilinx.a7._
+import org.yaml.snakeyaml.{DumperOptions, Yaml}
 
 case class EmbenchIotTools(config: ElementsConfig.ElementsConfig) {
   def generate(cpuFrequency: HertzNumber) = {
     val file = s"${config.zibalBuildPath}${config.className}.yaml"
-    val writer = new PrintWriter(new File(file))
-    println(s"Generate ${config.className}.yaml")
-    writer.write(s"{frequencies: {cpu: ${cpuFrequency.toInt}}}\n")
-    writer.close()
+    SpinalInfo(s"Generate ${config.className}.yaml")
+
+    val frequencies = new HashMap[String, Any]()
+    frequencies.put("cpu", cpuFrequency.toInt)
+    val content = new HashMap[String, Any]()
+    content.put("frequencies", frequencies)
+
+    val options = new DumperOptions()
+    options.setWidth(50)
+    options.setIndent(4)
+    options.setCanonical(true)
+    options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
+
+    val yaml = new Yaml()
+    yaml.dump(content, new FileWriter(file))
   }
 }

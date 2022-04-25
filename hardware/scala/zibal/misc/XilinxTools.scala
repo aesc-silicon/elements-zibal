@@ -22,7 +22,7 @@ object XilinxTools {
     def generate(io: Data, emitVoltage: Boolean = true, emitSpi: Boolean = false) = {
       val file = s"${config.zibalBuildPath}${config.className}.xdc"
       val writer = new PrintWriter(new File(file))
-      println(s"Generate ${config.className}.xdc")
+      SpinalInfo(s"Generate ${config.className}.xdc")
       writer.write("# CONFIG\n")
       if (emitVoltage) {
         writer.write("set_property CFGBVS VCCO [current_design]\n")

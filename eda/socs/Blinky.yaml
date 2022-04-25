@@ -1,5 +1,0 @@
-# Simple blinky SOC to test flows
-boards:
-  - Nexys4-DDR
-  - VirtualSG13S
-  - VirtualSG13S2

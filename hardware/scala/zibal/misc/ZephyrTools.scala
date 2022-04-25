@@ -15,17 +15,19 @@ import nafarr.peripherals.com.i2c.Apb3I2cController
 
 object ZephyrTools {
 
-  case class Board(config: ElementsConfig.ElementsConfig) {
+  case class Board(config: ElementsConfig.ElementsConfig, name: String, app: String = "") {
+
+    val storage = SoftwareStorage(config, name, "zephyr", app)
 
     def generateDefconfig(
         apbMapping: ArrayBuffer[(Apb3, SizeMapping)],
         clockDomain: ClockDomain
     ) = {
       val clockSpeed = clockDomain.frequency.getValue.toInt
-      val file =
-        s"${config.zephyrBoardPath}/${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
+      val file = s"${config.swStorageZephyrBoardPath(name)}/${config.socName
+        .toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
       val writer = new PrintWriter(new File(file))
-      println(
+      SpinalInfo(
         s"Generate ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
       )
       writer.write(s"""CONFIG_SOC_SERIES_RISCV32_ELEMENTS_VEXRISCV=y
@@ -73,9 +75,9 @@ CONFIG_SPI_ELEMENTS=y
     }
 
     def generateKconfig() = {
-      var file = s"${config.zephyrBoardPath}/Kconfig.board"
+      var file = s"${config.swStorageZephyrBoardPath(name)}/Kconfig.board"
       var writer = new PrintWriter(new File(file))
-      println(s"Generate Kconfig.board")
+      SpinalInfo(s"Generate Kconfig.board")
 
       writer.write(
         s"""config BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
@@ -88,9 +90,9 @@ CONFIG_SPI_ELEMENTS=y
 
       writer.close()
 
-      file = s"${config.zephyrBoardPath}/Kconfig.defconfig"
+      file = s"${config.swStorageZephyrBoardPath(name)}/Kconfig.defconfig"
       writer = new PrintWriter(new File(file))
-      println(s"Generate Kconfig.defconfig")
+      SpinalInfo(s"Generate Kconfig.defconfig")
 
       writer.write(s"""if BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
 config BOARD
@@ -114,10 +116,10 @@ endif
 
     def generateDeviceTree(stdout: Apb3Uart) = {
       val stdoutName = stdout.toString()
-      val file =
-        s"${config.zephyrBoardPath}/${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}.dts"
+      val file = s"${config.swStorageZephyrBoardPath(name)}/${config.socName
+        .toLowerCase()}-${config.boardName.toLowerCase()}.dts"
       val writer = new PrintWriter(new File(file))
-      println(s"Generate ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}.dts")
+      SpinalInfo(s"Generate ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}.dts")
 
       writer.write(s"""/dts-v1/;
 #include <${config.socName.toLowerCase()}.dtsi>
@@ -167,7 +169,9 @@ endif
 
   }
 
-  case class DeviceTree(config: ElementsConfig.ElementsConfig) {
+  case class DeviceTree(config: ElementsConfig.ElementsConfig, name: String, app: String = "") {
+
+    val storage = SoftwareStorage(config, name, "zephyr", app)
 
     def generate(
         filename: String,
@@ -177,8 +181,8 @@ endif
         apbMapping: ArrayBuffer[(Apb3, SizeMapping)],
         irqMapping: ArrayBuffer[(Int, Bool)]
     ) = {
-      val writer = new PrintWriter(new File(config.buildPath + filename))
-      println(s"Generate ${filename}")
+      val writer = new PrintWriter(new File(storage.path + filename))
+      SpinalInfo(s"Generate ${filename}")
 
       writer.write(s"""#include <$platform.dtsi>
 / {
@@ -200,19 +204,19 @@ endif
               case _: Apb3Uart =>
                 val ip = parent.asInstanceOf[Apb3Uart]
                 val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTree(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
               case _: Apb3I2cController =>
                 val ip = parent.asInstanceOf[Apb3I2cController]
                 val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTree(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
               case _: Apb3SpiMaster =>
                 val ip = parent.asInstanceOf[Apb3SpiMaster]
                 val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTree(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
               case _: Apb3Gpio =>
                 val ip = parent.asInstanceOf[Apb3Gpio]
                 val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTree(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
               case _ => ""
             }
             writer.write(deviceTree)

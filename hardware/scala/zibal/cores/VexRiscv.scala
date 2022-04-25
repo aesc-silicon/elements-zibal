@@ -13,6 +13,8 @@ case class VexRiscvCoreParameter(
 ) {}
 
 object VexRiscvCoreParameter {
+  val yamlPath =
+    "build/" + System.getenv("SOC") + "/" + System.getenv("BOARD") + "/zibal/VexRiscv.yaml"
   def realtime(resetAddress: BigInt) = VexRiscvCoreParameter(
     plugins = ArrayBuffer(
       new IBusSimplePlugin(
@@ -73,17 +75,15 @@ object VexRiscvCoreParameter {
           minstretAccess = CsrAccess.READ_WRITE,
           ucycleAccess = CsrAccess.READ_ONLY,
           wfiGenAsWait = true,
-          ecallGen = true
+          ecallGen = true,
+          ebreakGen = true
         )
       ),
       new BranchPlugin(
         earlyBranch = false,
         catchAddressMisaligned = true
       ),
-      new YamlPlugin(
-        "../build/" + System.getenv("SOC") + "/" + System.getenv("BOARD") +
-          "/zibal/VexRiscv.yaml"
-      )
+      new YamlPlugin(yamlPath)
     )
   )
   def mcu(resetAddress: BigInt) = VexRiscvCoreParameter(
@@ -165,17 +165,15 @@ object VexRiscvCoreParameter {
           minstretAccess = CsrAccess.READ_WRITE,
           ucycleAccess = CsrAccess.READ_ONLY,
           wfiGenAsWait = true,
-          ecallGen = true
+          ecallGen = true,
+          ebreakGen = true
         )
       ),
       new BranchPlugin(
         earlyBranch = false,
         catchAddressMisaligned = true
       ),
-      new YamlPlugin(
-        "../build/" + System.getenv("SOC") + "/" + System.getenv("BOARD") +
-          "/zibal/VexRiscv.yaml"
-      )
+      new YamlPlugin(yamlPath)
     )
   )
 }

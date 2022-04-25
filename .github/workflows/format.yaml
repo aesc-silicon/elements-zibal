@@ -20,6 +20,13 @@ jobs:
         with:
           path: zibal
 
+      - name: Checkout Nafarr
+        uses: actions/checkout@v2
+        with:
+          repository: aesc-silicon/elements-nafarr
+          ref: master
+          path: nafarr
+
       - name: Checkout SpinalCrypto
         uses: actions/checkout@v2
         with:

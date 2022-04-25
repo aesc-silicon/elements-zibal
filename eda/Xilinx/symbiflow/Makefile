@@ -1,8 +1,8 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
-BUILDDIR := ${current_dir}/../../../../build/${SOC}/${BOARD}/symbiflow/
+BUILDDIR := ${current_dir}/../../../../../build/${SOC}/${BOARD}/symbiflow/
 LOGDIR := ${BUILDDIR}/logs/
-ZIBALDIR := ${current_dir}/../../../../build/${SOC}/${BOARD}/zibal/
+ZIBALDIR := ${current_dir}/../../../../../build/${SOC}/${BOARD}/zibal/
 XDCDIR := ${ZIBALDIR}
 
 # Set variables with elements
