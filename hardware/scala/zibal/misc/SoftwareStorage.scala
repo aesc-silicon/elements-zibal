@@ -9,8 +9,7 @@ import org.yaml.snakeyaml.{DumperOptions, Yaml}
 case class SoftwareStorage(
     config: ElementsConfig.ElementsConfig,
     storage: String,
-    os: String,
-    app: String
+    os: String
 ) {
   val path = config.swStorageBuildPath(storage)
   val filePath = config.softwareBuildPath + "storages.yaml"
@@ -36,26 +35,31 @@ case class SoftwareStorage(
   val yaml = new Yaml()
   var storages = new HashMap[String, Any]()
   var content = new HashMap[String, Any]()
-  val file = new File(filePath)
-  if (file.exists()) {
-    val storages = yaml.load(new FileInputStream(file))
-  } else {
-    SpinalInfo(s"Generate ${filePath.split('/').last}")
+  content.put("os", os)
+
+  def add(key: String, value: Any) {
+    content.put(key, value)
   }
 
-  if (!storages.containsKey(storage)) {
-    content.put("os", os)
-    if (!app.equals("")) {
-      content.put("application", app)
+  def dump() {
+    val file = new File(filePath)
+    if (file.exists()) {
+      storages = yaml.load(new FileInputStream(file)).asInstanceOf[HashMap[String, Any]]
+    } else {
+      SpinalInfo(s"Generate ${filePath.split('/').last}")
+    }
+
+    if (storages.containsKey(storage)) {
+      storages.remove(storage)
     }
     storages.put(storage, content)
+
+    val options = new DumperOptions()
+    options.setWidth(50)
+    options.setIndent(4)
+    options.setCanonical(true)
+    options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
+
+    yaml.dump(storages, new FileWriter(file))
   }
-
-  val options = new DumperOptions()
-  options.setWidth(50)
-  options.setIndent(4)
-  options.setCanonical(true)
-  options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK)
-
-  yaml.dump(storages, new FileWriter(file))
 }

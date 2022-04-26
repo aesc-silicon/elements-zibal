@@ -17,7 +17,11 @@ object ZephyrTools {
 
   case class Board(config: ElementsConfig.ElementsConfig, name: String, app: String = "") {
 
-    val storage = SoftwareStorage(config, name, "zephyr", app)
+    val storage = SoftwareStorage(config, name, "zephyr")
+    if (!app.equals("")) {
+      storage.add("application", app)
+    }
+    storage.dump()
 
     def generateDefconfig(
         apbMapping: ArrayBuffer[(Apb3, SizeMapping)],
@@ -171,7 +175,11 @@ endif
 
   case class DeviceTree(config: ElementsConfig.ElementsConfig, name: String, app: String = "") {
 
-    val storage = SoftwareStorage(config, name, "zephyr", app)
+    val storage = SoftwareStorage(config, name, "zephyr")
+    if (!app.equals("")) {
+      storage.add("application", app)
+    }
+    storage.dump()
 
     def generate(
         filename: String,

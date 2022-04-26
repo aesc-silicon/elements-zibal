@@ -18,7 +18,8 @@ object BaremetalTools {
 
   case class Header(config: ElementsConfig.ElementsConfig, name: String) {
 
-    val storage = SoftwareStorage(config, name, "baremetal", "")
+    val storage = SoftwareStorage(config, name, "baremetal")
+    storage.dump()
 
     def generate(
         configs: mutable.LinkedHashMap[Axi4Bus, Axi4CrossbarSlaveConfig],
