@@ -203,20 +203,24 @@ endif
             val deviceTree = parent match {
               case _: Apb3Uart =>
                 val ip = parent.asInstanceOf[Apb3Uart]
-                val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
               case _: Apb3I2cController =>
                 val ip = parent.asInstanceOf[Apb3I2cController]
-                val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
               case _: Apb3SpiMaster =>
                 val ip = parent.asInstanceOf[Apb3SpiMaster]
-                val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
               case _: Apb3Gpio =>
                 val ip = parent.asInstanceOf[Apb3Gpio]
-                val irqNumber = irqMapping.filter(_._2 == ip.io.interrupt)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber(0)._1)
+                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
               case _ => ""
             }
             writer.write(deviceTree)
