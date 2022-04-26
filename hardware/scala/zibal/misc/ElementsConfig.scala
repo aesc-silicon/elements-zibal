@@ -18,7 +18,8 @@ object ElementsConfig {
     def swStorageZephyrBinary(name: String) = swStorageBuildPath(name) + "zephyr/zephyr/zephyr.bin"
     def swStorageZephyrBoardPath(name: String) =
       swStorageBuildPath(name) + "zephyr-boards/boards/riscv/" + socName
-    def swStorageBaremetalBinary(name: String) = swStorageBuildPath(name) + "kernel.rom"
+    def swStorageBaremetalRom(name: String) = swStorageBuildPath(name) + "kernel.rom"
+    def swStorageBaremetalImage(name: String) = swStorageBuildPath(name) + "kernel.img"
 
     // Prepare class will create files and therefore  replace with Top
     val className = top
