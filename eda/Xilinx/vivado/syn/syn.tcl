@@ -11,6 +11,7 @@ synth_design -top ${TOP} -part ${PART} -flatten rebuilt
 write_checkpoint -force ./post_synth.dcp
 write_edif -force ./${TOP}.edf
 report_utilization -file ./logs/post_synth_utilization.txt
+report_utilization -hierarchical -file ./logs/post_synth_utilization_hierarchical.txt
 report_timing > ./logs/post_synth_timing.txt
 report_timing_summary -file ./logs/post_synth_timing.rpt 
 
@@ -39,9 +40,10 @@ place_design -directive Explore
 phys_opt_design -directive Explore
 route_design -directive Explore
 
-report_utilization -file ./logs/post_route_utilization.rpt 
+report_utilization -file ./logs/post_route_utilization.rpt
+report_utilization -hierachical -file ./logs/post_route_utilization_hierachical.rpt
 report_timing > ./logs/post_route_timing.txt
-report_timing_summary -file ./logs/post_route_timing.rpt 
+report_timing_summary -file ./logs/post_route_timing.rpt
 
 #  write_bitstream
 write_checkpoint -force ./post_route.dcp 
