@@ -15,8 +15,8 @@ MAP = ${BUILD}/kernel.map
 
 LINKER = ${SOURCE}/kernel.ld
 
-AFLAGS = -march=rv32i -mabi=ilp32 -Wall
-CFLAGS = -march=rv32i -mabi=ilp32 -Wall
+AFLAGS = -march=rv32im -mabi=ilp32 -Wall
+CFLAGS = -march=rv32im -mabi=ilp32 -Wall
 LFLAGS = --no-undefined
 
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
