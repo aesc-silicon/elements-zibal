@@ -95,7 +95,7 @@ object VexRiscvCoreParameter {
         compressedGen = true,
         config = InstructionCacheConfig(
           cacheSize = 4096,
-          bytePerLine = 32,
+          bytePerLine = 16,
           wayCount = 1,
           addressWidth = 32,
           cpuDataWidth = 32,
@@ -110,7 +110,7 @@ object VexRiscvCoreParameter {
       new DBusCachedPlugin(
         config = new DataCacheConfig(
           cacheSize = 4096,
-          bytePerLine = 32,
+          bytePerLine = 16,
           wayCount = 1,
           addressWidth = 32,
           cpuDataWidth = 32,
