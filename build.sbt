@@ -6,7 +6,7 @@ lazy val root = (project in file("."))
       List(
         organization := "com.github.spinalhdl",
         scalaVersion := "2.11.12",
-        version := spinalVersion
+        version := "1.0.0"
       )
     ),
     libraryDependencies ++= Seq(
@@ -20,11 +20,11 @@ lazy val root = (project in file("."))
     Compile / scalaSource := baseDirectory.value / "hardware" / "scala",
     Test / scalaSource := baseDirectory.value / "test" / "scala"
   )
-  .dependsOn(vexRiscv, nafarr, spinalCrypto)
+  .dependsOn(vexRiscv, nafarr/*, spinalCrypto*/)
 
 lazy val vexRiscv = RootProject(file("../vexriscv/"))
 lazy val nafarr = RootProject(file("../nafarr/"))
-lazy val spinalCrypto = RootProject(file("../SpinalCrypto/"))
+//lazy val spinalCrypto = RootProject(file("../SpinalCrypto/"))
 
 run / connectInput := true
 fork := true
