@@ -41,7 +41,7 @@ phys_opt_design -directive Explore
 route_design -directive Explore
 
 report_utilization -file ./logs/post_route_utilization.rpt
-report_utilization -hierachical -file ./logs/post_route_utilization_hierachical.rpt
+report_utilization -hierarchical -file ./logs/post_route_utilization_hierarchical.rpt
 report_timing > ./logs/post_route_timing.txt
 report_timing_summary -file ./logs/post_route_timing.rpt
 
