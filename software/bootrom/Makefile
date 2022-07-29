@@ -5,9 +5,9 @@ BUILD = ${ELEMENTS_BASE}/build/${SOC}/${BOARD}/software/${STORAGE}/
 
 DRIVER = ${ELEMENTS_BASE}/internal/nafarr/software/driver/
 
-INCLUDE = -I ${ELEMENTS_BASE}/internal/nafarr/software/include/ -I ${BUILD}
-
 SOURCE = ${ELEMENTS_BASE}/hardware/scala/soc/${SOC}/${BOARD}/${STORAGE}/
+
+INCLUDE = -I ${ELEMENTS_BASE}/internal/nafarr/software/include/ -I ${BUILD} -I ${SOURCE}
 
 TARGET = ${BUILD}/kernel.img
 LIST = ${BUILD}/kernel.list
