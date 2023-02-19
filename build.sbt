@@ -2,6 +2,7 @@ val spinalVersion = "1.8.0"
 
 lazy val root = (project in file("."))
   .settings(
+    name := "Zibal",
     inThisBuild(
       List(
         organization := "com.github.spinalhdl",
@@ -16,14 +17,13 @@ lazy val root = (project in file("."))
       "org.scalatest" %% "scalatest" % "3.2.5",
       "org.yaml" % "snakeyaml" % "1.8"
     ),
-    name := "Zibal",
     Compile / scalaSource := baseDirectory.value / "hardware" / "scala",
     Test / scalaSource := baseDirectory.value / "test" / "scala"
   )
-  .dependsOn(vexRiscv, nafarr, spinalCrypto)
+  .dependsOn(nafarr, vexRiscv, spinalCrypto)
 
-lazy val vexRiscv = RootProject(file("../vexriscv/"))
 lazy val nafarr = RootProject(file("../nafarr/"))
+lazy val vexRiscv = RootProject(file("../vexriscv/"))
 lazy val spinalCrypto = RootProject(file("../SpinalCrypto/"))
 
 run / connectInput := true
