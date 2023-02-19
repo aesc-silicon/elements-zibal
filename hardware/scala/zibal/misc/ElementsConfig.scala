@@ -8,10 +8,14 @@ object ElementsConfig {
   case class ElementsConfig(top: Object) {
     val socName = System.getenv("SOC")
     val boardName = System.getenv("BOARD")
+    val buildRoot = scala.util.Properties.envOrElse("BUILD_ROOT", "./build") + "/"
+
     val socBoard = socName + "/" + boardName
-    val buildPath = "./build/" + socBoard + "/"
+    val buildPath = buildRoot + socBoard + "/"
     val zibalBuildPath = buildPath + "zibal/"
     val symbiflowBuildPath = buildPath + "symbiflow/"
+    def zephyrBinary = buildRoot + "zephyr/zephyr.bin"
+
     val vivadoBuildPath = buildPath + "vivado/syn/"
     val softwareBuildPath = buildPath + "software/"
     def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
@@ -30,7 +34,7 @@ object ElementsConfig {
       .last
       .split("\\$")
       .last
-      .replace("Prepare", "Top")
+      .replace("Generate", "Top")
     def genFPGASpinalConfig = SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath)
     def genFPGASimConfig = SimConfig
       .withConfig(this.genFPGASpinalConfig)

@@ -13,8 +13,8 @@ case class VexRiscvCoreParameter(
 ) {}
 
 object VexRiscvCoreParameter {
-  val yamlPath =
-    "build/" + System.getenv("SOC") + "/" + System.getenv("BOARD") + "/zibal/VexRiscv.yaml"
+  val yamlPath = scala.util.Properties.envOrElse("BUILD_ROOT", "./build") + "/" +
+    System.getenv("SOC") + "/" + System.getenv("BOARD") + "/zibal/VexRiscv.yaml"
   def realtime(resetAddress: BigInt) = VexRiscvCoreParameter(
     plugins = ArrayBuffer(
       new IBusSimplePlugin(
