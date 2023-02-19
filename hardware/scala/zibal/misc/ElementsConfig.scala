@@ -12,6 +12,7 @@ object ElementsConfig {
     val buildPath = "./build/" + socBoard + "/"
     val zibalBuildPath = buildPath + "zibal/"
     val symbiflowBuildPath = buildPath + "symbiflow/"
+
     val vivadoBuildPath = buildPath + "vivado/syn/"
     val softwareBuildPath = buildPath + "software/"
     def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
