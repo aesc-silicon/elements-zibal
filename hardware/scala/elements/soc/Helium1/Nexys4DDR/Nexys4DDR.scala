@@ -30,7 +30,7 @@ case class Nexys4DDRBoard() extends Component {
       val rts = inout(Analog(Bool))
       val cts = inout(Analog(Bool))
     }
-    val gpioStatus = Vec(inout(Analog(Bool())), 4)
+    val gpioStatus = Vec(inout(Analog(Bool())), 2)
   }
 
   val top = Nexys4DDRTop()
@@ -50,7 +50,7 @@ case class Nexys4DDRBoard() extends Component {
   top.io.uartStd.cts.PAD := io.uartStd.cts
   io.uartStd.rts := top.io.uartStd.rts.PAD
 
-  for (index <- 0 until 4) {
+  for (index <- 0 until 2) {
     io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
   }
 
@@ -99,9 +99,7 @@ case class Nexys4DDRTop() extends Component {
     }
     val gpioStatus = Vec(
       XilinxCmosIo("R12"),
-      XilinxCmosIo("R11"),
-      XilinxCmosIo("G14"),
-      XilinxCmosIo("N16")
+      XilinxCmosIo("C12")
     )
   }
 
@@ -119,7 +117,7 @@ case class Nexys4DDRTop() extends Component {
   io.uartStd.rts <> OBUF(soc.io_per.uartStd.rts)
   io.uartStd.cts <> IBUF(soc.io_per.uartStd.cts)
 
-  for (index <- 0 until 4) {
+  for (index <- 0 until 2) {
     io.gpioStatus(index) <> IOBUF(soc.io_per.gpioStatus.pins(index))
   }
 }

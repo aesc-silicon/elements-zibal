@@ -18,7 +18,7 @@ object Hydrogen1 {
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 2) {
     val uartStd = UartCtrl.Parameter.full
-    val gpioStatus = GpioCtrl.Parameter(4, 2, (0 to 2), (3 to 3), (3 to 3))
+    val gpioStatus = GpioCtrl.Parameter(2, 3, (0 to 0), (1 to 1), (1 to 1))
   }
 
   case class Hydrogen1(parameter: Hydrogen.Parameter) extends Hydrogen.Hydrogen(parameter) {
