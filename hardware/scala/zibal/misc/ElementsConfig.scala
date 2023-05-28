@@ -13,9 +13,10 @@ object ElementsConfig {
     val socBoard = socName + "/" + boardName
     val buildPath = buildRoot + socBoard + "/"
     val zibalBuildPath = buildPath + "zibal/"
-    val symbiflowBuildPath = buildPath + "symbiflow/"
     def zephyrBinary = buildRoot + "zephyr/zephyr.bin"
 
+    /* Probably not used anymore */
+    val symbiflowBuildPath = buildPath + "symbiflow/"
     val vivadoBuildPath = buildPath + "vivado/syn/"
     val softwareBuildPath = buildPath + "software/"
     def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
@@ -24,6 +25,7 @@ object ElementsConfig {
       swStorageBuildPath(name) + "zephyr-boards/boards/riscv/" + socName
     def swStorageBaremetalRom(name: String) = swStorageBuildPath(name) + "kernel.rom"
     def swStorageBaremetalImage(name: String) = swStorageBuildPath(name) + "kernel.img"
+    /* --- */
 
     // Prepare class will create files and therefore  replace with Top
     val className = top
