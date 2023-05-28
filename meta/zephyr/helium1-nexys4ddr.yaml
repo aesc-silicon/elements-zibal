@@ -1,9 +1,8 @@
+vendor: Xilinx
 soc: Helium1
 board: Nexys4DDR
-board_openfpgaloader: arty_a7_100t
-vendor: Xilinx
-family: artix7
-device: xc7a100t
 part: XC7A100TCSG324-1
+openfpgaloader:
+  board: arty_a7_100t
 f4pga:
   family: xc7
