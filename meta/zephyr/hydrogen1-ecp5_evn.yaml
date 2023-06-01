@@ -8,3 +8,4 @@ f4pga:
   family: ecp5
   device: um5g-85k
   package: CABGA381
+  frequency: 12
