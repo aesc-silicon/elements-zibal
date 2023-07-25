@@ -15,10 +15,10 @@ import zibal.platform.Hydrogen
 import zibal.board.{KitParameter, BoardParameter}
 
 import elements.sdk.ElementsApp
-import elements.board.ECP5EvaluationBoard
+import elements.board.ECPIX5
 import elements.soc.Hydrogen1
 
-case class ECP5EvaluationBoardBoard() extends Component {
+case class ECPIX5Board() extends Component {
   val io = new Bundle {
     val clock = inout(Analog(Bool))
     val uartStd = new Bundle {
@@ -28,7 +28,7 @@ case class ECP5EvaluationBoardBoard() extends Component {
     val gpioStatus = Vec(inout(Analog(Bool())), 2)
   }
 
-  val top = ECP5EvaluationBoardTop()
+  val top = ECPIX5Top()
   val analogFalse = Analog(Bool)
   analogFalse := False
   val analogTrue = Analog(Bool)
@@ -53,15 +53,15 @@ case class ECP5EvaluationBoardBoard() extends Component {
   }
 }
 
-case class ECP5EvaluationBoardTop() extends Component {
+case class ECPIX5Top() extends Component {
   val resets = List[ResetParameter](ResetParameter("system", 128), ResetParameter("debug", 128))
   val clocks = List[ClockParameter](
-    ClockParameter("system", 100 MHz, "system"),
-    ClockParameter("debug", 100 MHz, "debug", synchronousWith = "system")
+    ClockParameter("system", 90 MHz, "system"),
+    ClockParameter("debug", 90 MHz, "debug", synchronousWith = "system")
   )
 
   val kitParameter = KitParameter(resets, clocks)
-  val boardParameter = ECP5EvaluationBoard.Parameter(kitParameter)
+  val boardParameter = ECPIX5.Parameter(kitParameter, ECPIX5.SystemClock.frequency)
   val socParameter = Hydrogen1.Parameter(boardParameter)
   val parameter = Hydrogen.Parameter(
     socParameter,
@@ -72,22 +72,35 @@ case class ECP5EvaluationBoardTop() extends Component {
         clock,
         boardParameter.getOscillatorFrequency,
         List("system", "debug"),
+        2,
         1,
-        5,
-        10
+        9
       )
     }
   )
 
   val io = new Bundle {
-    val clock = LatticeCmosIo("A10").clock(boardParameter.getOscillatorFrequency)
+    val clock = LatticeCmosIo(ECPIX5.SystemClock.clock).clock(ECPIX5.SystemClock.frequency)
     val uartStd = new Bundle {
-      val txd = LatticeCmosIo("P3")
-      val rxd = LatticeCmosIo("P2")
+      val txd = LatticeCmosIo(ECPIX5.UartStd.txd)
+      val rxd = LatticeCmosIo(ECPIX5.UartStd.rxd)
     }
     val gpioStatus = Vec(
-      LatticeCmosIo("A13").ioStandard("LVCMOS25"),
-      LatticeCmosIo("P4")
+      LatticeCmosIo(ECPIX5.LEDs.LD5.blue),
+      LatticeCmosIo(ECPIX5.Buttons.sw0)
+    )
+    val ledPullDown = Vec(
+      LatticeCmosIo(ECPIX5.LEDs.LD5.red),
+      LatticeCmosIo(ECPIX5.LEDs.LD5.green),
+      LatticeCmosIo(ECPIX5.LEDs.LD6.red),
+      LatticeCmosIo(ECPIX5.LEDs.LD6.green),
+      LatticeCmosIo(ECPIX5.LEDs.LD6.blue),
+      LatticeCmosIo(ECPIX5.LEDs.LD7.red),
+      LatticeCmosIo(ECPIX5.LEDs.LD7.green),
+      LatticeCmosIo(ECPIX5.LEDs.LD7.blue),
+      LatticeCmosIo(ECPIX5.LEDs.LD8.red),
+      LatticeCmosIo(ECPIX5.LEDs.LD8.green),
+      LatticeCmosIo(ECPIX5.LEDs.LD8.blue)
     )
   }
 
@@ -103,14 +116,18 @@ case class ECP5EvaluationBoardTop() extends Component {
   io.uartStd.rxd <> FakeI(soc.io_per.uartStd.rxd)
   soc.io_per.uartStd.cts := False
 
-  for (index <- 0 until 2) {
+  io.gpioStatus(0) <> FakeIo(soc.io_per.gpioStatus.pins(0), true)
+  for (index <- 1 until io.gpioStatus.length) {
     io.gpioStatus(index) <> FakeIo(soc.io_per.gpioStatus.pins(index))
+  }
+  for (index <- 0 until io.ledPullDown.length) {
+    io.ledPullDown(index) <> FakeO(True)
   }
 }
 
-object ECP5EvaluationBoardGenerate extends ElementsApp {
+object ECPIX5Generate extends ElementsApp {
   elementsConfig.genFPGASpinalConfig.generateVerilog {
-    val top = ECP5EvaluationBoardTop()
+    val top = ECPIX5Top()
 
     val lpf = LatticeTools.Lpf(elementsConfig)
     lpf.generate(top.io)
@@ -120,9 +137,9 @@ object ECP5EvaluationBoardGenerate extends ElementsApp {
   }
 }
 
-object ECP5EvaluationBoardSimulate extends ElementsApp {
+object ECPIX5Simulate extends ElementsApp {
   val compiled = elementsConfig.genFPGASimConfig.compile {
-    val board = ECP5EvaluationBoardBoard()
+    val board = ECPIX5Board()
     board.top.soc.initOnChipRam(elementsConfig.zephyrBinary)
     for (domain <- board.top.soc.parameter.getKitParameter.clocks) {
       board.top.soc.clockCtrl.getClockDomainByName(domain.name).clock.simPublic()
@@ -134,20 +151,20 @@ object ECP5EvaluationBoardSimulate extends ElementsApp {
       compiled.doSimUntilVoid("simulate") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClock(dut.io.clock, ECP5EvaluationBoard.oscillatorFrequency, 10 ms)
+        testCases.addClock(dut.io.clock, ECPIX5.SystemClock.frequency, 10 ms)
       }
     case "boot" =>
       compiled.doSimUntilVoid("boot") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClockWithTimeout(dut.io.clock, ECP5EvaluationBoard.oscillatorFrequency, 10 ms)
+        testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 10 ms)
         testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
       }
     case "mtimer" =>
       compiled.doSimUntilVoid("mtimer") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClockWithTimeout(dut.io.clock, ECP5EvaluationBoard.oscillatorFrequency, 400 ms)
+        testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 400 ms)
         testCases.heartbeat(dut.io.gpioStatus(0))
       }
     case _ =>

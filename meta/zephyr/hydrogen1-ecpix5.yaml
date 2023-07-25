@@ -1,0 +1,11 @@
+vendor: Lattice
+soc: Hydrogen1
+board: ECPIX5
+part: LFE5UM5G-45F-8BG554I
+openfpgaloader:
+  cable: ft4232
+f4pga:
+  family: ecp5
+  device: um5g-45k
+  package: CABGA554
+  frequency: 100
