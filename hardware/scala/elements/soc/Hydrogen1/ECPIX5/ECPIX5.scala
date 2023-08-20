@@ -56,8 +56,8 @@ case class ECPIX5Board() extends Component {
 case class ECPIX5Top() extends Component {
   val resets = List[ResetParameter](ResetParameter("system", 128), ResetParameter("debug", 128))
   val clocks = List[ClockParameter](
-    ClockParameter("system", 90 MHz, "system"),
-    ClockParameter("debug", 90 MHz, "debug", synchronousWith = "system")
+    ClockParameter("system", 100 MHz, "system"),
+    ClockParameter("debug", 100 MHz, "debug", synchronousWith = "system")
   )
 
   val kitParameter = KitParameter(resets, clocks)
@@ -68,6 +68,8 @@ case class ECPIX5Top() extends Component {
     128 kB,
     (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
     (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
+      clockCtrl.buildDummy(clock)
+      /* TODO PLLs don't work when booting from flash
       clockCtrl.buildLatticeECP5Pll(
         clock,
         boardParameter.getOscillatorFrequency,
@@ -76,6 +78,7 @@ case class ECPIX5Top() extends Component {
         1,
         9
       )
+      */
     }
   )
 
