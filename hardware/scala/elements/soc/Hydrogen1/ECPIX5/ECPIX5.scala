@@ -43,6 +43,10 @@ case class ECPIX5Board() extends Component {
     io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
   }
 
+  for (index <- 0 until 11) {
+    top.io.ledPullDown(index).PAD := analogFalse
+  }
+
   val baudPeriod = top.soc.socParameter.uartStd.init.getBaudPeriod()
 
   def simHook() {
