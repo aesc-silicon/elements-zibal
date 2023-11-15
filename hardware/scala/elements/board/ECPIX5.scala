@@ -47,7 +47,5 @@ object ECPIX5 {
   ) extends BoardParameter(
         kitParameter,
         mainClockFrequency
-      ) {
-    def getJtagFrequency = 10 MHz
-  }
+      ) {}
 }

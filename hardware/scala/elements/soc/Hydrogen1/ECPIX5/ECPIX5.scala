@@ -82,7 +82,7 @@ case class ECPIX5Top() extends Component {
         1,
         9
       )
-      */
+       */
     }
   )
 
@@ -158,21 +158,36 @@ object ECPIX5Simulate extends ElementsApp {
       compiled.doSimUntilVoid("simulate") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClock(dut.io.clock, ECPIX5.SystemClock.frequency, 10 ms)
+        testCases.addClock(
+          dut.io.clock,
+          ECPIX5.SystemClock.frequency,
+          simDuration.toString.toInt ms
+        )
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
       }
     case "boot" =>
       compiled.doSimUntilVoid("boot") { dut =>
         dut.simHook()
         val testCases = TestCases()
         testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 10 ms)
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
         testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
       }
     case "mtimer" =>
       compiled.doSimUntilVoid("mtimer") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 400 ms)
-        testCases.heartbeat(dut.io.gpioStatus(0))
+        testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 20 ms)
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
+        testCases.heartbeat(dut.io.gpioStatus(0), true)
+      }
+    case "reset" =>
+      compiled.doSimUntilVoid("reset") { dut =>
+        dut.simHook()
+        val testCases = TestCases()
+        testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 25 ms)
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
+        testCases.reset(dut.io.uartStd.txd, dut.baudPeriod)
       }
     case _ =>
       println(s"Unknown simulation ${simType}")

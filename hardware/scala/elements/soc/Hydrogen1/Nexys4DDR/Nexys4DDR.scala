@@ -72,7 +72,7 @@ case class Nexys4DDRTop() extends Component {
   )
 
   val kitParameter = KitParameter(resets, clocks)
-  val boardParameter = Nexys4DDR.Parameter(kitParameter)
+  val boardParameter = Nexys4DDR.Parameter(kitParameter, Nexys4DDR.SystemClock.frequency)
   val socParameter = Hydrogen1.Parameter(boardParameter)
   val parameter = Hydrogen.Parameter(
     socParameter,
@@ -84,22 +84,23 @@ case class Nexys4DDRTop() extends Component {
   )
 
   val io = new Bundle {
-    val clock = XilinxCmosIo("E3").clock(boardParameter.getOscillatorFrequency)
+    val clock = XilinxCmosIo(Nexys4DDR.SystemClock.clock).clock(Nexys4DDR.SystemClock.frequency)
     val jtag = new Bundle {
-      val tms = XilinxCmosIo("H2")
-      val tdi = XilinxCmosIo("G4")
-      val tdo = XilinxCmosIo("G2")
-      val tck = XilinxCmosIo("F3").clock(boardParameter.getJtagFrequency).disableDedicatedClockRoute
+      val tms = XilinxCmosIo(Nexys4DDR.Jtag.tms)
+      val tdi = XilinxCmosIo(Nexys4DDR.Jtag.tdi)
+      val tdo = XilinxCmosIo(Nexys4DDR.Jtag.tdo)
+      val tck =
+        XilinxCmosIo(Nexys4DDR.Jtag.tck).clock(Nexys4DDR.Jtag.frequency).disableDedicatedClockRoute
     }
     val uartStd = new Bundle {
-      val txd = XilinxCmosIo("D4")
-      val rxd = XilinxCmosIo("C4")
-      val rts = XilinxCmosIo("D3")
-      val cts = XilinxCmosIo("E5")
+      val txd = XilinxCmosIo(Nexys4DDR.UartStd.txd)
+      val rxd = XilinxCmosIo(Nexys4DDR.UartStd.rxd)
+      val rts = XilinxCmosIo(Nexys4DDR.UartStd.rts)
+      val cts = XilinxCmosIo(Nexys4DDR.UartStd.cts)
     }
     val gpioStatus = Vec(
-      XilinxCmosIo("R12"),
-      XilinxCmosIo("C12")
+      XilinxCmosIo(Nexys4DDR.LEDs.LED16.blue),
+      XilinxCmosIo(Nexys4DDR.Buttons.cpuResetN)
     )
   }
 
@@ -149,21 +150,35 @@ object Nexys4DDRSimulate extends ElementsApp {
       compiled.doSimUntilVoid("simulate") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClock(dut.io.clock, Nexys4DDR.oscillatorFrequency, 10 ms)
+        testCases.addClock(
+          dut.io.clock,
+          Nexys4DDR.SystemClock.frequency,
+          simDuration.toString.toInt ms
+        )
       }
     case "boot" =>
       compiled.doSimUntilVoid("boot") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.oscillatorFrequency, 10 ms)
+        testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.SystemClock.frequency, 10 ms)
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
         testCases.boot(dut.io.uartStd.txd, dut.baudPeriod)
       }
     case "mtimer" =>
       compiled.doSimUntilVoid("mtimer") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.oscillatorFrequency, 400 ms)
+        testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.SystemClock.frequency, 20 ms)
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
         testCases.heartbeat(dut.io.gpioStatus(0))
+      }
+    case "reset" =>
+      compiled.doSimUntilVoid("reset") { dut =>
+        dut.simHook()
+        val testCases = TestCases()
+        testCases.addClockWithTimeout(dut.io.clock, Nexys4DDR.SystemClock.frequency, 25 ms)
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
+        testCases.reset(dut.io.uartStd.txd, dut.baudPeriod)
       }
     case _ =>
       println(s"Unknown simulation ${simType}")
