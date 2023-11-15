@@ -113,7 +113,7 @@ object SimulationHelper {
   }
 
   def expectZephyrPrompt(rxd: Bool, baudPeriod: Int) = {
-    val pattern = "\\*\\*\\* Booting Zephyr OS build (.*)  \\*\\*\\*".r
+    val pattern = "\\*\\*\\* Booting Zephyr OS build (.*) \\*\\*\\*".r
     var log = ""
     var run = true
     fork {
@@ -128,6 +128,32 @@ object SimulationHelper {
           run = false
         }
         log = log + buffer.toChar
+      }
+      simSuccess
+    }
+  }
+
+  def expectResetMessage(rxd: Bool, baudPeriod: Int) = {
+    val pattern = "Triggering warm reboot\\.".r
+    var log = ""
+    var run = true
+    var matches = 0
+    fork {
+      waitUntil(rxd.toBoolean == true)
+
+      while (run) {
+        waitUntil(rxd.toBoolean == false)
+        val buffer = uartReceive(rxd, baudPeriod)
+        assert(rxd.toBoolean == true)
+        if (buffer.toChar == '\n') {
+          assert(pattern.findFirstIn(log) != None)
+          log = ""
+          matches = matches + 1
+          if (matches == 2)
+            run = false
+        } else {
+          log = log + buffer.toChar
+        }
       }
       simSuccess
     }

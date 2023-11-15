@@ -48,23 +48,25 @@ object TestCases {
       SimulationHelper.expectZephyrPrompt(txd, baudPeriod)
     }
 
-    def heartbeat(gpio: Bool) {
+    def reset(txd: Bool, baudPeriod: Int) {
+      dump(txd, baudPeriod)
+      SimulationHelper.expectResetMessage(txd, baudPeriod)
+    }
+
+    def heartbeat(gpio: Bool, polarity: Boolean = false) {
       fork {
         SimulationHelper.wait(100 us)
-        assert(gpio.toBoolean == false)
+        assert(gpio.toBoolean == polarity)
         println("Heartbeat LED: OFF")
-        SimulationHelper.wait(4 ms)
-        assert(gpio.toBoolean == true)
+        SimulationHelper.wait(1 ms)
+        assert(gpio.toBoolean == !polarity)
         println("Heartbeat LED: ON")
-        SimulationHelper.wait(150 ms)
-        assert(gpio.toBoolean == false)
+        SimulationHelper.wait(5 ms)
+        assert(gpio.toBoolean == polarity)
         println("Heartbeat LED: OFF")
-        SimulationHelper.wait(50 ms)
-        assert(gpio.toBoolean == true)
+        SimulationHelper.wait(10 ms)
+        assert(gpio.toBoolean == !polarity)
         println("Heartbeat LED: ON")
-        SimulationHelper.wait(150 ms)
-        assert(gpio.toBoolean == false)
-        println("Heartbeat LED: OFF")
         simSuccess()
       }
     }
@@ -75,6 +77,10 @@ object TestCases {
         SimulationHelper.waitUntilOrFail(gpio1.toBoolean == true, 250 us, 100 ns)
         simSuccess
       }
+    }
+
+    def uartRxIdle(rxd: Bool) {
+      rxd #= true
     }
 
     def uartLoopback(txd: Bool, rxd: Bool, baudPeriod: Int) {
