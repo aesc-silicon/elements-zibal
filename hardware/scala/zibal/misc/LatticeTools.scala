@@ -20,10 +20,18 @@ object LatticeTools {
         val pin = instance.getPin()
         writer.write(s"""LOCATE COMP "${name}" SITE "${pin}";\n""")
 
+        val clockSpeed = instance.getClockSpeed().toBigDecimal.toBigInt
+        if (clockSpeed != 1) {
+          writer.write(s"""FREQUENCY PORT "${name}" ${clockSpeed} Hz;\n""")
+        }
+
         val ioStandard = instance.getIoStandard()
         writer.write(s"""IOBUF PORT "${name}" IO_TYPE=${ioStandard}""")
         if (!instance.pullType.equals("")) {
           writer.write(s" PULLMODE=${instance.pullType}")
+        }
+        if (instance.isOpendrain) {
+          writer.write(s" OPENDRAIN=ON")
         }
         writer.write(s";\n")
         if (!instance.comment_.equals("")) {
