@@ -21,14 +21,14 @@ object Helium1 {
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 2) {
     val uartStd = UartCtrl.Parameter.full
-    val gpioStatus = GpioCtrl.Parameter(2, 3, (0 to 0), (1 to 1), (1 to 1))
+    val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(2), 3, (0 to 0), (1 to 1), (1 to 1))
   }
 
   case class Helium1(parameter: Helium.Parameter) extends Helium.Helium(parameter) {
     var socParameter = parameter.getSocParameter.asInstanceOf[Parameter]
     val io_per = new Bundle {
       val uartStd = master(Uart.Io(socParameter.uartStd))
-      val gpioStatus = Gpio.Io(socParameter.gpioStatus)
+      val gpioStatus = Gpio.Io(socParameter.gpioStatus.io)
     }
 
     val peripherals = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
