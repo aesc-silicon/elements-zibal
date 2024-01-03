@@ -40,6 +40,19 @@ object ECPIX5 {
   object Buttons {
     val sw0 = "AB1"
   }
+  object SpiFlash {
+    val io0 = "AE2" // MOSI
+    val io1 = "AD2" // MISO
+    val io2 = "AF2"
+    val io3 = "AE1"
+    val cs = "AA2"
+  }
+  object HDMITransmitter {
+    object Control {
+      val sda = "E17"
+      val scl = "C17"
+    }
+  }
   object Pmods {
     object Pmod0 {
       val pin0 = "T25"
