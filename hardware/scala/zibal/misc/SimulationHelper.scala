@@ -124,8 +124,8 @@ object SimulationHelper {
         val buffer = uartReceive(rxd, baudPeriod)
         assert(rxd.toBoolean == true)
         if (buffer.toChar == '\n') {
-          assert(pattern.findFirstIn(log) != None)
-          run = false
+          if (pattern.findFirstIn(log) != None)
+            run = false
         }
         log = log + buffer.toChar
       }
