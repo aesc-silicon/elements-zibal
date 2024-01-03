@@ -24,7 +24,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: aesc-silicon/elements-vexriscv
-          ref: stable
           path: vexriscv
 
       - name: Checkout Nafarr
