@@ -1,6 +1,6 @@
 vendor: Xilinx
-soc: Hydrogen1
-board: Nexys4DDR
+soc: Hydrogen2
+board: NexysA7
 part: XC7A100TCSG324-1
 openfpgaloader:
   board: arty_a7_100t
