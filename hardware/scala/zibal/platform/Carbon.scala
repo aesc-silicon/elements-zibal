@@ -46,7 +46,7 @@ object Carbon {
       val reset = in(Bool)
       val clock = in(Bool)
       val jtag = slave(Jtag())
-      val spiXip = master(Spi.Io(parameter.spiXip))
+      val spiXip = master(Spi.Io(parameter.spiXip.io))
     }
 
     override def initOnChipRam(path: String) = println("initOnChipRam not implemented!")
