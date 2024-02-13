@@ -14,7 +14,7 @@ import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
 import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 import nafarr.peripherals.io.pwm.{Apb3Pwm, Pwm, PwmCtrl}
 import nafarr.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl, I2cControllerCtrl}
-import nafarr.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl, SpiMasterCtrl}
+import nafarr.peripherals.com.spi.{Apb3SpiController, Spi, SpiCtrl, SpiControllerCtrl}
 
 object Hydrogen1 {
   def apply(parameter: Hydrogen.Parameter) = Hydrogen1(parameter)
@@ -24,7 +24,7 @@ object Hydrogen1 {
     val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(4), 3, (0 to 2), (3 to 3), (3 to 3))
     val pwmLED = PwmCtrl.Parameter.default(3)
     val i2cHDMI = I2cCtrl.Parameter.full
-    val spiFlash = SpiCtrl.Parameter.full
+    val spiFlash = SpiCtrl.Parameter.full()
   }
 
   case class Hydrogen1(parameter: Hydrogen.Parameter) extends Hydrogen.Hydrogen(parameter) {
@@ -58,7 +58,7 @@ object Hydrogen1 {
       addApbDevice(i2cHDMICtrl.io.bus, 0x11000, 4 kB)
       addInterrupt(i2cHDMICtrl.io.interrupt)
 
-      val spiFlashCtrl = Apb3SpiMaster(socParameter.spiFlash)
+      val spiFlashCtrl = Apb3SpiController(socParameter.spiFlash)
       spiFlashCtrl.io.spi <> io_per.spiFlash
       addApbDevice(spiFlashCtrl.io.bus, 0x12000, 4 kB)
       addInterrupt(spiFlashCtrl.io.interrupt)

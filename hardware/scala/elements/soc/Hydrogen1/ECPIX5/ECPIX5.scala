@@ -157,9 +157,9 @@ case class ECPIX5Top() extends Component {
   io.i2cHDMI.scl <> FakeIo(soc.io_per.i2cHDMI.scl)
   io.i2cHDMI.sda <> FakeIo(soc.io_per.i2cHDMI.sda)
 
-  io.spiFlash.cs <> FakeO(soc.io_per.spiFlash.ss(0))
-  io.spiFlash.mosi <> FakeO(soc.io_per.spiFlash.mosi)
-  io.spiFlash.miso <> FakeI(soc.io_per.spiFlash.miso)
+  io.spiFlash.cs <> FakeO(soc.io_per.spiFlash.cs(0))
+  io.spiFlash.mosi <> FakeIo(soc.io_per.spiFlash.dq(0))
+  io.spiFlash.miso <> FakeIo(soc.io_per.spiFlash.dq(1))
   USRMCLK(soc.io_per.spiFlash.sclk)
 
   for (index <- 0 until io.ledPullDown.length) {

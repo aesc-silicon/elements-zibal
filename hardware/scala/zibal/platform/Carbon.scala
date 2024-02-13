@@ -13,7 +13,7 @@ import nafarr.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{Apb3Plic, Plic, PlicCtrl}
 import nafarr.system.reset.{Apb3ResetController, ResetControllerCtrl}
 import nafarr.system.clock.{Apb3ClockController, ClockControllerCtrl}
-import nafarr.peripherals.com.spi.{Axi4SharedSpiXipMaster, Spi, SpiCtrl}
+import nafarr.peripherals.com.spi.{Axi4ReadOnlySpiXipController, Spi, SpiCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
@@ -36,7 +36,7 @@ object Carbon {
     val core = VexRiscvCoreParameter.realtime(0xa0000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(1))
-    val spiXip = SpiCtrl.Parameter.default
+    val spiXip = SpiCtrl.Parameter.default()
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
   }
@@ -98,19 +98,19 @@ object Carbon {
         idWidth = 4
       )
 
-      val spiXipMasterCtrl = Axi4SharedSpiXipMaster(parameter.spiXip)
+      val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spiXip)
 
       /* Generate AXI Crossbar */
       val axiCrossbar = Axi4CrossbarFactory()
 
       axiCrossbar.addSlaves(
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
-        spiXipMasterCtrl.io.dataBus -> (0xa0000000L, parameter.spiRomSize),
+        spiXipControllerCtrl.io.dataBus -> (0xa0000000L, parameter.spiRomSize),
         apbBridge.io.axi -> (0xf0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
-        core.iBus -> List(spiXipMasterCtrl.io.dataBus),
+        core.iBus -> List(spiXipControllerCtrl.io.dataBus),
         core.dBus -> List(onChipRamAxiPort, apbBridge.io.axi)
       )
 
@@ -128,10 +128,8 @@ object Carbon {
         crossbar.readRsp <-/< ctrl.readRsp
       })
 
-      axiCrossbar.addPipelining(spiXipMasterCtrl.io.dataBus)((crossbar, ctrl) => {
-        crossbar.sharedCmd >/-> ctrl.sharedCmd
-        crossbar.writeData >/-> ctrl.writeData
-        crossbar.writeRsp <-/< ctrl.writeRsp
+      axiCrossbar.addPipelining(spiXipControllerCtrl.io.dataBus)((crossbar, ctrl) => {
+        crossbar.readCmd >/-> ctrl.readCmd
         crossbar.readRsp <-/< ctrl.readRsp
       })
 
@@ -162,9 +160,9 @@ object Carbon {
       clockCtrlMapper.io.config <> clockCtrl.io.config
       addApbDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
 
-      spiXipMasterCtrl.io.spi <> io_plat.spiXip
-      addApbDevice(spiXipMasterCtrl.io.bus, 0x40000, 4 kB)
-      addInterrupt(spiXipMasterCtrl.io.interrupt)
+      spiXipControllerCtrl.io.spi <> io_plat.spiXip
+      addApbDevice(spiXipControllerCtrl.io.bus, 0x40000, 4 kB)
+      addInterrupt(spiXipControllerCtrl.io.interrupt)
 
       publishApbComponents(apbBridge, plicCtrl)
     }

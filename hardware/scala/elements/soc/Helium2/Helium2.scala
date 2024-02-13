@@ -14,7 +14,7 @@ import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
 import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
 import nafarr.peripherals.io.pwm.{Apb3Pwm, Pwm, PwmCtrl}
 import nafarr.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl, I2cControllerCtrl}
-import nafarr.peripherals.com.spi.{Apb3SpiMaster, Spi, SpiCtrl, SpiMasterCtrl}
+import nafarr.peripherals.com.spi.{Apb3SpiController, Spi, SpiCtrl, SpiControllerCtrl}
 import nafarr.peripherals.misc.sevensegment.{Apb3SevenSegment, SevenSegment, SevenSegmentCtrl}
 
 object Helium2 {
@@ -30,7 +30,7 @@ object Helium2 {
       memory = I2cCtrl.MemoryMappedParameter.full,
       io = I2c.Parameter(2)
     )
-    val spiA = SpiCtrl.Parameter.full
+    val spiA = SpiCtrl.Parameter.full()
     val gpioA = GpioCtrl.Parameter(Gpio.Parameter(32), 3)
     val sevenSegment = SevenSegmentCtrl.Parameter.default
   }
@@ -68,7 +68,7 @@ object Helium2 {
       addApbDevice(i2cACtrl.io.bus, 0x11000, 4 kB)
       addInterrupt(i2cACtrl.io.interrupt)
 
-      val spiACtrl = Apb3SpiMaster(socParameter.spiA)
+      val spiACtrl = Apb3SpiController(socParameter.spiA)
       spiACtrl.io.spi <> io_per.spiA
       addApbDevice(spiACtrl.io.bus, 0x12000, 4 kB)
       addInterrupt(spiACtrl.io.interrupt)

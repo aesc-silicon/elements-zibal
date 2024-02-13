@@ -9,8 +9,8 @@ import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.misc.SizeMapping
 import nafarr.peripherals.io.gpio.Apb3Gpio
 import nafarr.peripherals.com.uart.Apb3Uart
-import nafarr.peripherals.com.spi.Apb3SpiMaster
-import nafarr.peripherals.com.spi.Axi4SharedSpiXipMaster
+import nafarr.peripherals.com.spi.Apb3SpiController
+import nafarr.peripherals.com.spi.Axi4ReadOnlySpiXipController
 import nafarr.peripherals.com.i2c.Apb3I2cController
 import nafarr.system.mtimer.Apb3MachineTimer
 
@@ -51,15 +51,15 @@ object BaremetalTools {
                 val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
                 val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
                 ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3SpiMaster =>
-                val ip = parent.asInstanceOf[Apb3SpiMaster]
+              case _: Apb3SpiController =>
+                val ip = parent.asInstanceOf[Apb3SpiController]
                 val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
                 ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
               case _: Apb3Gpio =>
                 val ip = parent.asInstanceOf[Apb3Gpio]
                 val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
                 ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
               case _: Apb3MachineTimer =>
                 val ip = parent.asInstanceOf[Apb3MachineTimer]

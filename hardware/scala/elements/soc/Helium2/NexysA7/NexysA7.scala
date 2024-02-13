@@ -240,9 +240,9 @@ case class NexysA7Top() extends Component {
   io.i2cA.intCrit <> IBUF(soc.io_per.i2cA.interrupts(1))
 
   io.spiA.sclk <> OBUF(soc.io_per.spiA.sclk)
-  io.spiA.csN <> OBUF(soc.io_per.spiA.ss(0))
-  io.spiA.mosi <> OBUF(soc.io_per.spiA.mosi)
-  io.spiA.miso <> IBUF(soc.io_per.spiA.miso)
+  io.spiA.csN <> OBUF(soc.io_per.spiA.cs(0))
+  io.spiA.mosi <> IOBUF(soc.io_per.spiA.dq(0))
+  io.spiA.miso <> IOBUF(soc.io_per.spiA.dq(1))
 
   for (index <- 0 until io.gpioA.length) {
     io.gpioA(index) <> IOBUF(soc.io_per.gpioA.pins(index))
