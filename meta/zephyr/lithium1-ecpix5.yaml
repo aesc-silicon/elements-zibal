@@ -1,0 +1,12 @@
+vendor: Lattice
+soc: Lithium1
+board: ECPIX5
+part: LFE5UM5G-45F-8BG554I
+openfpgaloader:
+  cable: ft4232
+fpga:
+  vendor: lattice
+  family: ecp5
+  device: um5g-45k
+  package: CABGA554
+  frequency: 100
