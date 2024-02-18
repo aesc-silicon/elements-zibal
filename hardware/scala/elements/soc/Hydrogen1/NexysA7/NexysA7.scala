@@ -1,4 +1,4 @@
-package elements.soc.hydrogen2
+package elements.soc.hydrogen1
 
 import spinal.core._
 import spinal.core.sim._
@@ -16,7 +16,7 @@ import zibal.board.{KitParameter, BoardParameter}
 
 import elements.sdk.ElementsApp
 import elements.board.NexysA7
-import elements.soc.Hydrogen2
+import elements.soc.Hydrogen1
 
 case class NexysA7Board() extends Component {
   val io = new Bundle {
@@ -31,12 +31,6 @@ case class NexysA7Board() extends Component {
       val cts = inout(Analog(Bool))
     }
     val gpioStatus = Vec(inout(Analog(Bool())), 9)
-    val pwmLED = Vec(inout(Analog(Bool())), 3)
-    val sevenSegment = new Bundle {
-      val cathodes = Vec(inout(Analog(Bool())), 8)
-      val anodes = Vec(inout(Analog(Bool())), 8)
-    }
-    val gpioA = Vec(inout(Analog(Bool())), 32)
   }
 
   val top = NexysA7Top()
@@ -59,29 +53,6 @@ case class NexysA7Board() extends Component {
   for (index <- 0 until top.io.gpioStatus.length) {
     io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
   }
-  for (index <- 0 until top.io.pwmLED.length) {
-    io.pwmLED(index) <> top.io.pwmLED(index).PAD
-  }
-
-  for (index <- 0 until top.io.sevenSegment.cathodes.length) {
-    io.sevenSegment.cathodes(index) <> top.io.sevenSegment.cathodes(index).PAD
-  }
-  for (index <- 0 until top.io.sevenSegment.anodes.length) {
-    io.sevenSegment.anodes(index) <> top.io.sevenSegment.anodes(index).PAD
-  }
-
-  for (index <- 0 until top.io.gpioA.length) {
-    io.gpioA(index) <> top.io.gpioA(index).PAD
-  }
-
-  top.io.i2cA.scl.PAD := analogFalse
-  top.io.i2cA.sda.PAD := analogFalse
-  top.io.i2cA.int.PAD := analogFalse
-  top.io.i2cA.intCrit.PAD := analogFalse
-  top.io.spiA.mosi.PAD := analogFalse
-  top.io.spiA.miso.PAD := analogFalse
-  top.io.spiA.csN.PAD := analogFalse
-  top.io.spiA.sclk.PAD := analogFalse
 
   val baudPeriod = top.soc.socParameter.uartStd.init.getBaudPeriod()
 
@@ -102,7 +73,7 @@ case class NexysA7Top() extends Component {
 
   val kitParameter = KitParameter(resets, clocks)
   val boardParameter = NexysA7.Parameter(kitParameter, NexysA7.SystemClock.frequency)
-  val socParameter = Hydrogen2.Parameter(boardParameter)
+  val socParameter = Hydrogen1.Parameter(boardParameter)
   val parameter = Hydrogen.Parameter(
     socParameter,
     128 kB,
@@ -131,89 +102,11 @@ case class NexysA7Top() extends Component {
       XilinxCmosIo(NexysA7.LEDs.LED16.blue),
       XilinxCmosIo(NexysA7.LEDs.LED16.red),
       XilinxCmosIo(NexysA7.LEDs.LED16.green),
-      XilinxCmosIo(NexysA7.Buttons.cpuResetN),
-      XilinxCmosIo(NexysA7.Buttons.buttonCenter),
-      XilinxCmosIo(NexysA7.Buttons.buttonUp),
-      XilinxCmosIo(NexysA7.Buttons.buttonRight),
-      XilinxCmosIo(NexysA7.Buttons.buttonDown),
-      XilinxCmosIo(NexysA7.Buttons.buttonLeft)
+      XilinxCmosIo(NexysA7.Buttons.buttonCenter)
     )
-    val pwmLED = Vec(
-      XilinxCmosIo(NexysA7.LEDs.LED17.red),
-      XilinxCmosIo(NexysA7.LEDs.LED17.green),
-      XilinxCmosIo(NexysA7.LEDs.LED17.blue)
-    )
-    val i2cA = new Bundle {
-      val scl = XilinxCmosIo(NexysA7.I2c.Tmp.scl)
-      val sda = XilinxCmosIo(NexysA7.I2c.Tmp.sda)
-      val int = XilinxCmosIo(NexysA7.I2c.Tmp.int)
-      val intCrit = XilinxCmosIo(NexysA7.I2c.Tmp.intCritical)
-    }
-    val spiA = new Bundle {
-      val sclk = XilinxCmosIo(NexysA7.Spi.Acl.sclk)
-      val csN = XilinxCmosIo(NexysA7.Spi.Acl.csN)
-      val mosi = XilinxCmosIo(NexysA7.Spi.Acl.mosi)
-      val miso = XilinxCmosIo(NexysA7.Spi.Acl.miso)
-    }
-    val gpioA = Vec(
-      XilinxCmosIo(NexysA7.LEDs.led0),
-      XilinxCmosIo(NexysA7.LEDs.led1),
-      XilinxCmosIo(NexysA7.LEDs.led2),
-      XilinxCmosIo(NexysA7.LEDs.led3),
-      XilinxCmosIo(NexysA7.LEDs.led4),
-      XilinxCmosIo(NexysA7.LEDs.led5),
-      XilinxCmosIo(NexysA7.LEDs.led6),
-      XilinxCmosIo(NexysA7.LEDs.led7),
-      XilinxCmosIo(NexysA7.LEDs.led8),
-      XilinxCmosIo(NexysA7.LEDs.led9),
-      XilinxCmosIo(NexysA7.LEDs.led10),
-      XilinxCmosIo(NexysA7.LEDs.led11),
-      XilinxCmosIo(NexysA7.LEDs.led12),
-      XilinxCmosIo(NexysA7.LEDs.led13),
-      XilinxCmosIo(NexysA7.LEDs.led14),
-      XilinxCmosIo(NexysA7.LEDs.led15),
-      XilinxCmosIo(NexysA7.Buttons.sw0),
-      XilinxCmosIo(NexysA7.Buttons.sw1),
-      XilinxCmosIo(NexysA7.Buttons.sw2),
-      XilinxCmosIo(NexysA7.Buttons.sw3),
-      XilinxCmosIo(NexysA7.Buttons.sw4),
-      XilinxCmosIo(NexysA7.Buttons.sw5),
-      XilinxCmosIo(NexysA7.Buttons.sw6),
-      XilinxCmosIo(NexysA7.Buttons.sw7),
-      XilinxCmosIo(NexysA7.Buttons.sw8),
-      XilinxCmosIo(NexysA7.Buttons.sw9),
-      XilinxCmosIo(NexysA7.Buttons.sw10),
-      XilinxCmosIo(NexysA7.Buttons.sw11),
-      XilinxCmosIo(NexysA7.Buttons.sw12),
-      XilinxCmosIo(NexysA7.Buttons.sw13),
-      XilinxCmosIo(NexysA7.Buttons.sw14),
-      XilinxCmosIo(NexysA7.Buttons.sw15)
-    )
-    val sevenSegment = new Bundle {
-      val cathodes = Vec(
-        XilinxCmosIo(NexysA7.SevenSegment.Cathodes.ca),
-        XilinxCmosIo(NexysA7.SevenSegment.Cathodes.cb),
-        XilinxCmosIo(NexysA7.SevenSegment.Cathodes.cc),
-        XilinxCmosIo(NexysA7.SevenSegment.Cathodes.cd),
-        XilinxCmosIo(NexysA7.SevenSegment.Cathodes.ce),
-        XilinxCmosIo(NexysA7.SevenSegment.Cathodes.cf),
-        XilinxCmosIo(NexysA7.SevenSegment.Cathodes.cg),
-        XilinxCmosIo(NexysA7.SevenSegment.dp)
-      )
-      val anodes = Vec(
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an0),
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an1),
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an2),
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an3),
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an4),
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an5),
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an6),
-        XilinxCmosIo(NexysA7.SevenSegment.Anodes.an7)
-      )
-    }
   }
 
-  val soc = Hydrogen2(parameter)
+  val soc = Hydrogen1(parameter)
 
   io.clock <> IBUF(soc.io_plat.clock)
 
@@ -229,30 +122,6 @@ case class NexysA7Top() extends Component {
 
   for (index <- 0 until io.gpioStatus.length) {
     io.gpioStatus(index) <> IOBUF(soc.io_per.gpioStatus.pins(index))
-  }
-  for (index <- 0 until io.pwmLED.length) {
-    io.pwmLED(index) <> OBUF(soc.io_per.pwmLED.output(index))
-  }
-
-  io.i2cA.scl <> IOBUF(soc.io_per.i2cA.scl)
-  io.i2cA.sda <> IOBUF(soc.io_per.i2cA.sda)
-  io.i2cA.int <> IBUF(soc.io_per.i2cA.interrupts(0))
-  io.i2cA.intCrit <> IBUF(soc.io_per.i2cA.interrupts(1))
-
-  io.spiA.sclk <> OBUF(soc.io_per.spiA.sclk)
-  io.spiA.csN <> OBUF(soc.io_per.spiA.cs(0))
-  io.spiA.mosi <> IOBUF(soc.io_per.spiA.dq(0))
-  io.spiA.miso <> IOBUF(soc.io_per.spiA.dq(1))
-
-  for (index <- 0 until io.gpioA.length) {
-    io.gpioA(index) <> IOBUF(soc.io_per.gpioA.pins(index))
-  }
-
-  for (index <- 0 until io.sevenSegment.cathodes.length) {
-    io.sevenSegment.cathodes(index) <> OBUF(soc.io_per.sevenSegment.value(index))
-  }
-  for (index <- 0 until io.sevenSegment.anodes.length) {
-    io.sevenSegment.anodes(index) <> OBUF(soc.io_per.sevenSegment.select(index))
   }
 }
 

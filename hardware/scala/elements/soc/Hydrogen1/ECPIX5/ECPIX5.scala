@@ -26,7 +26,6 @@ case class ECPIX5Board() extends Component {
       val rxd = inout(Analog(Bool))
     }
     val gpioStatus = Vec(inout(Analog(Bool())), 4)
-    val pwmLED = Vec(inout(Analog(Bool())), 3)
   }
 
   val top = ECPIX5Top()
@@ -43,15 +42,6 @@ case class ECPIX5Board() extends Component {
   for (index <- 0 until top.io.gpioStatus.length) {
     io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
   }
-  for (index <- 0 until top.io.pwmLED.length) {
-    io.pwmLED(index) <> top.io.pwmLED(index).PAD
-  }
-
-  top.io.i2cHDMI.scl.PAD := analogFalse
-  top.io.i2cHDMI.sda.PAD := analogFalse
-  top.io.spiFlash.mosi.PAD := analogFalse
-  top.io.spiFlash.miso.PAD := analogFalse
-  top.io.spiFlash.cs.PAD := analogFalse
 
   for (index <- 0 until top.io.ledPullDown.length) {
     top.io.ledPullDown(index).PAD := analogFalse
@@ -108,20 +98,6 @@ case class ECPIX5Top() extends Component {
       LatticeCmosIo(ECPIX5.LEDs.LD7.green),
       LatticeCmosIo(ECPIX5.Buttons.sw0)
     )
-    val pwmLED = Vec(
-      LatticeCmosIo(ECPIX5.LEDs.LD8.red),
-      LatticeCmosIo(ECPIX5.LEDs.LD8.green),
-      LatticeCmosIo(ECPIX5.LEDs.LD8.blue)
-    )
-    val i2cHDMI = new Bundle {
-      val scl = LatticeCmosIo(ECPIX5.HDMITransmitter.Control.scl)
-      val sda = LatticeCmosIo(ECPIX5.HDMITransmitter.Control.sda)
-    }
-    val spiFlash = new Bundle {
-      val mosi = LatticeCmosIo(ECPIX5.SpiFlash.io0)
-      val miso = LatticeCmosIo(ECPIX5.SpiFlash.io1)
-      val cs = LatticeCmosIo(ECPIX5.SpiFlash.cs)
-    }
     val ledPullDown = Vec(
       LatticeCmosIo(ECPIX5.LEDs.LD5.red),
       LatticeCmosIo(ECPIX5.LEDs.LD5.green),
@@ -150,17 +126,6 @@ case class ECPIX5Top() extends Component {
   for (index <- io.gpioStatus.length - 1 until io.gpioStatus.length) {
     io.gpioStatus(index) <> FakeIo(soc.io_per.gpioStatus.pins(index))
   }
-  for (index <- 0 until io.pwmLED.length) {
-    io.pwmLED(index) <> FakeO(soc.io_per.pwmLED.output(index))
-  }
-
-  io.i2cHDMI.scl <> FakeIo(soc.io_per.i2cHDMI.scl)
-  io.i2cHDMI.sda <> FakeIo(soc.io_per.i2cHDMI.sda)
-
-  io.spiFlash.cs <> FakeO(soc.io_per.spiFlash.cs(0))
-  io.spiFlash.mosi <> FakeIo(soc.io_per.spiFlash.dq(0))
-  io.spiFlash.miso <> FakeIo(soc.io_per.spiFlash.dq(1))
-  USRMCLK(soc.io_per.spiFlash.sclk)
 
   for (index <- 0 until io.ledPullDown.length) {
     io.ledPullDown(index) <> FakeO(True)
