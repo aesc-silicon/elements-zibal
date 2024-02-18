@@ -33,6 +33,9 @@ object LatticeTools {
         if (instance.isOpendrain) {
           writer.write(s" OPENDRAIN=ON")
         }
+        if (!instance.ioSlew.equals("")) {
+          writer.write(s" SLEWRATE=${instance.ioSlew}")
+        }
         writer.write(s";\n")
         if (!instance.comment_.equals("")) {
           writer.write(s"${instance.comment_}\n")
