@@ -95,7 +95,7 @@ object ECPIX5 {
       val pin7 = "F5"
     }
     object Pmod4 {
-      val pin0 = "E25" // 0N
+      val pin0 = "E26" // 0N
       val pin1 = "D25" // 0P
       val pin2 = "F26" // 1N
       val pin3 = "F25" // 1P
