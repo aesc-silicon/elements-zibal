@@ -42,7 +42,7 @@ object Lithium {
         (ram.io.axi, ram.ram)
       }
   ) extends PlatformParameter(socParameter) {
-    val core = VexRiscvCoreParameter.realtime(0x80000000L).plugins
+    val core = VexRiscvCoreParameter.mcu(0x80000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
