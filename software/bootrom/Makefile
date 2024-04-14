@@ -1,27 +1,29 @@
-GCC ?= ${ELEMENTS_BASE}/internal/riscv32-unknown-elf/bin/riscv32-unknown-elf
+GCC ?= ${ELEMENTS_BASE}/zephyr-sdk-0.16.0/riscv64-zephyr-elf/bin/riscv64-zephyr-elf
 
 # The intermediate directory for compiled object files.
-BUILD = ${ELEMENTS_BASE}/build/${SOC}/${BOARD}/software/${STORAGE}/
+BUILD = ${ELEMENTS_BASE}/build/${SOC}/${BOARD}/bootrom/
 
-DRIVER = ${ELEMENTS_BASE}/internal/nafarr/software/driver/
+DRIVER = ${NAFARR_BASE}/software/driver/
+MISC   = ${NAFARR_BASE}/software/misc/
 
-SOURCE = ${ELEMENTS_BASE}/hardware/scala/soc/${SOC}/${BOARD}/${STORAGE}/
+SOURCE = ${ZIBAL_BASE}/hardware/scala/elements/soc/${SOC}/${BOARD}/bootrom/
 
-INCLUDE = -I ${ELEMENTS_BASE}/internal/nafarr/software/include/ -I ${BUILD} -I ${SOURCE}
+INCLUDE = -I ${NAFARR_BASE}/software/include/ -I ${BUILD} -I ${SOURCE}
 
 TARGET = ${BUILD}/kernel.img
-LIST = ${BUILD}/kernel.list
+LIST = ${BUILD}/kernel.lst
 MAP = ${BUILD}/kernel.map
 
 LINKER = ${SOURCE}/kernel.ld
 
-AFLAGS = -march=rv32im -mabi=ilp32 -Wall
-CFLAGS = -march=rv32im -mabi=ilp32 -Wall
-LFLAGS = --no-undefined
+AFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall
+CFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall
+LFLAGS = -march=rv32im_zicsr -mabi=ilp32 -m elf32lriscv --no-undefined
 
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 OBJECTS += $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
 OBJECTS += $(patsubst $(DRIVER)%.c,$(BUILD)%.o,$(wildcard $(DRIVER)*.c))
+OBJECTS += $(patsubst $(MISC)%.c,$(BUILD)%.o,$(wildcard $(MISC)*.c))
 
 # Rule to make everything.
 all: $(TARGET) $(LIST)
@@ -49,6 +51,9 @@ $(BUILD)%.o: $(SOURCE)%.c $(BUILD)
 	$(GCC)-gcc $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 $(BUILD)%.o: $(DRIVER)%.c $(BUILD)
+	$(GCC)-gcc $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+$(BUILD)%.o: $(MISC)%.c $(BUILD)
 	$(GCC)-gcc $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 $(BUILD):
