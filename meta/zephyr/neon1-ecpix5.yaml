@@ -1,5 +1,5 @@
 vendor: Lattice
-soc: Hydrogen1
+soc: Neon1
 board: ECPIX5
 part: LFE5UM5G-45F-8BG554I
 openfpgaloader:

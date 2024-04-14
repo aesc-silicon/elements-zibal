@@ -14,16 +14,19 @@ import nafarr.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{Apb3Plic, Plic, PlicCtrl}
 import nafarr.system.reset.{Apb3ResetController, ResetControllerCtrl}
 import nafarr.system.clock.{Apb3ClockController, ClockControllerCtrl}
+import nafarr.memory.hyperbus.{Axi4SharedHyperBus, HyperBus, HyperBusCtrl}
+import nafarr.memory.hyperbus.phy.HyperBusGenericPhy
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
 import vexriscv.plugin._
 
-object Hydrogen {
+object Argon {
 
   case class Parameter(
       socParameter: SocParameter,
       onChipRamSize: BigInt,
+      hyperbusPartitions: List[(BigInt, Boolean)],
       resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
       clockLogic: (
           ClockControllerCtrl.ClockControllerCtrl,
@@ -39,18 +42,20 @@ object Hydrogen {
         (ram.io.axi, ram.ram)
       }
   ) extends PlatformParameter(socParameter) {
-    val core = VexRiscvCoreParameter.realtime(0x80000000L).plugins
+    val core = VexRiscvCoreParameter.mcu(0x80000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
+    val hyperbus = HyperBusCtrl.Parameter.default(hyperbusPartitions)
   }
 
-  class Hydrogen(parameter: Parameter) extends PlatformComponent(parameter) {
+  class Argon(parameter: Parameter) extends PlatformComponent(parameter) {
     val io_plat = new Bundle {
       val reset = in(Bool)
       val clock = in(Bool)
       val jtag = slave(Jtag())
+      val hyperbus = master(HyperBus.Io(parameter.hyperbus))
     }
 
     override def initOnChipRam(path: String) = BinTools.initRam(system.onChipRamMem, path)
@@ -96,6 +101,13 @@ object Hydrogen {
       /* AXI Subordinates */
       val (onChipRamAxiPort, onChipRamMem) = parameter.onChipRamLogic(parameter.onChipRamSize)
 
+      val hyperbus = new Area {
+        val ctrl = Axi4SharedHyperBus(parameter.hyperbus)
+        val phy = HyperBusGenericPhy(parameter.hyperbus)
+        ctrl.io.phy <> phy.io.phy
+        io_plat.hyperbus <> phy.io.hyperbus
+      }
+
       val apbBridge = Axi4SharedToApb3Bridge(
         addressWidth = 20,
         dataWidth = 32,
@@ -107,12 +119,20 @@ object Hydrogen {
 
       axiCrossbar.addSlaves(
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
+        hyperbus.ctrl.io.memory -> (0x90000000L, 64 MB),
         apbBridge.io.axi -> (0xf0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
-        core.iBus -> List(onChipRamAxiPort),
-        core.dBus -> List(onChipRamAxiPort, apbBridge.io.axi)
+        core.iBus -> List(
+          onChipRamAxiPort,
+          hyperbus.ctrl.io.memory
+        ),
+        core.dBus -> List(
+          onChipRamAxiPort,
+          hyperbus.ctrl.io.memory,
+          apbBridge.io.axi
+        )
       )
 
       axiCrossbar.addPipelining(apbBridge.io.axi)((crossbar, bridge) => {
@@ -123,6 +143,13 @@ object Hydrogen {
       })
 
       axiCrossbar.addPipelining(onChipRamAxiPort)((crossbar, ctrl) => {
+        crossbar.sharedCmd >/-> ctrl.sharedCmd
+        crossbar.writeData >/-> ctrl.writeData
+        crossbar.writeRsp <-/< ctrl.writeRsp
+        crossbar.readRsp <-/< ctrl.readRsp
+      })
+
+      axiCrossbar.addPipelining(hyperbus.ctrl.io.memory)((crossbar, ctrl) => {
         crossbar.sharedCmd >/-> ctrl.sharedCmd
         crossbar.writeData >/-> ctrl.writeData
         crossbar.writeRsp <-/< ctrl.writeRsp
@@ -155,6 +182,8 @@ object Hydrogen {
       val clockCtrlMapper = Apb3ClockController(parameter.clocks)
       clockCtrlMapper.io.config <> clockCtrl.io.config
       addApbDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
+
+      addApbDevice(hyperbus.ctrl.io.bus, 0x23000, 4 kB)
 
       publishApbComponents(apbBridge, plicCtrl)
     }

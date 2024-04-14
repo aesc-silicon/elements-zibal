@@ -1,5 +1,5 @@
 vendor: Lattice
-soc: Lithium1
+soc: Argon1
 board: ECPIX5
 part: LFE5UM5G-45F-8BG554I
 openfpgaloader:

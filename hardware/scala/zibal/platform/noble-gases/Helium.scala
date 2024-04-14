@@ -17,7 +17,6 @@ import nafarr.system.clock.{Apb3ClockController, ClockControllerCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
-
 import vexriscv.plugin._
 
 object Helium {
@@ -40,7 +39,7 @@ object Helium {
         (ram.io.axi, ram.ram)
       }
   ) extends PlatformParameter(socParameter) {
-    val core = VexRiscvCoreParameter.mcu(0x80000000L).plugins
+    val core = VexRiscvCoreParameter.realtime(0x80000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)

@@ -1,5 +1,5 @@
 vendor: Xilinx
-soc: Hydrogen1
+soc: Neon1
 board: NexysA7
 part: XC7A100TCSG324-1
 openfpgaloader:

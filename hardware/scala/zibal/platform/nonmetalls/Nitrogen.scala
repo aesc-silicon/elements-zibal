@@ -16,16 +16,18 @@ import nafarr.system.reset.{Apb3ResetController, ResetControllerCtrl}
 import nafarr.system.clock.{Apb3ClockController, ClockControllerCtrl}
 import nafarr.memory.hyperbus.{Axi4SharedHyperBus, HyperBus, HyperBusCtrl}
 import nafarr.memory.hyperbus.phy.HyperBusGenericPhy
+import nafarr.peripherals.com.spi.{Axi4ReadOnlySpiXipController, Spi, SpiCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
 import vexriscv.plugin._
 
-object Lithium {
+object Nitrogen {
 
   case class Parameter(
       socParameter: SocParameter,
       onChipRamSize: BigInt,
+      spiRomSize: BigInt,
       hyperbusPartitions: List[(BigInt, Boolean)],
       resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
       clockLogic: (
@@ -42,20 +44,22 @@ object Lithium {
         (ram.io.axi, ram.ram)
       }
   ) extends PlatformParameter(socParameter) {
-    val core = VexRiscvCoreParameter.mcu(0x80000000L).plugins
+    val core = VexRiscvCoreParameter.mcu(0xa0000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
     val hyperbus = HyperBusCtrl.Parameter.default(hyperbusPartitions)
+    val spiXip = SpiCtrl.Parameter.default()
   }
 
-  class Lithium(parameter: Parameter) extends PlatformComponent(parameter) {
+  class Nitrogen(parameter: Parameter) extends PlatformComponent(parameter) {
     val io_plat = new Bundle {
       val reset = in(Bool)
       val clock = in(Bool)
       val jtag = slave(Jtag())
       val hyperbus = master(HyperBus.Io(parameter.hyperbus))
+      val spiXip = master(Spi.Io(parameter.spiXip.io))
     }
 
     override def initOnChipRam(path: String) = BinTools.initRam(system.onChipRamMem, path)
@@ -108,6 +112,9 @@ object Lithium {
         io_plat.hyperbus <> phy.io.hyperbus
       }
 
+      val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spiXip)
+      io_plat.spiXip <> spiXipControllerCtrl.io.spi
+
       val apbBridge = Axi4SharedToApb3Bridge(
         addressWidth = 20,
         dataWidth = 32,
@@ -120,12 +127,22 @@ object Lithium {
       axiCrossbar.addSlaves(
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
         hyperbus.ctrl.io.memory -> (0x90000000L, 64 MB),
+        spiXipControllerCtrl.io.dataBus -> (0xa0000000L, parameter.spiRomSize),
         apbBridge.io.axi -> (0xf0000000L, 1 MB)
       )
 
       axiCrossbar.addConnections(
-        core.iBus -> List(onChipRamAxiPort, hyperbus.ctrl.io.memory),
-        core.dBus -> List(onChipRamAxiPort, hyperbus.ctrl.io.memory, apbBridge.io.axi)
+        core.iBus -> List(
+          onChipRamAxiPort,
+          hyperbus.ctrl.io.memory,
+          spiXipControllerCtrl.io.dataBus
+        ),
+        core.dBus -> List(
+          onChipRamAxiPort,
+          hyperbus.ctrl.io.memory,
+          apbBridge.io.axi,
+          spiXipControllerCtrl.io.dataBus
+        )
       )
 
       axiCrossbar.addPipelining(apbBridge.io.axi)((crossbar, bridge) => {
@@ -146,6 +163,11 @@ object Lithium {
         crossbar.sharedCmd >/-> ctrl.sharedCmd
         crossbar.writeData >/-> ctrl.writeData
         crossbar.writeRsp <-/< ctrl.writeRsp
+        crossbar.readRsp <-/< ctrl.readRsp
+      })
+
+      axiCrossbar.addPipelining(spiXipControllerCtrl.io.dataBus)((crossbar, ctrl) => {
+        crossbar.readCmd >/-> ctrl.readCmd
         crossbar.readRsp <-/< ctrl.readRsp
       })
 
@@ -177,6 +199,8 @@ object Lithium {
       addApbDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
 
       addApbDevice(hyperbus.ctrl.io.bus, 0x23000, 4 kB)
+
+      addApbDevice(spiXipControllerCtrl.io.bus, 0x24000, 4 kB)
 
       publishApbComponents(apbBridge, plicCtrl)
     }

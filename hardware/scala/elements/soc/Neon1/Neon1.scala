@@ -6,24 +6,22 @@ import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
 
 import zibal.misc._
-import zibal.platform.Lithium
+import zibal.platform.Neon
 import zibal.board.BoardParameter
 import zibal.soc.SocParameter
 
 import nafarr.peripherals.io.gpio.{Apb3Gpio, Gpio, GpioCtrl}
 import nafarr.peripherals.com.uart.{Apb3Uart, Uart, UartCtrl}
-import nafarr.peripherals.com.i2c.{Apb3I2cController, I2c, I2cCtrl, I2cControllerCtrl}
-import nafarr.peripherals.com.spi.{Apb3SpiController, Spi, SpiCtrl, SpiControllerCtrl}
 
-object Lithium1 {
-  def apply(parameter: Lithium.Parameter) = Lithium1(parameter)
+object Neon1 {
+  def apply(parameter: Neon.Parameter) = Neon1(parameter)
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 2) {
     val uartStd = UartCtrl.Parameter.full
     val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(4), 3, (0 to 2), (3 to 3), (3 to 3))
   }
 
-  case class Lithium1(parameter: Lithium.Parameter) extends Lithium.Lithium(parameter) {
+  case class Neon1(parameter: Neon.Parameter) extends Neon.Neon(parameter) {
     var socParameter = parameter.getSocParameter.asInstanceOf[Parameter]
     val io_per = new Bundle {
       val uartStd = master(Uart.Io(socParameter.uartStd))

@@ -1,4 +1,4 @@
-package elements.soc.lithium1
+package elements.soc.nitrogen1
 
 import spinal.core._
 import spinal.core.sim._
@@ -11,22 +11,30 @@ import nafarr.system.clock.ClockControllerCtrl._
 import nafarr.blackboxes.lattice.ecp5._
 
 import zibal.misc._
-import zibal.platform.Lithium
+import zibal.platform.Nitrogen
 import zibal.board.{KitParameter, BoardParameter}
 import zibal.sim.hyperram.W956A8MBYA
+import zibal.sim.MT25Q
 
 import elements.sdk.ElementsApp
 import elements.board.ECPIX5
-import elements.soc.Lithium1
+import elements.soc.Nitrogen1
 
 case class ECPIX5Board() extends Component {
   val io = new Bundle {
     val clock = inout(Analog(Bool))
+    val reset = inout(Analog(Bool))
     val uartStd = new Bundle {
       val txd = inout(Analog(Bool))
       val rxd = inout(Analog(Bool))
     }
     val gpioStatus = Vec(inout(Analog(Bool())), 4)
+    val spiFlash = new Bundle {
+      val cs = inout(Analog(Bool))
+      val sck = inout(Analog(Bool))
+      val mosi = inout(Analog(Bool))
+      val miso = inout(Analog(Bool))
+    }
   }
 
   val top = ECPIX5Top()
@@ -57,6 +65,19 @@ case class ECPIX5Board() extends Component {
   top.io.hyperbus.cs(2).PAD := analogFalse
   top.io.hyperbus.cs(3).PAD := analogFalse
 
+  val spiNor = MT25Q()
+  spiNor.io.clock := io.clock
+  spiNor.io.dataClock := io.spiFlash.sck
+  spiNor.io.reset := io.reset
+  spiNor.io.chipSelect := io.spiFlash.cs
+  spiNor.io.dataIn := io.spiFlash.mosi
+  top.io.spiFlash.dq(1).PAD := spiNor.io.dataOut
+
+  io.spiFlash.cs := top.io.spiFlash.cs(0).PAD
+  io.spiFlash.sck := top.io.spiFlash.sck.PAD
+  io.spiFlash.mosi := top.io.spiFlash.dq(0).PAD
+  top.io.spiFlash.dq(1).PAD := io.spiFlash.miso
+
   for (index <- 0 until top.io.ledPullDown.length) {
     top.io.ledPullDown(index).PAD := analogFalse
   }
@@ -78,29 +99,30 @@ case class ECPIX5Top() extends Component {
     ClockParameter("debug", 10 MHz, "debug", synchronousWith = "system")
   )
   val hyperbusPartitions = List[(BigInt, Boolean)](
-    (0x800000L, true),
-    (0x800000L, true),
-    (0x800000L, true),
-    (0x800000L, true)
+    (8 MB, true),
+    (8 MB, false),
+    (8 MB, false),
+    (8 MB, false)
   )
   val kitParameter = KitParameter(resets, clocks)
   val boardParameter = ECPIX5.Parameter(kitParameter, ECPIX5.SystemClock.frequency)
-  val socParameter = Lithium1.Parameter(boardParameter)
-  val parameter = Lithium.Parameter(
+  val socParameter = Nitrogen1.Parameter(boardParameter)
+  val parameter = Nitrogen.Parameter(
     socParameter,
-    192 kB,
+    128 kB,
+    8 MB,
     hyperbusPartitions,
     (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
     (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
       clockCtrl.buildDummy(clock)
-      /* TODO PLLs don't work when booting from flash
+      /*
       clockCtrl.buildLatticeECP5Pll(
         clock,
         boardParameter.getOscillatorFrequency,
         List("system", "debug"),
         2,
         1,
-        10
+        14
       )
        */
     }
@@ -122,8 +144,8 @@ case class ECPIX5Top() extends Component {
       val cs = Vec(
         LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin1),
         LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin5),
-        LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin4),
-        LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin0)
+        LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin0),
+        LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin4)
       )
       val ck = LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin2).slewRateFast
       val ckN = LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin3).slewRateFast
@@ -140,6 +162,16 @@ case class ECPIX5Top() extends Component {
       )
       val rwds = LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin7).slewRateFast
     }
+    val spiFlash = new Bundle {
+      val cs = Vec(
+        LatticeCmosIo(ECPIX5.Pmods.Pmod6.pin0)
+      )
+      val dq = Vec(
+        LatticeCmosIo(ECPIX5.Pmods.Pmod6.pin1).slewRateFast,
+        LatticeCmosIo(ECPIX5.Pmods.Pmod6.pin2).slewRateFast
+      )
+      val sck = LatticeCmosIo(ECPIX5.Pmods.Pmod6.pin3).slewRateFast
+    }
     val ledPullDown = Vec(
       LatticeCmosIo(ECPIX5.LEDs.LD5.red),
       LatticeCmosIo(ECPIX5.LEDs.LD5.green),
@@ -153,7 +185,7 @@ case class ECPIX5Top() extends Component {
     )
   }
 
-  val soc = Lithium1(parameter)
+  val soc = Nitrogen1(parameter)
 
   io.clock <> FakeI(soc.io_plat.clock)
 
@@ -183,6 +215,14 @@ case class ECPIX5Top() extends Component {
   }
   io.hyperbus.rwds <> FakeIo(soc.io_plat.hyperbus.rwds)
 
+  for (index <- 0 until io.spiFlash.cs.length) {
+    io.spiFlash.cs(index) <> FakeO(soc.io_plat.spiXip.cs(index))
+  }
+  io.spiFlash.sck <> FakeO(soc.io_plat.spiXip.sclk)
+  for (index <- 0 until io.spiFlash.dq.length) {
+    io.spiFlash.dq(index) <> FakeIo(soc.io_plat.spiXip.dq(index))
+  }
+
   for (index <- 0 until io.ledPullDown.length) {
     io.ledPullDown(index) <> FakeO(True)
   }
@@ -195,7 +235,6 @@ object ECPIX5Generate extends ElementsApp {
     val lpf = LatticeTools.Lpf(elementsConfig)
     lpf.generate(top.io)
 
-    top.soc.initOnChipRam(elementsConfig.zephyrBinary)
     top
   }
 }
@@ -203,7 +242,7 @@ object ECPIX5Generate extends ElementsApp {
 object ECPIX5Simulate extends ElementsApp {
   val compiled = elementsConfig.genFPGASimConfig.compile {
     val board = ECPIX5Board()
-    board.top.soc.initOnChipRam(elementsConfig.zephyrBinary)
+    BinTools.initRam(board.spiNor.deviceOut.data, elementsConfig.zephyrBinary)
     for (domain <- board.top.soc.parameter.getKitParameter.clocks) {
       board.top.soc.clockCtrl.getClockDomainByName(domain.name).clock.simPublic()
     }
@@ -219,6 +258,7 @@ object ECPIX5Simulate extends ElementsApp {
           ECPIX5.SystemClock.frequency,
           simDuration.toString.toInt ms
         )
+        testCases.addReset(dut.io.reset, 1000 ns)
         testCases.uartRxIdle(dut.io.uartStd.rxd)
       }
     case "boot" =>
