@@ -20,7 +20,7 @@ object ElemRV {
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 2) {
     val uartStd = UartCtrl.Parameter.full
-    val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(4), 3, (0 to 2), (3 to 3), (3 to 3))
+    val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(4), 3, null, null, null)
   }
 
   case class ElemRV(parameter: Hydrogen.Parameter) extends Hydrogen.Hydrogen(parameter) {

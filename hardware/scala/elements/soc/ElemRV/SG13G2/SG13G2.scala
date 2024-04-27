@@ -48,7 +48,7 @@ case class SG13G2Board() extends Component {
 
   top.io.uartStd.rxd.PAD := io.uartStd.rxd
   io.uartStd.txd := top.io.uartStd.txd.PAD
-  top.io.uartStd.cts.PAD := analogTrue
+  top.io.uartStd.cts.PAD := analogFalse
   analogFalse := top.io.uartStd.rts.PAD
 
   top.io.jtag.tms.PAD := analogFalse
@@ -81,19 +81,6 @@ case class SG13G2Board() extends Component {
   io.spi.sck := top.io.spi.sck.PAD
   io.spi.mosi := top.io.spi.dq(0).PAD
   top.io.spi.dq(1).PAD := io.spi.miso
-
-  for (index <- 0 until top.io.pwr.io.length) {
-    top.io.pwr.io(index).PAD := analogFalse
-  }
-  for (index <- 0 until top.io.gnd.io.length) {
-    top.io.gnd.io(index).PAD := analogFalse
-  }
-  for (index <- 0 until top.io.pwr.core.length) {
-    top.io.pwr.core(index).PAD := analogFalse
-  }
-  for (index <- 0 until top.io.gnd.core.length) {
-    top.io.gnd.core(index).PAD := analogFalse
-  }
 }
 
 case class ElemRVTop() extends Component {
@@ -169,6 +156,7 @@ case class ElemRVTop() extends Component {
       )
       val sck = IhpCmosIo("w", 0)
     }
+    /*
     val pwr = new Bundle {
       val io = Vec(
         IhpCmosIo("", 0),
@@ -197,6 +185,7 @@ case class ElemRVTop() extends Component {
         IhpCmosIo("", 0)
       )
     }
+     */
   }
 
   val soc = ElemRV(parameter)
@@ -236,18 +225,10 @@ case class ElemRVTop() extends Component {
     io.spi.dq(index) <> IOPadInOut4mA(soc.io_plat.spi.dq(index))
   }
 
-  for (index <- 0 until io.pwr.io.length) {
-    io.pwr.io(index) <> IOPadIOVdd()
-  }
-  for (index <- 0 until io.gnd.io.length) {
-    io.gnd.io(index) <> IOPadIOVss()
-  }
-  for (index <- 0 until io.pwr.core.length) {
-    io.pwr.core(index) <> IOPadVdd()
-  }
-  for (index <- 0 until io.gnd.core.length) {
-    io.gnd.core(index) <> IOPadVss()
-  }
+  for (index <- 0 until 5) { IOPadIOVdd() }
+  for (index <- 0 until 5) { IOPadIOVss() }
+  for (index <- 0 until 3) { IOPadVdd() }
+  for (index <- 0 until 3) { IOPadVss() }
 }
 
 object SG13G2Generate extends ElementsApp {
@@ -261,6 +242,7 @@ object SG13G2Generate extends ElementsApp {
 object SG13G2Simulate extends ElementsApp {
   val compiled = elementsConfig.genFPGASimConfig.compile {
     val board = SG13G2Board()
+    BinTools.initRam(board.spiNor.deviceOut.data, elementsConfig.zephyrBinary)
     board
   }
   simType match {
