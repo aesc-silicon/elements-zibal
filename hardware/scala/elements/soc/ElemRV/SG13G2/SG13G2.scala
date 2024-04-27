@@ -29,7 +29,7 @@ case class SG13G2Board() extends Component {
       val rxd = inout(Analog(Bool))
     }
     val gpioStatus = Vec(inout(Analog(Bool())), 4)
-    val spiXip = new Bundle {
+    val spi = new Bundle {
       val cs = inout(Analog(Bool))
       val sck = inout(Analog(Bool))
       val mosi = inout(Analog(Bool))
@@ -71,16 +71,16 @@ case class SG13G2Board() extends Component {
 
   val spiNor = MT25Q()
   spiNor.io.clock := io.clock
-  spiNor.io.dataClock := io.spiXip.sck
+  spiNor.io.dataClock := io.spi.sck
   spiNor.io.reset := io.reset
-  spiNor.io.chipSelect := io.spiXip.cs
-  spiNor.io.dataIn := io.spiXip.mosi
-  top.io.spiXip.dq(1).PAD := spiNor.io.dataOut
+  spiNor.io.chipSelect := io.spi.cs
+  spiNor.io.dataIn := io.spi.mosi
+  top.io.spi.dq(1).PAD := spiNor.io.dataOut
 
-  io.spiXip.cs := top.io.spiXip.cs(0).PAD
-  io.spiXip.sck := top.io.spiXip.sck.PAD
-  io.spiXip.mosi := top.io.spiXip.dq(0).PAD
-  top.io.spiXip.dq(1).PAD := io.spiXip.miso
+  io.spi.cs := top.io.spi.cs(0).PAD
+  io.spi.sck := top.io.spi.sck.PAD
+  io.spi.mosi := top.io.spi.dq(0).PAD
+  top.io.spi.dq(1).PAD := io.spi.miso
 
   for (index <- 0 until top.io.pwr.io.length) {
     top.io.pwr.io(index).PAD := analogFalse
@@ -159,7 +159,7 @@ case class ElemRVTop() extends Component {
       )
       val rwds = IhpCmosIo("e", 0)
     }
-    val spiXip = new Bundle {
+    val spi = new Bundle {
       val cs = Vec(
         IhpCmosIo("w", 0)
       )
@@ -228,12 +228,12 @@ case class ElemRVTop() extends Component {
   }
   io.hyperbus.rwds <> IOPadInOut30mA(soc.io_plat.hyperbus.rwds)
 
-  for (index <- 0 until io.spiXip.cs.length) {
-    io.spiXip.cs(index) <> IOPadOut4mA(soc.io_plat.spiXip.cs(index))
+  for (index <- 0 until io.spi.cs.length) {
+    io.spi.cs(index) <> IOPadOut4mA(soc.io_plat.spi.cs(index))
   }
-  io.spiXip.sck <> IOPadOut4mA(soc.io_plat.spiXip.sclk)
-  for (index <- 0 until io.spiXip.dq.length) {
-    io.spiXip.dq(index) <> IOPadInOut4mA(soc.io_plat.spiXip.dq(index))
+  io.spi.sck <> IOPadOut4mA(soc.io_plat.spi.sclk)
+  for (index <- 0 until io.spi.dq.length) {
+    io.spi.dq(index) <> IOPadInOut4mA(soc.io_plat.spi.dq(index))
   }
 
   for (index <- 0 until io.pwr.io.length) {

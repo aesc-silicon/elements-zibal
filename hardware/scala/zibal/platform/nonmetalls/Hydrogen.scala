@@ -41,7 +41,7 @@ object Hydrogen {
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
     val hyperbus = HyperBusCtrl.Parameter.default(hyperbusPartitions)
-    val spiXip = SpiCtrl.Parameter.xip()
+    val spi = SpiCtrl.Parameter.xip()
   }
 
   class Hydrogen(parameter: Parameter) extends PlatformComponent(parameter) {
@@ -50,7 +50,7 @@ object Hydrogen {
       val clock = in(Bool)
       val jtag = slave(Jtag())
       val hyperbus = master(HyperBus.Io(parameter.hyperbus))
-      val spiXip = master(Spi.Io(parameter.spiXip.io))
+      val spi = master(Spi.Io(parameter.spi.io))
     }
 
     override def initOnChipRam(path: String) {}
@@ -101,8 +101,8 @@ object Hydrogen {
         io_plat.hyperbus <> phy.io.hyperbus
       }
 
-      val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spiXip)
-      io_plat.spiXip <> spiXipControllerCtrl.io.spi
+      val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spi)
+      io_plat.spi <> spiXipControllerCtrl.io.spi
 
       val apbBridge = Axi4SharedToApb3Bridge(
         addressWidth = 20,
