@@ -10,7 +10,7 @@ void _kernel(void)
 
 	gpio_init(&gpio, GPIO_STATUS_BASE_ADDR);	
 	gpio_dir_set(&gpio, 0);
-	gpio_value_set(&gpio, 0);
+	gpio_value_clr(&gpio, 0);
 
 	hang();
 }

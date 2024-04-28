@@ -10,8 +10,8 @@ MEMORY
 
 
 SECTIONS {
-	__STACK_START = ORIGIN(OCRAM) + LENGTH(OCRAM);
-	__STACK_END = __STACK_START - LENGTH(OCRAM);
+	__STACK_START = ORIGIN(RAM) + LENGTH(RAM);
+	__STACK_END = __STACK_START - LENGTH(RAM);
 
 	.init : {
 		*(.init)
@@ -31,7 +31,7 @@ SECTIONS {
 
 	.data : {
 		*(.data)
-	} > OCRAM
+	} > RAM
 
 	COMMON : {
 		*(COMMON)
