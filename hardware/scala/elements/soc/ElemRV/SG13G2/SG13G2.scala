@@ -108,84 +108,54 @@ case class ElemRVTop() extends Component {
   )
 
   val io = new Bundle {
-    val clock = IhpCmosIo("e", 0)
-    val reset = IhpCmosIo("e", 0)
+    val clock = IhpCmosIo("east", 5)
+    val reset = IhpCmosIo("east", 6)
     val uartStd = new Bundle {
-      val txd = IhpCmosIo("s", 0)
-      val rxd = IhpCmosIo("s", 0)
-      val cts = IhpCmosIo("s", 0)
-      val rts = IhpCmosIo("s", 0)
+      val txd = IhpCmosIo("south", 10)
+      val rxd = IhpCmosIo("south", 8)
+      val cts = IhpCmosIo("south", 9)
+      val rts = IhpCmosIo("south", 11)
     }
     val jtag = new Bundle {
-      val tms = IhpCmosIo("s", 0)
-      val tdi = IhpCmosIo("s", 0)
-      val tdo = IhpCmosIo("s", 0)
-      val tck = IhpCmosIo("s", 0)
+      val tms = IhpCmosIo("south", 4)
+      val tdi = IhpCmosIo("south", 5)
+      val tdo = IhpCmosIo("south", 6)
+      val tck = IhpCmosIo("south", 7)
     }
     val gpioStatus = Vec(
-      IhpCmosIo("e", 0),
-      IhpCmosIo("w", 0),
-      IhpCmosIo("w", 0),
-      IhpCmosIo("w", 0)
+      IhpCmosIo("east", 4),
+      IhpCmosIo("west", 8),
+      IhpCmosIo("west", 9),
+      IhpCmosIo("west", 10)
     )
     val hyperbus = new Bundle {
       val cs = Vec(
-        IhpCmosIo("w", 0)
+        IhpCmosIo("east", 8)
       )
-      val ck = IhpCmosIo("e", 0)
-      val reset = IhpCmosIo("e", 0)
+      val ck = IhpCmosIo("east", 10)
+      val reset = IhpCmosIo("east", 7)
       val dq = Vec(
-        IhpCmosIo("n", 0),
-        IhpCmosIo("n", 0),
-        IhpCmosIo("n", 0),
-        IhpCmosIo("n", 0),
-        IhpCmosIo("n", 0),
-        IhpCmosIo("n", 0),
-        IhpCmosIo("n", 0),
-        IhpCmosIo("n", 0)
+        IhpCmosIo("north", 2),
+        IhpCmosIo("north", 3),
+        IhpCmosIo("north", 4),
+        IhpCmosIo("north", 5),
+        IhpCmosIo("north", 6),
+        IhpCmosIo("north", 7),
+        IhpCmosIo("north", 8),
+        IhpCmosIo("north", 9)
       )
-      val rwds = IhpCmosIo("e", 0)
+      val rwds = IhpCmosIo("east", 9)
     }
     val spi = new Bundle {
       val cs = Vec(
-        IhpCmosIo("w", 0)
+        IhpCmosIo("west", 4)
       )
       val dq = Vec(
-        IhpCmosIo("w", 0),
-        IhpCmosIo("w", 0)
+        IhpCmosIo("west", 6),
+        IhpCmosIo("west", 7)
       )
-      val sck = IhpCmosIo("w", 0)
+      val sck = IhpCmosIo("west", 5)
     }
-    /*
-    val pwr = new Bundle {
-      val io = Vec(
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0)
-      )
-      val core = Vec(
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0)
-      )
-    }
-    val gnd = new Bundle {
-      val io = Vec(
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0)
-      )
-      val core = Vec(
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0),
-        IhpCmosIo("", 0)
-      )
-    }
-     */
   }
 
   val soc = ElemRV(parameter)
@@ -234,6 +204,40 @@ case class ElemRVTop() extends Component {
 object SG13G2Generate extends ElementsApp {
   elementsConfig.genASICSpinalConfig.generateVerilog {
     val top = ElemRVTop()
+    val config = OpenROADTools.IHP.Config(elementsConfig)
+    config.generate(
+      OpenROADTools.PDKs.IHP.sg13g2,
+      (0, 0, 2015.04, 2014.74),
+      (394.08, 396.92, 1622.4, 1617.86)
+    )
+
+    val sdc = OpenROADTools.IHP.Sdc(elementsConfig)
+    sdc.addClock(top.io.clock.PAD, 25 MHz, "clk_core")
+    sdc.addClock(top.io.jtag.tck.PAD, 10 MHz, "clk_jtag")
+    sdc.setFalsePath("clk_core", "clk_jtag")
+    sdc.generate(top.io)
+
+    val io = OpenROADTools.IHP.Io(elementsConfig)
+    io.addPad("south", 0, "sg13g2_IOPadIOVdd")
+    io.addPad("south", 1, "sg13g2_IOPadIOVss")
+    io.addPad("south", 2, "sg13g2_IOPadVss")
+    io.addPad("south", 3, "sg13g2_IOPadVdd")
+    io.addPad("east", 0, "sg13g2_IOPadIOVdd")
+    io.addPad("east", 1, "sg13g2_IOPadIOVss")
+    io.addPad("east", 2, "sg13g2_IOPadVss")
+    io.addPad("east", 3, "sg13g2_IOPadVdd")
+    io.addPad("north", 0, "sg13g2_IOPadIOVdd")
+    io.addPad("north", 1, "sg13g2_IOPadIOVss")
+    io.addPad("north", 10, "sg13g2_IOPadIOVss")
+    io.addPad("north", 11, "sg13g2_IOPadIOVdd")
+    io.addPad("west", 0, "sg13g2_IOPadIOVdd")
+    io.addPad("west", 1, "sg13g2_IOPadIOVss")
+    io.addPad("west", 2, "sg13g2_IOPadVss")
+    io.addPad("west", 3, "sg13g2_IOPadVdd")
+    io.generate(top.io)
+
+    val pdn = OpenROADTools.IHP.Pdn(elementsConfig)
+    pdn.generate()
 
     top
   }
