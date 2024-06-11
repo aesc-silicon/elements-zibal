@@ -26,9 +26,10 @@ object OpenROADTools {
           dieArea: Tuple4[Double, Double, Double, Double],
           coreArea: Tuple4[Double, Double, Double, Double]
       ) = {
-        val file = s"${config.zibalBuildPath}${config.className}.mk"
+        val filename = s"${config.className}.mk"
+        val file = s"${config.zibalBuildPath}${filename}"
         val writer = new PrintWriter(new File(file))
-        SpinalInfo(s"Generate ${config.className}.mk")
+        SpinalInfo(s"Generate ${filename}")
 
         writer.write(s"""export DESIGN_NAME=${config.className}
 export PLATFORM=ihp-${platform}
@@ -61,6 +62,14 @@ export ADDITIONAL_GDS = \\
 export ADDITIONAL_LIBS = \\
 	./platforms/$$(PLATFORM)/lib/sg13g2_io_dummy.lib\n""")
         writer.close()
+
+        val sealringFilename = s"${config.className}.sealring.txt"
+        val sealringFile = s"${config.zibalBuildPath}${sealringFilename}"
+        val sealringWriter = new PrintWriter(new File(sealringFile))
+        SpinalInfo(s"Generate ${sealringFilename}")
+
+        sealringWriter.write(s"${dieArea._3}\n${dieArea._4}\n")
+        sealringWriter.close()
       }
     }
 
