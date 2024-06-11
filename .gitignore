@@ -14,3 +14,4 @@ tmp/
 .bsp/
 *.v
 *.vhd
+build/
