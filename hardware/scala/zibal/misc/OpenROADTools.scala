@@ -24,7 +24,8 @@ object OpenROADTools {
       def generate(
           platform: String,
           dieArea: Tuple4[Double, Double, Double, Double],
-          coreArea: Tuple4[Double, Double, Double, Double]
+          coreArea: Tuple4[Double, Double, Double, Double],
+          useFill: Boolean = false
       ) = {
         val filename = s"${config.className}.mk"
         val file = s"${config.zibalBuildPath}${filename}"
@@ -42,9 +43,12 @@ export SEAL_GDS = ${config.zibalBuildPath}/macros/sealring/sealring.gds.gz
 export DIE_AREA = ${dieArea._1} ${dieArea._2} ${dieArea._3} ${dieArea._4}
 export CORE_AREA = ${coreArea._1} ${coreArea._2} ${coreArea._3} ${coreArea._4}
 
-export MAX_ROUTING_LAYER = TopMetal2
-export USE_FILL = 1
+export MAX_ROUTING_LAYER = TopMetal2\n""")
 
+        if (useFill)
+          writer.write("export USE_FILL = 1\n")
+
+        writer.write(s"""
 export TNS_END_PERCENT = 100
 
 export FOOTPRINT_TCL = ${config.zibalBuildPath}${config.className}.pad.tcl
