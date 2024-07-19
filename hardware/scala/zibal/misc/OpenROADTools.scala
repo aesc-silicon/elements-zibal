@@ -25,6 +25,7 @@ object OpenROADTools {
           platform: String,
           dieArea: Tuple4[Double, Double, Double, Double],
           coreArea: Tuple4[Double, Double, Double, Double],
+          hasIoRing: Boolean = true,
           useFill: Boolean = false
       ) = {
         val filename = s"${config.className}.mk"
@@ -44,27 +45,15 @@ export DIE_AREA = ${dieArea._1} ${dieArea._2} ${dieArea._3} ${dieArea._4}
 export CORE_AREA = ${coreArea._1} ${coreArea._2} ${coreArea._3} ${coreArea._4}
 
 export MAX_ROUTING_LAYER = TopMetal2\n""")
-
+        if (hasIoRing)
+          writer.write("export HAS_IO_RING = 1\n")
         if (useFill)
           writer.write("export USE_FILL = 1\n")
-
         writer.write(s"""
 export TNS_END_PERCENT = 100
 
 export FOOTPRINT_TCL = ${config.zibalBuildPath}${config.className}.pad.tcl
 export PDN_TCL = ${config.zibalBuildPath}${config.className}.pdn.tcl\n""")
-
-        writer.write(s"""
-# Following exports should be part of platforms/ihp-sg13g2/config.mk and
-# might be obsolete in the future.
-export ADDITIONAL_LEFS = \\
-	./platforms/$$(PLATFORM)/lef/sg13g2_io.lef \\
-	./platforms/$$(PLATFORM)/lef/bondpad_70x70.lef
-export ADDITIONAL_GDS = \\
-	./platforms/$$(PLATFORM)/gds/sg13g2_io.gds \\
-	./platforms/$$(PLATFORM)/gds/bondpad_70x70.gds
-export ADDITIONAL_LIBS = \\
-	./platforms/$$(PLATFORM)/lib/sg13g2_io_dummy.lib\n""")
         writer.close()
 
         val sealringFilename = s"${config.className}.sealring.txt"
