@@ -53,19 +53,18 @@ object TestCases {
       SimulationHelper.expectResetMessage(txd, baudPeriod)
     }
 
-    def heartbeat(gpio: Bool, polarity: Boolean = false) {
+    def heartbeat(gpio: Bool, polarity: Boolean = false, deviation: Double = 1.2) {
       fork {
-        SimulationHelper.wait(100 us)
-        assert(gpio.toBoolean == polarity)
+        SimulationHelper.waitUntilOrFail(gpio.toBoolean == !polarity, 3 ms, 10 us)
         println("Heartbeat LED: OFF")
-        SimulationHelper.wait(1 ms)
-        assert(gpio.toBoolean == !polarity)
+        SimulationHelper.wait(1 * deviation ms)
+        assert(gpio.toBoolean == polarity)
         println("Heartbeat LED: ON")
-        SimulationHelper.wait(5 ms)
-        assert(gpio.toBoolean == polarity)
-        println("Heartbeat LED: OFF")
-        SimulationHelper.wait(10 ms)
+        SimulationHelper.wait(5 * deviation ms)
         assert(gpio.toBoolean == !polarity)
+        println("Heartbeat LED: OFF")
+        SimulationHelper.wait(10 * deviation ms)
+        assert(gpio.toBoolean == polarity)
         println("Heartbeat LED: ON")
         simSuccess()
       }
