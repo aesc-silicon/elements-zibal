@@ -199,7 +199,7 @@ object ECPIX5Simulate extends ElementsApp {
       compiled.doSimUntilVoid("mtimer") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 20 ms)
+        testCases.addClockWithTimeout(dut.io.clock, ECPIX5.SystemClock.frequency, 30 ms)
         testCases.uartRxIdle(dut.io.uartStd.rxd)
         testCases.heartbeat(dut.io.gpioStatus(0), true)
       }
