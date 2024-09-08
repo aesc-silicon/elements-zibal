@@ -52,6 +52,7 @@ object SimulationHelper {
     0 until 1000 foreach { _ => sleep(durationCycles) }
   }
   def waitUntilOrFail(cond: => Boolean, duration: TimeNumber, checks: TimeNumber): Boolean = {
+    require(duration > checks)
     val durationCycles = (duration.toDouble * 1000000000).toInt
     val checkCycles = (checks.toDouble * 1000000000).toInt
     val sleepDuration = (durationCycles / checkCycles).toInt
