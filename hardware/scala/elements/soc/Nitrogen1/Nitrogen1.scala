@@ -19,7 +19,7 @@ object Nitrogen1 {
   def apply(parameter: Nitrogen.Parameter) = Nitrogen1(parameter)
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 2) {
-    val uartStd = UartCtrl.Parameter.full
+    val uartStd = UartCtrl.Parameter.full()
     val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(4), 3, (0 to 2), (3 to 3), (3 to 3))
   }
 
