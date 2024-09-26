@@ -26,6 +26,8 @@ case class ECPIX5Board() extends Component {
       val rxd = inout(Analog(Bool))
     }
     val gpioStatus = Vec(inout(Analog(Bool())), 4)
+    val pwmA = Vec(inout(Analog(Bool())), 3)
+    val pioA = Vec(inout(Analog(Bool())), 3)
   }
 
   val top = ECPIX5Top()
@@ -41,6 +43,14 @@ case class ECPIX5Board() extends Component {
 
   for (index <- 0 until top.io.gpioStatus.length) {
     io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
+  }
+
+  for (index <- 0 until top.io.pwmA.length) {
+    io.pwmA(index) <> top.io.pwmA(index).PAD
+  }
+
+  for (index <- 0 until top.io.pioA.length) {
+    io.pioA(index) <> top.io.pioA(index).PAD
   }
 
   for (index <- 0 until top.io.ledPullDown.length) {
@@ -94,17 +104,24 @@ case class ECPIX5Top() extends Component {
     }
     val gpioStatus = Vec(
       LatticeCmosIo(ECPIX5.LEDs.LD5.blue),
-      LatticeCmosIo(ECPIX5.LEDs.LD6.red),
-      LatticeCmosIo(ECPIX5.LEDs.LD7.green),
-      LatticeCmosIo(ECPIX5.Buttons.sw0)
-    )
-    val ledPullDown = Vec(
       LatticeCmosIo(ECPIX5.LEDs.LD5.red),
       LatticeCmosIo(ECPIX5.LEDs.LD5.green),
+      LatticeCmosIo(ECPIX5.Buttons.sw0)
+    )
+    val pwmA = Vec(
+      LatticeCmosIo(ECPIX5.LEDs.LD6.red),
       LatticeCmosIo(ECPIX5.LEDs.LD6.green),
-      LatticeCmosIo(ECPIX5.LEDs.LD6.blue),
+      LatticeCmosIo(ECPIX5.LEDs.LD6.blue)
+    )
+    val pioA = Vec(
       LatticeCmosIo(ECPIX5.LEDs.LD7.red),
+      LatticeCmosIo(ECPIX5.LEDs.LD7.green),
       LatticeCmosIo(ECPIX5.LEDs.LD7.blue)
+    )
+    val ledPullDown = Vec(
+      LatticeCmosIo(ECPIX5.LEDs.LD8.blue),
+      LatticeCmosIo(ECPIX5.LEDs.LD8.red),
+      LatticeCmosIo(ECPIX5.LEDs.LD8.green)
     )
   }
 
@@ -126,7 +143,12 @@ case class ECPIX5Top() extends Component {
   for (index <- io.gpioStatus.length - 1 until io.gpioStatus.length) {
     io.gpioStatus(index) <> FakeIo(soc.io_per.gpioStatus.pins(index))
   }
-
+  for (index <- 0 until io.pwmA.length) {
+    io.pwmA(index) <> FakeO(soc.io_per.pwmA.output(index))
+  }
+  for (index <- 0 until io.pioA.length) {
+    io.pioA(index) <> FakeIo(soc.io_per.pioA.pins(index))
+  }
   for (index <- 0 until io.ledPullDown.length) {
     io.ledPullDown(index) <> FakeO(True)
   }

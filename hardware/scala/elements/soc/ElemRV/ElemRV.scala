@@ -19,7 +19,7 @@ object ElemRV {
   def apply(parameter: Hydrogen.Parameter) = ElemRV(parameter)
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 2) {
-    val uartStd = UartCtrl.Parameter.full
+    val uartStd = UartCtrl.Parameter.full()
     val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(4), 3, null, null, null)
   }
 
