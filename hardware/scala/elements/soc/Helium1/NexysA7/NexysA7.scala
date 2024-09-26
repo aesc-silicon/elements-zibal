@@ -30,7 +30,9 @@ case class NexysA7Board() extends Component {
       val rts = inout(Analog(Bool))
       val cts = inout(Analog(Bool))
     }
-    val gpioStatus = Vec(inout(Analog(Bool())), 9)
+    val gpioStatus = Vec(inout(Analog(Bool())), 4)
+    val pwmA = Vec(inout(Analog(Bool())), 3)
+    val pioA = Vec(inout(Analog(Bool())), 3)
   }
 
   val top = NexysA7Top()
@@ -52,6 +54,14 @@ case class NexysA7Board() extends Component {
 
   for (index <- 0 until top.io.gpioStatus.length) {
     io.gpioStatus(index) <> top.io.gpioStatus(index).PAD
+  }
+
+  for (index <- 0 until top.io.pwmA.length) {
+    io.pwmA(index) <> top.io.pwmA(index).PAD
+  }
+
+  for (index <- 0 until top.io.pioA.length) {
+    io.pioA(index) <> top.io.pioA(index).PAD
   }
 
   val baudPeriod = top.soc.socParameter.uartStd.init.getBaudPeriod()
@@ -104,6 +114,16 @@ case class NexysA7Top() extends Component {
       XilinxCmosIo(NexysA7.LEDs.LED16.green),
       XilinxCmosIo(NexysA7.Buttons.buttonCenter)
     )
+    val pwmA = Vec(
+      XilinxCmosIo(NexysA7.LEDs.LED17.blue),
+      XilinxCmosIo(NexysA7.LEDs.LED17.red),
+      XilinxCmosIo(NexysA7.LEDs.LED17.green)
+    )
+    val pioA = Vec(
+      XilinxCmosIo(NexysA7.LEDs.led0),
+      XilinxCmosIo(NexysA7.LEDs.led1),
+      XilinxCmosIo(NexysA7.LEDs.led2)
+    )
   }
 
   val soc = Helium1(parameter)
@@ -122,6 +142,12 @@ case class NexysA7Top() extends Component {
 
   for (index <- 0 until io.gpioStatus.length) {
     io.gpioStatus(index) <> IOBUF(soc.io_per.gpioStatus.pins(index))
+  }
+  for (index <- 0 until io.pwmA.length) {
+    io.pwmA(index) <> OBUF(soc.io_per.pwmA.output(index))
+  }
+  for (index <- 0 until io.pioA.length) {
+    io.pioA(index) <> IOBUF(soc.io_per.pioA.pins(index))
   }
 }
 
@@ -157,6 +183,7 @@ object NexysA7Simulate extends ElementsApp {
           NexysA7.SystemClock.frequency,
           simDuration.toString.toInt ms
         )
+        testCases.uartRxIdle(dut.io.uartStd.rxd)
       }
     case "boot" =>
       compiled.doSimUntilVoid("boot") { dut =>
@@ -170,7 +197,7 @@ object NexysA7Simulate extends ElementsApp {
       compiled.doSimUntilVoid("mtimer") { dut =>
         dut.simHook()
         val testCases = TestCases()
-        testCases.addClockWithTimeout(dut.io.clock, NexysA7.SystemClock.frequency, 20 ms)
+        testCases.addClockWithTimeout(dut.io.clock, NexysA7.SystemClock.frequency, 30 ms)
         testCases.uartRxIdle(dut.io.uartStd.rxd)
         testCases.heartbeat(dut.io.gpioStatus(0))
       }
