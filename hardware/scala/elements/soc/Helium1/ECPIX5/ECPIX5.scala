@@ -21,6 +21,9 @@ import elements.soc.Helium1
 case class ECPIX5Board() extends Component {
   val io = new Bundle {
     val clock = inout(Analog(Bool))
+    val jtag = new Bundle {
+      val tdo = inout(Analog(Bool))
+    }
     val uartStd = new Bundle {
       val txd = inout(Analog(Bool))
       val rxd = inout(Analog(Bool))
@@ -37,6 +40,11 @@ case class ECPIX5Board() extends Component {
   analogTrue := True
 
   top.io.clock.PAD := io.clock
+
+  top.io.jtag.tms.PAD := analogFalse
+  top.io.jtag.tdi.PAD := analogFalse
+  top.io.jtag.tdo.PAD := io.jtag.tdo
+  top.io.jtag.tck.PAD := analogFalse
 
   top.io.uartStd.rxd.PAD := io.uartStd.rxd
   io.uartStd.txd := top.io.uartStd.txd.PAD
@@ -71,7 +79,7 @@ case class ECPIX5Top() extends Component {
   val resets = List[ResetParameter](ResetParameter("system", 128), ResetParameter("debug", 128))
   val clocks = List[ClockParameter](
     ClockParameter("system", 100 MHz, "system"),
-    ClockParameter("debug", 100 MHz, "debug", synchronousWith = "system")
+    ClockParameter("debug", 10 MHz, "debug", synchronousWith = "system")
   )
 
   val kitParameter = KitParameter(resets, clocks)
@@ -84,7 +92,7 @@ case class ECPIX5Top() extends Component {
     (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
       clockCtrl.buildDummy(clock)
       /* TODO PLLs don't work when booting from flash
-      clockCtrl.buildLatticeECP5Pll(
+      clockCtrl.buildXilinxECP5Pll(
         clock,
         boardParameter.getOscillatorFrequency,
         List("system", "debug"),
@@ -98,6 +106,12 @@ case class ECPIX5Top() extends Component {
 
   val io = new Bundle {
     val clock = LatticeCmosIo(ECPIX5.SystemClock.clock).clock(ECPIX5.SystemClock.frequency)
+    val jtag = new Bundle {
+      val tms = LatticeCmosIo(ECPIX5.Pmods.Pmod7.pin4)
+      val tdi = LatticeCmosIo(ECPIX5.Pmods.Pmod7.pin5)
+      val tdo = LatticeCmosIo(ECPIX5.Pmods.Pmod7.pin6)
+      val tck = LatticeCmosIo(ECPIX5.Pmods.Pmod7.pin7).clock(ECPIX5.Jtag.frequency)
+    }
     val uartStd = new Bundle {
       val txd = LatticeCmosIo(ECPIX5.UartStd.txd)
       val rxd = LatticeCmosIo(ECPIX5.UartStd.rxd)
@@ -129,9 +143,10 @@ case class ECPIX5Top() extends Component {
 
   io.clock <> FakeI(soc.io_plat.clock)
 
-  soc.io_plat.jtag.tms := False
-  soc.io_plat.jtag.tdi := False
-  soc.io_plat.jtag.tck := False
+  io.jtag.tms <> FakeI(soc.io_plat.jtag.tms)
+  io.jtag.tdi <> FakeI(soc.io_plat.jtag.tdi)
+  io.jtag.tdi <> FakeO(soc.io_plat.jtag.tdo)
+  io.jtag.tck <> FakeI(soc.io_plat.jtag.tck)
 
   io.uartStd.txd <> FakeO(soc.io_per.uartStd.txd)
   io.uartStd.rxd <> FakeI(soc.io_per.uartStd.rxd)
