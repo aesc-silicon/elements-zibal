@@ -11,6 +11,9 @@ object ECPIX5 {
     val clock = "K23"
     val frequency = 100 MHz
   }
+  object Jtag {
+    val frequency = 10 MHz
+  }
   object UartStd {
     val txd = "R24"
     val rxd = "R26"

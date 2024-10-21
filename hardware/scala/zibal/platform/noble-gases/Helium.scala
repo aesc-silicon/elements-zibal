@@ -97,7 +97,7 @@ object Helium {
       val (onChipRamAxiPort, onChipRamMem) = parameter.onChipRamLogic(parameter.onChipRamSize)
 
       val apbBridge = Axi4SharedToApb3Bridge(
-        addressWidth = 20,
+        addressWidth = 24,
         dataWidth = 32,
         idWidth = 4
       )
@@ -107,7 +107,7 @@ object Helium {
 
       axiCrossbar.addSlaves(
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
-        apbBridge.io.axi -> (0xf0000000L, 1 MB)
+        apbBridge.io.axi -> (0xf0000000L, 16 MB)
       )
 
       axiCrossbar.addConnections(
@@ -141,7 +141,7 @@ object Helium {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0xf0000, 64 kB)
+      addApbDevice(plicCtrl.io.bus, 0x800000, 2 MB)
       addInterrupt(False)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
