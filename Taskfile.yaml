@@ -1,0 +1,103 @@
+version: '3'
+
+env:
+  OPENROAD_EXE: "/usr/bin/openroad"
+  YOSYS_EXE: "/opt/elements/oss-cad-suite/bin/yosys"
+  PATH: "/opt/elements/oss-cad-suite/bin/:{{ .PATH }}"
+  CONTAINER_CHECK: "podman ps | grep {{.CONTAINER_NAME}} >/dev/null || venv/bin/podman-compose up -d"
+  CONTAINER_CMD: "podman exec {{if .CONTAINER_ENV}}{{.CONTAINER_ENV}}{{end}} -e OPENROAD_EXE={{ .OPENROAD_EXE }} -e YOSYS_EXE={{ .YOSYS_EXE }} -e PATH={{ .PATH }} --workdir={{ .PWD }} -it {{.CONTAINER_NAME}}"
+  RUN: "{{.CONTAINER_CMD}} bash -c"
+
+tasks:
+  lib-generate:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'BOARD={{ .board }} sbt "runMain {{ .soc }}"'
+
+  lib-synthesize-fpga:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'mkdir -p {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/fpga/'
+      - ${RUN} 'BOARD={{ .board }} ./modules/elements/zibal/eda/{{ .vendor }}/fpga/syn.sh'
+
+  lib-flash-bitstream:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'openFPGALoader -b {{ .OPENFPGALOADER_BOARD }} {{ .BUILD_ROOT }/{{ .SOC }}/{{ .board }}/fpga/{{ .board }}Top.bit'
+
+  lib-sealring:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'klayout -n sg13g2 -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/sealring.py
+                -rd width={{ .WIDTH }} -rd height={{ .HEIGHT }}
+                -rd output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/macros/sealring/sealring.gds.gz'
+    vars:
+      WIDTH:
+        sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.sealring.txt
+      HEIGHT:
+        sh: tail -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.sealring.txt
+
+  lib-layout:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk'
+
+  lib-filler:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'klayout -n sg13g2 -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/filler.py
+                -rd output_file={{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
+                {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+
+  lib-run-drc:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'klayout -n sg13g2 -b
+                -r {{ .KLAYOUT_HOME }}/tech/drc/sg13g2_{{if .level}}{{ .level }}{{else}}maximal{{end}}.lydrc
+                -rd cell={{ .board }}Top
+                -rd noRecommendedRules=true
+                {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+
+  lib-view-drc:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'klayout -n sg13g2
+                -e {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
+                -m {{ .KLAYOUT_HOME }}/tech/drc/sg13g2_{{if .level}}{{ .level }}{{else}}maximal{{end}}.lyrdb'
+
+  lib-view-openroad:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'openroad -gui <(echo read_db {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board}}Top/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'
+
+  lib-view-klayout:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'klayout -n sg13g2
+                -e {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+
+  clean-orfs:
+    desc: Deletes ORFS-related artifacts and temporary files.
+    cmds:
+      - rm -rf {{ .OPENROAD_FLOW_ROOT }}/results/
+      - rm -rf {{ .OPENROAD_FLOW_ROOT }}/log/
+      - rm -rf {{ .OPENROAD_FLOW_ROOT }}/objects/
+  clean-zibal:
+    desc: Cleans up Zibal-specific files and artifacts.
+    cmds:
+      - rm -rf {{ .BUILD_ROOT }}
+  clean:
+    desc: Removes temporary files and intermediate build outputs.
+    cmds:
+      - task: clean-orfs
+      - task: clean-zibal
