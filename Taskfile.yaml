@@ -4,7 +4,7 @@ env:
   OPENROAD_EXE: "/usr/bin/openroad"
   YOSYS_EXE: "/opt/elements/oss-cad-suite/bin/yosys"
   PATH: "/opt/elements/oss-cad-suite/bin/:{{ .PATH }}"
-  CONTAINER_CHECK: "podman ps | grep {{.CONTAINER_NAME}} >/dev/null || venv/bin/podman-compose up -d"
+  CONTAINER_CHECK: "podman ps | grep {{.CONTAINER_NAME}} >/dev/null || venv/bin/podman-compose {{if .IS_HEADLESS}} -f podman-compose-headless.yml{{end}} up -d"
   CONTAINER_CMD: "podman exec {{if .CONTAINER_ENV}}{{.CONTAINER_ENV}}{{end}} -e OPENROAD_EXE={{ .OPENROAD_EXE }} -e YOSYS_EXE={{ .YOSYS_EXE }} -e PATH={{ .PATH }} --workdir={{ .PWD }} -it {{.CONTAINER_NAME}}"
   RUN: "{{.CONTAINER_CMD}} bash -c"
 
