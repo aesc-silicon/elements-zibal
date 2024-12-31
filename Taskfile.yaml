@@ -13,7 +13,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'BOARD={{ .board }} sbt "runMain {{ .soc }}"'
+      - ${RUN} 'BOARD={{ .board }} sbt "runMain {{ .package }}.{{ .board }}Generate"'
 
   lib-synthesize-fpga:
     internal: true
