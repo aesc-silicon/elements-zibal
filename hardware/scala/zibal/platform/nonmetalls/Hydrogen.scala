@@ -105,7 +105,7 @@ object Hydrogen {
       io_plat.spi <> spiXipControllerCtrl.io.spi
 
       val apbBridge = Axi4SharedToApb3Bridge(
-        addressWidth = 20,
+        addressWidth = 24,
         dataWidth = 32,
         idWidth = 4
       )
@@ -116,7 +116,7 @@ object Hydrogen {
       axiCrossbar.addSlaves(
         hyperbus.ctrl.io.memory -> (0x90000000L, 64 MB),
         spiXipControllerCtrl.io.dataBus -> (0xa0000000L, parameter.spiRomSize),
-        apbBridge.io.axi -> (0xf0000000L, 1 MB)
+        apbBridge.io.axi -> (0xf0000000L, 16 MB)
       )
 
       axiCrossbar.addConnections(
@@ -162,7 +162,7 @@ object Hydrogen {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0xf0000, 64 kB)
+      addApbDevice(plicCtrl.io.bus, 0x800000, 2 MB)
       addInterrupt(False)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
