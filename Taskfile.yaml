@@ -45,15 +45,15 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk'
+      - ${RUN} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/'
 
   lib-filler:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - ${RUN} 'klayout -n sg13g2 -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/filler.py
-                -rd output_file={{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
-                {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+                -rd output_file={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
+                {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
 
   lib-run-drc:
     internal: true
@@ -63,35 +63,29 @@ tasks:
                 -r {{ .KLAYOUT_HOME }}/tech/drc/sg13g2_{{if .level}}{{ .level }}{{else}}maximal{{end}}.lydrc
                 -rd cell={{ .board }}Top
                 -rd noRecommendedRules=true
-                {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+                {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
 
   lib-view-drc:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - ${RUN} 'klayout -n sg13g2
-                -e {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
                 -m {{ .KLAYOUT_HOME }}/tech/drc/sg13g2_{{if .level}}{{ .level }}{{else}}maximal{{end}}.lyrdb'
 
   lib-view-openroad:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'openroad -gui <(echo read_db {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board}}Top/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'
+      - ${RUN} 'openroad -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'
 
   lib-view-klayout:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - ${RUN} 'klayout -n sg13g2
-                -e {{ .OPENROAD_FLOW_ROOT }}/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
 
-  clean-orfs:
-    desc: Deletes ORFS-related artifacts and temporary files.
-    cmds:
-      - rm -rf {{ .OPENROAD_FLOW_ROOT }}/results/
-      - rm -rf {{ .OPENROAD_FLOW_ROOT }}/log/
-      - rm -rf {{ .OPENROAD_FLOW_ROOT }}/objects/
   clean-zibal:
     desc: Cleans up Zibal-specific files and artifacts.
     cmds:
@@ -99,5 +93,4 @@ tasks:
   clean:
     desc: Removes temporary files and intermediate build outputs.
     cmds:
-      - task: clean-orfs
       - task: clean-zibal
