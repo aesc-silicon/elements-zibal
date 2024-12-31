@@ -25,6 +25,7 @@ object OpenROADTools {
           platform: String,
           dieArea: Tuple4[Double, Double, Double, Double],
           coreArea: Tuple4[Double, Double, Double, Double],
+          placeDensity: Double = 0.75,
           hasIoRing: Boolean = true,
           useFill: Boolean = false
       ) = {
@@ -51,6 +52,7 @@ export MAX_ROUTING_LAYER = TopMetal2\n""")
           writer.write("export USE_FILL = 1\n")
         writer.write(s"""
 export TNS_END_PERCENT = 100
+export PLACE_DENSITY = ${placeDensity}
 
 export FOOTPRINT_TCL = ${config.zibalBuildPath}${config.className}.pad.tcl
 export PDN_TCL = ${config.zibalBuildPath}${config.className}.pdn.tcl\n""")

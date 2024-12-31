@@ -20,6 +20,9 @@ jobs:
         with:
           path: zibal
 
+      - name: Setup Scala
+        uses: olafurpg/setup-scala@v11
+
       - name: Checkout VexRiscv
         uses: actions/checkout@v2
         with:
