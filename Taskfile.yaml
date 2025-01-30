@@ -1,7 +1,7 @@
 version: '3'
 
 env:
-  OPENROAD_EXE: "/usr/bin/openroad"
+  OPENROAD_EXE: "/opt/elements/tools/OpenROAD-flow-scripts/tools/install/OpenROAD/bin/openroad"
   YOSYS_EXE: "/opt/elements/oss-cad-suite/bin/yosys"
   PATH: "/opt/elements/oss-cad-suite/bin/:{{ .PATH }}"
   CONTAINER_CHECK: "podman ps | grep {{.CONTAINER_NAME}} >/dev/null || venv/bin/podman-compose {{if .IS_HEADLESS}} -f podman-compose-headless.yml{{end}} up -d"
