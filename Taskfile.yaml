@@ -86,6 +86,13 @@ tasks:
       - ${RUN} 'klayout -n sg13g2
                 -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
 
+  lib-check-logs:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} "find {{ .BUILD_ROOT  }}/{{ .SOC }}/{{ .board }}/orfs/ -type f -iname '*.log' -exec grep -v -e 'already destroyed' -e 'XDG_RUNTIME_DIR not set' -i {} \+ |
+                grep --color -e WARNING -e ERROR"
+
   clean-zibal:
     desc: Cleans up Zibal-specific files and artifacts.
     cmds:
