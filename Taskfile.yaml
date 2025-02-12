@@ -15,6 +15,17 @@ tasks:
       - "{{.CONTAINER_CHECK}}"
       - ${RUN} 'BOARD={{ .board }} sbt "runMain {{ .package }}.{{ .board }}Generate"'
 
+  lib-simulate:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'BOARD={{ .board }} sbt "runMain {{ .package }}.{{ .board }}Simulate {{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }} {{ if .duration }}{{ .duration }}{{ else }}100{{ end }}"'
+
+  lib-view-simulation:
+    internal: true
+    cmds:
+      - ${RUN} 'gtkwave -o {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Board/{{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }}/wave.vcd'
+
   lib-synthesize-fpga:
     internal: true
     cmds:
@@ -26,7 +37,13 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'openFPGALoader -b {{ .OPENFPGALOADER_BOARD }} {{ .BUILD_ROOT }/{{ .SOC }}/{{ .board }}/fpga/{{ .board }}Top.bit'
+      - ${RUN} 'openFPGALoader -b {{ .OPENFPGALOADER_BOARD }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/fpga/{{ .board }}Top.bit'
+
+  lib-baremetal-firmware:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'BOARD={{ .board }} SOURCE={{ .PWD }}/hardware/scala/{{ .package }}/bootrom make -C {{ .ZIBAL_BASE }}/software/bootrom'
 
   lib-sealring:
     internal: true
