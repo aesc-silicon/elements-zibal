@@ -1,12 +1,12 @@
 GCC ?= ${ELEMENTS_BASE}/zephyr-sdk-0.16.0/riscv64-zephyr-elf/bin/riscv64-zephyr-elf
 
 # The intermediate directory for compiled object files.
-BUILD = ${ELEMENTS_BASE}/build/${SOC}/${BOARD}/bootrom/
+BUILD = ${BUILD_ROOT}/${SOC}/${BOARD}/bootrom/
 
 DRIVER = ${NAFARR_BASE}/software/driver/
 MISC   = ${NAFARR_BASE}/software/misc/
 
-SOURCE = ${ZIBAL_BASE}/hardware/scala/elements/soc/${SOC}/${BOARD}/bootrom/
+SOURCE ?= ${ZIBAL_BASE}/hardware/scala/elements/soc/${SOC}/${BOARD}/bootrom/
 
 INCLUDE = -I ${NAFARR_BASE}/software/include/ -I ${BUILD} -I ${SOURCE}
 
