@@ -29,11 +29,18 @@ case class ECPIX5Board() extends Component {
       val rxd = inout(Analog(Bool))
     }
     val gpioStatus = Vec(inout(Analog(Bool())), 4)
-    val spiFlash = new Bundle {
+    val spi = new Bundle {
       val cs = inout(Analog(Bool))
       val sck = inout(Analog(Bool))
       val mosi = inout(Analog(Bool))
       val miso = inout(Analog(Bool))
+    }
+    val hyperbus = new Bundle {
+      val cs = inout(Analog(Bool))
+      val ck = inout(Analog(Bool))
+      val reset = inout(Analog(Bool))
+      val rwds = inout(Analog(Bool))
+      val dq = Vec(inout(Analog(Bool())), 8)
     }
   }
 
@@ -53,30 +60,37 @@ case class ECPIX5Board() extends Component {
   }
 
   val w956a8mbya = W956A8MBYA()
-  w956a8mbya.ck <> top.io.hyperbus.ck.PAD
-  w956a8mbya.ckN <> top.io.hyperbus.ckN.PAD
+  w956a8mbya.io.ck := io.hyperbus.ck
+  w956a8mbya.io.ckN := analogFalse
   for (index <- 0 until top.io.hyperbus.dq.length) {
-    w956a8mbya.dq(index) <> top.io.hyperbus.dq(index).PAD
+    w956a8mbya.io.dqIn(index) := io.hyperbus.dq(index)
+    io.hyperbus.dq(index) := w956a8mbya.io.dqOut(index)
   }
-  w956a8mbya.rwds <> top.io.hyperbus.rwds.PAD
-  w956a8mbya.csN <> top.io.hyperbus.cs(0).PAD
-  w956a8mbya.resetN <> top.io.hyperbus.reset.PAD
-  top.io.hyperbus.cs(1).PAD := analogFalse
-  top.io.hyperbus.cs(2).PAD := analogFalse
-  top.io.hyperbus.cs(3).PAD := analogFalse
+  w956a8mbya.io.rwdsIn := io.hyperbus.rwds
+  io.hyperbus.rwds := w956a8mbya.io.rwdsOut
+  w956a8mbya.io.csN := io.hyperbus.cs
+  w956a8mbya.io.resetN := io.hyperbus.reset
+
+  io.hyperbus.cs := top.io.hyperbus.cs(0).PAD
+  io.hyperbus.ck := top.io.hyperbus.ck.PAD
+  io.hyperbus.reset := top.io.hyperbus.reset.PAD
+  io.hyperbus.rwds <> top.io.hyperbus.rwds.PAD
+  for (index <- 0 until top.io.hyperbus.dq.length) {
+    io.hyperbus.dq(index) <> top.io.hyperbus.dq(index).PAD
+  }
 
   val spiNor = MT25Q()
   spiNor.io.clock := io.clock
-  spiNor.io.dataClock := io.spiFlash.sck
+  spiNor.io.dataClock := io.spi.sck
   spiNor.io.reset := io.reset
-  spiNor.io.chipSelect := io.spiFlash.cs
-  spiNor.io.dataIn := io.spiFlash.mosi
-  top.io.spiFlash.dq(1).PAD := spiNor.io.dataOut
+  spiNor.io.chipSelect := io.spi.cs
+  spiNor.io.dataIn := io.spi.mosi
+  top.io.spi.dq(1).PAD := spiNor.io.dataOut
 
-  io.spiFlash.cs := top.io.spiFlash.cs(0).PAD
-  io.spiFlash.sck := top.io.spiFlash.sck.PAD
-  io.spiFlash.mosi := top.io.spiFlash.dq(0).PAD
-  top.io.spiFlash.dq(1).PAD := io.spiFlash.miso
+  io.spi.cs := top.io.spi.cs(0).PAD
+  io.spi.sck := top.io.spi.sck.PAD
+  io.spi.mosi := top.io.spi.dq(0).PAD
+  top.io.spi.dq(1).PAD := io.spi.miso
 
   for (index <- 0 until top.io.ledPullDown.length) {
     top.io.ledPullDown(index).PAD := analogFalse
@@ -162,7 +176,7 @@ case class ECPIX5Top() extends Component {
       )
       val rwds = LatticeCmosIo(ECPIX5.Pmods.Pmod5.pin7).slewRateFast
     }
-    val spiFlash = new Bundle {
+    val spi = new Bundle {
       val cs = Vec(
         LatticeCmosIo(ECPIX5.Pmods.Pmod6.pin0)
       )
@@ -215,12 +229,12 @@ case class ECPIX5Top() extends Component {
   }
   io.hyperbus.rwds <> FakeIo(soc.io_plat.hyperbus.rwds)
 
-  for (index <- 0 until io.spiFlash.cs.length) {
-    io.spiFlash.cs(index) <> FakeO(soc.io_plat.spiXip.cs(index))
+  for (index <- 0 until io.spi.cs.length) {
+    io.spi.cs(index) <> FakeO(soc.io_plat.spiXip.cs(index))
   }
-  io.spiFlash.sck <> FakeO(soc.io_plat.spiXip.sclk)
-  for (index <- 0 until io.spiFlash.dq.length) {
-    io.spiFlash.dq(index) <> FakeIo(soc.io_plat.spiXip.dq(index))
+  io.spi.sck <> FakeO(soc.io_plat.spiXip.sclk)
+  for (index <- 0 until io.spi.dq.length) {
+    io.spi.dq(index) <> FakeIo(soc.io_plat.spiXip.dq(index))
   }
 
   for (index <- 0 until io.ledPullDown.length) {
