@@ -14,6 +14,7 @@ object ElementsConfig {
     val buildPath = buildRoot + socBoard + "/"
     val zibalBuildPath = buildPath + "zibal/"
     def zephyrBinary = buildRoot + "zephyr/zephyr.bin"
+    def bootromBinary = buildPath + "bootrom/kernel.img"
     val openroadBuildPath = buildPath + "openroad/"
 
     /* Probably not used anymore */

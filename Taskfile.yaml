@@ -43,7 +43,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'BOARD={{ .board }} SOURCE={{ .PWD }}/hardware/scala/{{ .package }}/bootrom make -C {{ .ZIBAL_BASE }}/software/bootrom'
+      - ${RUN} 'BOARD={{ .board }} SOURCE={{ .PWD }}/hardware/scala/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'
 
   lib-sealring:
     internal: true
