@@ -108,7 +108,7 @@ object MT25Q {
       val offset = Reg(UInt(24 bits)).init(0)
       val response = UInt(8 bits)
       val counter = Counter(8)
-      val data = Mem(UInt(8 bits), 16777216)
+      val data = Mem(UInt(8 bits), 16 MB)
       val output = Reg(Bool).init(False)
       io.dataOut := output
 

@@ -8,12 +8,18 @@ object W956A8MBYA {
   def apply() = W956A8MBYA()
 
   case class W956A8MBYA() extends Component {
-    val ck = inout(Analog(Bool()))
-    val ckN = inout(Analog(Bool()))
-    val dq = inout(Analog(Bits(8 bits)))
-    val rwds = inout(Analog(Bool()))
-    val csN = inout(Analog(Bool()))
-    val resetN = inout(Analog(Bool()))
+    val io = new Bundle {
+      val ck = in(Bool)
+      val ckN = in(Bool)
+      val dqIn = in(Bits(8 bits))
+      val dqOut = out(Bits(8 bits))
+      val rwdsIn = in(Bool)
+      val rwdsOut = out(Bool)
+      val csN = in(Bool)
+      val resetN = in(Bool)
+    }
 
+    io.dqOut := 0
+    io.rwdsOut := False
   }
 }
