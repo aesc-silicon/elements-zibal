@@ -1,7 +1,7 @@
 GCC ?= ${ELEMENTS_BASE}/zephyr-sdk-0.16.0/riscv64-zephyr-elf/bin/riscv64-zephyr-elf
 
 # The intermediate directory for compiled object files.
-BUILD = ${BUILD_ROOT}/${SOC}/${BOARD}/bootrom/
+BUILD ?= ${BUILD_ROOT}/${SOC}/${BOARD}/bootrom/
 
 DRIVER = ${NAFARR_BASE}/software/driver/
 MISC   = ${NAFARR_BASE}/software/misc/
@@ -17,8 +17,8 @@ MAP = ${BUILD}/kernel.map
 LINKER = ${SOURCE}/kernel.ld
 
 AFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall
-CFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall
-LFLAGS = -march=rv32im_zicsr -mabi=ilp32 -m elf32lriscv --no-undefined
+CFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall -g
+LFLAGS = -march=rv32im_zicsr -mabi=ilp32 -m elf32lriscv --no-undefined -g
 
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 OBJECTS += $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
@@ -32,15 +32,15 @@ all: $(TARGET) $(LIST)
 rebuild: all
 
 # Rule to make the listing file.
-$(LIST) : $(BUILD)output.elf
+$(LIST): $(BUILD)output.elf
 	$(GCC)-objdump -d $(BUILD)output.elf > $(LIST)
 
 # Rule to make the image file.
-$(TARGET) : $(BUILD)output.elf
+$(TARGET): $(BUILD)output.elf
 	$(GCC)-objcopy --input-target=elf32-littleriscv $(BUILD)output.elf -O binary $(TARGET) 
 
 # Rule to make the elf file.
-$(BUILD)output.elf : $(OBJECTS) $(LINKER)
+$(BUILD)output.elf: $(OBJECTS) $(LINKER)
 	$(GCC)-ld $(LFLAGS) $(OBJECTS) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) --print-memory-usage
 
 # Rule to make the object files.
@@ -60,5 +60,5 @@ $(BUILD):
 	mkdir $@
 
 # Rule to clean files.
-clean : 
+clean:
 	-rm -rf $(BUILD)
