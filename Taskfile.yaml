@@ -94,7 +94,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'openroad -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'
+      - ${RUN} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'
 
   lib-view-klayout:
     internal: true
