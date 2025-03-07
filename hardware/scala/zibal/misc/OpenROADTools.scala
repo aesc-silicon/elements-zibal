@@ -56,6 +56,20 @@ export PLACE_DENSITY = ${placeDensity}
 
 export FOOTPRINT_TCL = ${config.zibalBuildPath}${config.className}.pad.tcl
 export PDN_TCL = ${config.zibalBuildPath}${config.className}.pdn.tcl\n""")
+
+        writer.write("""
+export LOAD_ADDITIONAL_FILES =
+export TECH_LEF = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lef/sg13g2_tech.lef
+export SC_LEF = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lef/sg13g2_stdcell.lef
+export ADDITIONAL_LEFS = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lef/sg13g2_io.lef \
+                         $(PLATFORM_DIR)/lef/bondpad_70x70.lef
+export LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib \
+                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_typ_1p2V_3p3V_25C.lib
+export GDS_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/gds/sg13g2_stdcell.gds \
+                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/gds/sg13g2_io.gds \
+                   $(PLATFORM_DIR)/gds/bondpad_70x70.gds
+""")
+
         writer.close()
 
         val sealringFilename = s"${config.className}.sealring.txt"
