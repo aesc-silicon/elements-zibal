@@ -79,7 +79,7 @@ tasks:
       - ${RUN} 'klayout -n sg13g2 -b
                 -r {{ .KLAYOUT_HOME }}/tech/drc/sg13g2_{{if .level}}{{ .level }}{{else}}maximal{{end}}.lydrc
                 -rd cell={{ .board }}Top
-                -rd noRecommendedRules=true
+                -rd recommendedRules=false
                 {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
 
   lib-view-drc:
