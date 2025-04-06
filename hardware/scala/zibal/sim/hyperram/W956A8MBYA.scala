@@ -9,6 +9,7 @@ object W956A8MBYA {
 
   case class W956A8MBYA() extends Component {
     val io = new Bundle {
+      val clock = in(Bool)
       val ck = in(Bool)
       val ckN = in(Bool)
       val dqIn = in(Bits(8 bits))
@@ -19,7 +20,55 @@ object W956A8MBYA {
       val resetN = in(Bool)
     }
 
-    io.dqOut := 0
-    io.rwdsOut := False
+    val dummyClockDomain2 = ClockDomain(
+      clock = io.clock,
+      reset = io.csN,
+      config = ClockDomainConfig(
+        resetKind = ASYNC,
+        resetActiveLevel = HIGH
+      )
+    )
+
+    object HyperBusState extends SpinalEnum {
+      val START, LATENCY, READ = newElement()
+    }
+
+    val device = new ClockingArea(dummyClockDomain2) {
+      val state = RegInit(HyperBusState.START)
+      val counter = CounterFreeRun(512)
+      val rwds = Reg(Bool).init(True)
+      val data = Mem(UInt(8 bits), 8 MB)
+      val output = Reg(Bits(8 bits)).init(B"00000000")
+      val address = Reg(UInt(log2Up(8 MB) bits)).init(0)
+
+      switch(state) {
+        is(HyperBusState.START) {
+          when(counter.value === 27) {
+            rwds := False
+            counter.clear()
+            state := HyperBusState.LATENCY
+          }
+        }
+        is(HyperBusState.LATENCY) {
+          when(counter.value === 104) {
+            counter.clear()
+            state := HyperBusState.READ
+            rwds := True
+            output := data(address).asBits
+            address := address + 1
+          }
+        }
+        is(HyperBusState.READ) {
+          when(counter.value === 3) {
+            rwds := !rwds
+            output := data(address).asBits
+            address := address + 1
+            counter.clear()
+          }
+        }
+      }
+    }
+    io.rwdsOut := device.rwds
+    io.dqOut := device.output
   }
 }
