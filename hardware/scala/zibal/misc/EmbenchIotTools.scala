@@ -9,7 +9,7 @@ import org.yaml.snakeyaml.{DumperOptions, Yaml}
 case class EmbenchIotTools(config: ElementsConfig.ElementsConfig) {
   def generate(cpuFrequency: HertzNumber) = {
     val file = s"${config.zibalBuildPath}${config.className}.yaml"
-    SpinalInfo(s"Generate ${config.className}.yaml")
+    SpinalInfo(s"Generating ${config.className}.yaml")
 
     val frequencies = new HashMap[String, Any]()
     frequencies.put("cpu", cpuFrequency.toInt)
