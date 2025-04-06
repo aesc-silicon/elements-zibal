@@ -13,23 +13,22 @@ object ElementsConfig {
     val socBoard = socName + "/" + boardName
     val buildPath = buildRoot + socBoard + "/"
     val zibalBuildPath = buildPath + "zibal/"
-    def zephyrBinary = buildRoot + "zephyr/zephyr.bin"
-    def bootromBinary = buildPath + "bootrom/kernel.img"
     val openroadBuildPath = buildPath + "openroad/"
+
+    def zephyrBinary = buildRoot + "zephyr/zephyr.bin"
+    val softwareBuildPath = buildPath + "software/"
+    def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
+    def swStorageBaremetalImage(name: String) = swStorageBuildPath(name) + "kernel.img"
+    def swStorageZephyrBinary(name: String) = swStorageBuildPath(name) + "zephyr/zephyr/zephyr.bin"
 
     /* Probably not used anymore */
     val symbiflowBuildPath = buildPath + "symbiflow/"
     val vivadoBuildPath = buildPath + "vivado/syn/"
-    val softwareBuildPath = buildPath + "software/"
-    def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
-    def swStorageZephyrBinary(name: String) = swStorageBuildPath(name) + "zephyr/zephyr/zephyr.bin"
     def swStorageZephyrBoardPath(name: String) =
       swStorageBuildPath(name) + "zephyr-boards/boards/riscv/" + socName
-    def swStorageBaremetalRom(name: String) = swStorageBuildPath(name) + "kernel.rom"
-    def swStorageBaremetalImage(name: String) = swStorageBuildPath(name) + "kernel.img"
     /* --- */
 
-    // Prepare class will create files and therefore  replace with Top
+    // Prepare class will create files and therefore replace with Top
     val className = top
       .getClass()
       .getName()
