@@ -5,7 +5,14 @@ env:
   YOSYS_EXE: "/opt/elements/tools/yosys/bin/yosys"
   PATH: "/opt/elements/oss-cad-suite/bin/:{{ .PATH }}"
   CONTAINER_CHECK: "podman ps | grep {{.CONTAINER_NAME}} >/dev/null || venv/bin/podman-compose {{if .IS_HEADLESS}} -f podman-compose-headless.yml{{end}} up -d"
-  CONTAINER_CMD: "podman exec {{if .CONTAINER_ENV}}{{.CONTAINER_ENV}}{{end}} -e OPENROAD_EXE={{ .OPENROAD_EXE }} -e YOSYS_EXE={{ .YOSYS_EXE }} -e PATH={{ .PATH }} --workdir={{ .PWD }} -it {{.CONTAINER_NAME}}"
+  CONTAINER_CMD: "podman exec \
+    {{if .CONTAINER_ENV}}{{.CONTAINER_ENV}}{{end}} \
+    -e OPENROAD_EXE={{ .OPENROAD_EXE }} \
+    -e YOSYS_EXE={{ .YOSYS_EXE }} \
+    -e PATH={{ .PATH }} \
+    --workdir={{ .PWD }} \
+    -it {{.CONTAINER_NAME}} \
+"
   RUN: "{{.CONTAINER_CMD}} bash -c"
 
 tasks:
@@ -43,7 +50,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'BOARD={{ .board }} SOURCE={{ .PWD }}/hardware/scala/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'
+      - ${RUN} 'BOARD={{ .board }} SOURCE={{ .PWD }}/hardware/scala/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/software/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/software/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'
 
   lib-sealring:
     internal: true
