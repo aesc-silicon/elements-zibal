@@ -2,7 +2,7 @@ package zibal.misc
 
 import java.io._
 import spinal.core._
-import nafarr.blackboxes.ihp.sg13s._
+import nafarr.blackboxes.ihp.sg13g2._
 import scala.collection.mutable.Map
 
 object CadenceTools {
@@ -19,7 +19,7 @@ object CadenceTools {
     def generate(path: String) = {
       val file = s"${path}${config.className}.sdc"
       val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.className}.sdc")
+      SpinalInfo(s"Generating ${config.className}.sdc")
 
       writer.write("""set sdc_version 2.0
 set_units -capacitance 1000fF
@@ -86,7 +86,7 @@ current_design ${TOP}
     def generate(io: Data, path: String) = {
       val file = s"${path}${config.className}.io"
       val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.className}.io")
+      SpinalInfo(s"Generating ${config.className}.io")
 
       io.component.getOrdredNodeIo.foreach { baseType =>
         val instance = baseType.parent.asInstanceOf[IhpCmosIo.IhpCmosIo]
@@ -97,7 +97,7 @@ current_design ${TOP}
         }
         val count = counters(instance.cell)
         val name = s"${instance.cell}_${count}"
-        pads(instance.edge_) += (instance.number_ -> (name, instance.cell))
+        pads(instance.edge) += (instance.number -> (name, instance.cell))
       }
 
       writer.write("""(globals
