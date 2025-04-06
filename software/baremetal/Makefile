@@ -7,8 +7,9 @@ DRIVER = ${NAFARR_BASE}/software/driver/
 MISC   = ${NAFARR_BASE}/software/misc/
 
 SOURCE ?= ${ZIBAL_BASE}/hardware/scala/elements/soc/${SOC}/${BOARD}/bootrom/
+SOC_HEADER ?= ${SOURCE}
 
-INCLUDE = -I ${NAFARR_BASE}/software/include/ -I ${BUILD} -I ${SOURCE}
+INCLUDE = -I ${NAFARR_BASE}/software/include/ -I ${BUILD} -I ${SOURCE} -I ${SOC_HEADER}
 
 TARGET = ${BUILD}/kernel.img
 LIST = ${BUILD}/kernel.lst
