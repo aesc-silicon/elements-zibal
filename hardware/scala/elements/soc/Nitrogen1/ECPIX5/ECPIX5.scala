@@ -126,19 +126,11 @@ case class ECPIX5Top() extends Component {
     128 kB,
     8 MB,
     hyperbusPartitions,
-    (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
+    (resetCtrl: ResetControllerCtrl, _, clock: Bool) => {
+      resetCtrl.buildXilinx(clock)
+    },
     (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
       clockCtrl.buildDummy(clock)
-      /*
-      clockCtrl.buildLatticeECP5Pll(
-        clock,
-        boardParameter.getOscillatorFrequency,
-        List("system", "debug"),
-        2,
-        1,
-        14
-      )
-       */
     }
   )
 
@@ -230,11 +222,11 @@ case class ECPIX5Top() extends Component {
   io.hyperbus.rwds <> FakeIo(soc.io_plat.hyperbus.rwds)
 
   for (index <- 0 until io.spi.cs.length) {
-    io.spi.cs(index) <> FakeO(soc.io_plat.spiXip.cs(index))
+    io.spi.cs(index) <> FakeO(soc.io_plat.spi.cs(index))
   }
-  io.spi.sck <> FakeO(soc.io_plat.spiXip.sclk)
+  io.spi.sck <> FakeO(soc.io_plat.spi.sclk)
   for (index <- 0 until io.spi.dq.length) {
-    io.spi.dq(index) <> FakeIo(soc.io_plat.spiXip.dq(index))
+    io.spi.dq(index) <> FakeIo(soc.io_plat.spi.dq(index))
   }
 
   for (index <- 0 until io.ledPullDown.length) {
