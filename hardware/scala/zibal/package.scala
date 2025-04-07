@@ -20,8 +20,7 @@ package object board {
 
 package object soc {
   abstract class SocParameter(boardParameter: board.BoardParameter, socInterrupts: Int) {
-    // Interrupt on line 0 is False. Add one interrupt be default.
-    def getInterruptCount(platformInterrupts: Int) = 1 + socInterrupts + platformInterrupts
+    def getInterruptCount(platformInterrupts: Int) = socInterrupts + platformInterrupts
 
     def getKitParameter = boardParameter.getKitParameter
     def getBoardParameter = boardParameter
