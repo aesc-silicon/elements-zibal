@@ -14,9 +14,7 @@ import nafarr.system.mtimer.{Apb3MachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{Apb3Plic, Plic, PlicCtrl}
 import nafarr.system.reset.{Apb3ResetController, ResetControllerCtrl}
 import nafarr.system.clock.{Apb3ClockController, ClockControllerCtrl}
-import nafarr.memory.hyperbus.{Axi4SharedHyperBus, HyperBus, HyperBusCtrl}
-import nafarr.memory.hyperbus.phy.HyperBusGenericPhy
-import nafarr.peripherals.com.spi.{Axi4ReadOnlySpiXipController, Spi, SpiCtrl}
+import nafarr.peripherals.com.spi.{Axi4ReadOnlySpiXipController, Spi, SpiControllerCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
@@ -26,22 +24,29 @@ object Hydrogen {
 
   case class Parameter(
       socParameter: SocParameter,
+      onChipRamSize: BigInt,
       spiRomSize: BigInt,
-      hyperbusPartitions: List[(BigInt, Boolean)],
       resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
       clockLogic: (
           ClockControllerCtrl.ClockControllerCtrl,
           ResetControllerCtrl.ResetControllerCtrl,
           Bool
-      ) => Unit
+      ) => Unit,
+      onChipRamLogic: (BigInt) => (Axi4Shared, Mem[Bits]) = (onChipRamSize: BigInt) => {
+        val ram = Axi4SharedOnChipRam(
+          dataWidth = 32,
+          byteCount = onChipRamSize,
+          idWidth = 4
+        )
+        (ram.io.axi, ram.ram)
+      }
   ) extends PlatformParameter(socParameter) {
     val core = VexRiscvCoreParameter.realtime(0xa0000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
-    val hyperbus = HyperBusCtrl.Parameter.default(hyperbusPartitions)
-    val spi = SpiCtrl.Parameter.xip()
+    val spi = SpiControllerCtrl.Parameter.xip()
   }
 
   class Hydrogen(parameter: Parameter) extends PlatformComponent(parameter) {
@@ -49,7 +54,6 @@ object Hydrogen {
       val reset = in(Bool)
       val clock = in(Bool)
       val jtag = slave(Jtag())
-      val hyperbus = master(HyperBus.Io(parameter.hyperbus))
       val spi = master(Spi.Io(parameter.spi.io))
     }
 
@@ -94,12 +98,7 @@ object Hydrogen {
       }
 
       /* AXI Subordinates */
-      val hyperbus = new Area {
-        val ctrl = Axi4SharedHyperBus(parameter.hyperbus)
-        val phy = HyperBusGenericPhy(parameter.hyperbus)
-        ctrl.io.phy <> phy.io.phy
-        io_plat.hyperbus <> phy.io.hyperbus
-      }
+      val (onChipRamAxiPort, onChipRamMem) = parameter.onChipRamLogic(parameter.onChipRamSize)
 
       val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spi)
       io_plat.spi <> spiXipControllerCtrl.io.spi
@@ -114,18 +113,18 @@ object Hydrogen {
       val axiCrossbar = Axi4CrossbarFactory()
 
       axiCrossbar.addSlaves(
-        hyperbus.ctrl.io.memory -> (0x90000000L, 64 MB),
+        onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
         spiXipControllerCtrl.io.dataBus -> (0xa0000000L, parameter.spiRomSize),
         apbBridge.io.axi -> (0xf0000000L, 16 MB)
       )
 
       axiCrossbar.addConnections(
         core.iBus -> List(
-          hyperbus.ctrl.io.memory,
+          onChipRamAxiPort,
           spiXipControllerCtrl.io.dataBus
         ),
         core.dBus -> List(
-          hyperbus.ctrl.io.memory,
+          onChipRamAxiPort,
           apbBridge.io.axi,
           spiXipControllerCtrl.io.dataBus
         )
@@ -138,7 +137,7 @@ object Hydrogen {
         crossbar.readRsp << bridge.readRsp
       })
 
-      axiCrossbar.addPipelining(hyperbus.ctrl.io.memory)((crossbar, ctrl) => {
+      axiCrossbar.addPipelining(onChipRamAxiPort)((crossbar, ctrl) => {
         crossbar.sharedCmd >/-> ctrl.sharedCmd
         crossbar.writeData >/-> ctrl.writeData
         crossbar.writeRsp <-/< ctrl.writeRsp
@@ -162,8 +161,7 @@ object Hydrogen {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0x800000, 2 MB)
-      addInterrupt(False)
+      addApbDevice(plicCtrl.io.bus, 0x800000, 4 MB)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
       core.mtimerInterrupt := mtimerCtrl.io.interrupt
@@ -176,8 +174,6 @@ object Hydrogen {
       val clockCtrlMapper = Apb3ClockController(parameter.clocks)
       clockCtrlMapper.io.config <> clockCtrl.io.config
       addApbDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
-
-      addApbDevice(hyperbus.ctrl.io.bus, 0x23000, 4 kB)
 
       addApbDevice(spiXipControllerCtrl.io.bus, 0x24000, 4 kB)
 

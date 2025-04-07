@@ -6,6 +6,8 @@ import spinal.lib._
 import zibal.cores.VexRiscvCoreParameter
 import zibal.soc.SocParameter
 import zibal.misc.BinTools
+import zibal.misc.BaremetalTools
+import zibal.misc.ElementsConfig
 
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
@@ -16,7 +18,7 @@ import nafarr.system.reset.{Apb3ResetController, ResetControllerCtrl}
 import nafarr.system.clock.{Apb3ClockController, ClockControllerCtrl}
 import nafarr.memory.hyperbus.{Axi4SharedHyperBus, HyperBus, HyperBusCtrl}
 import nafarr.memory.hyperbus.phy.HyperBusGenericPhy
-import nafarr.peripherals.com.spi.{Axi4ReadOnlySpiXipController, Spi, SpiCtrl}
+import nafarr.peripherals.com.spi.{Axi4ReadOnlySpiXipController, Spi, SpiControllerCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
@@ -35,22 +37,22 @@ object Nitrogen {
           ResetControllerCtrl.ResetControllerCtrl,
           Bool
       ) => Unit,
-      onChipRamLogic: (BigInt) => (Axi4Shared, Mem[Bits]) = (onChipRamSize: BigInt) => {
+      onChipRamLogic: (BigInt) => (Component, Axi4Shared, Component) = (onChipRamSize: BigInt) => {
         val ram = Axi4SharedOnChipRam(
           dataWidth = 32,
           byteCount = onChipRamSize,
           idWidth = 4
         )
-        (ram.io.axi, ram.ram)
+        (ram, ram.io.axi, ram.ram.asInstanceOf[Component])
       }
   ) extends PlatformParameter(socParameter) {
-    val core = VexRiscvCoreParameter.mcu(0xa0000000L).plugins
+    val core = VexRiscvCoreParameter.realtime(0xa0000000L).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
     val hyperbus = HyperBusCtrl.Parameter.default(hyperbusPartitions)
-    val spiXip = SpiCtrl.Parameter.default()
+    val spi = SpiControllerCtrl.Parameter.xip()
   }
 
   class Nitrogen(parameter: Parameter) extends PlatformComponent(parameter) {
@@ -59,10 +61,20 @@ object Nitrogen {
       val clock = in(Bool)
       val jtag = slave(Jtag())
       val hyperbus = master(HyperBus.Io(parameter.hyperbus))
-      val spiXip = master(Spi.Io(parameter.spiXip.io))
+      val spi = master(Spi.Io(parameter.spi.io))
     }
 
-    override def initOnChipRam(path: String) = BinTools.initRam(system.onChipRamMem, path)
+    def prepareBaremetal(name: String, elementsConfig: ElementsConfig.ElementsConfig) {
+      val header = BaremetalTools.Header(elementsConfig, name)
+      header.generate(
+        this.system.axiCrossbar.slavesConfigs,
+        this.system.apbBridge.io.axi,
+        this.apbMapping,
+        this.irqMapping
+      )
+    }
+
+    override def initOnChipRam(path: String) {}
 
     val resetCtrl = ResetControllerCtrl(parameter.resets)
     parameter.resetLogic(resetCtrl, io_plat.reset, io_plat.clock)
@@ -103,7 +115,8 @@ object Nitrogen {
       }
 
       /* AXI Subordinates */
-      val (onChipRamAxiPort, onChipRamMem) = parameter.onChipRamLogic(parameter.onChipRamSize)
+      val (onChipCtrl, onChipRamAxiPort, onChipRamMem) =
+        parameter.onChipRamLogic(parameter.onChipRamSize)
 
       val hyperbus = new Area {
         val ctrl = Axi4SharedHyperBus(parameter.hyperbus)
@@ -112,11 +125,11 @@ object Nitrogen {
         io_plat.hyperbus <> phy.io.hyperbus
       }
 
-      val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spiXip)
-      io_plat.spiXip <> spiXipControllerCtrl.io.spi
+      val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spi)
+      io_plat.spi <> spiXipControllerCtrl.io.spi
 
       val apbBridge = Axi4SharedToApb3Bridge(
-        addressWidth = 20,
+        addressWidth = 24,
         dataWidth = 32,
         idWidth = 4
       )
@@ -128,7 +141,7 @@ object Nitrogen {
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
         hyperbus.ctrl.io.memory -> (0x90000000L, 64 MB),
         spiXipControllerCtrl.io.dataBus -> (0xa0000000L, parameter.spiRomSize),
-        apbBridge.io.axi -> (0xf0000000L, 1 MB)
+        apbBridge.io.axi -> (0xf0000000L, 16 MB)
       )
 
       axiCrossbar.addConnections(
@@ -183,8 +196,7 @@ object Nitrogen {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0xf0000, 64 kB)
-      addInterrupt(False)
+      addApbDevice(plicCtrl.io.bus, 0x800000, 4 MB)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
       core.mtimerInterrupt := mtimerCtrl.io.interrupt
