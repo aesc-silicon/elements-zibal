@@ -23,7 +23,7 @@ case class SoftwareStorage(
     val directory = new File(path);
     if (!directory.exists()) {
       directory.mkdirs();
-      SpinalInfo(s"Create path ${path}")
+      SpinalInfo(s"Creating path ${path}")
     }
   }
 
@@ -46,7 +46,7 @@ case class SoftwareStorage(
     if (file.exists()) {
       storages = yaml.load(new FileInputStream(file)).asInstanceOf[HashMap[String, Any]]
     } else {
-      SpinalInfo(s"Generate ${filePath.split('/').last}")
+      SpinalInfo(s"Generating ${filePath.split('/').last}")
     }
 
     if (storages.containsKey(storage)) {
