@@ -9,37 +9,73 @@ import scala.collection.mutable.ArrayBuffer
 
 object OpenROADTools {
 
+  case class PDKTech(platform: String, x: Double, y: Double)
+
   object PDKs {
-    object Skywater {
-      val sky130hd = "sky130hd"
-      val sky130hs = "sky130hs"
-    }
     object IHP {
-      val sg13g2 = "sg13g2"
+      val sg13g2 = PDKTech("sg13g2", 0.48, 3.78)
     }
+  }
+
+  def divisible(n: Double, p: Int): Double = { val s = math pow (10, p); (math floor n * s) / s }
+  def divisible(a: Double, b: Double): Boolean = {
+    return ((a / b) % 1) < 0.0001
   }
 
   object IHP {
     case class Config(config: ElementsConfig.ElementsConfig) {
       def generate(
-          platform: String,
+          platform: PDKTech,
           dieArea: Tuple4[Double, Double, Double, Double],
           coreArea: Tuple4[Double, Double, Double, Double],
           placeDensity: Double = 0.75,
           hasIoRing: Boolean = true,
           useFill: Boolean = false
       ) = {
+        assert(
+          divisible(dieArea._1, platform.x),
+          f"Die area lower left coordinate not on Core Site (${platform.x})."
+        )
+        assert(
+          divisible(dieArea._2, platform.y),
+          f"Die area lower left coordinate not on Core Site (${platform.y})."
+        )
+        assert(
+          divisible(dieArea._3, platform.x),
+          f"Die area upper right coordinate not on Core Site (${platform.x})."
+        )
+        assert(
+          divisible(dieArea._4, platform.y),
+          f"Die area upper right coordinate not on Core Site (${platform.y})."
+        )
+
+        assert(
+          divisible(coreArea._1, platform.x),
+          f"Core area lower left coordinate not on Core Site (${platform.x})."
+        )
+        assert(
+          divisible(coreArea._2, platform.y),
+          f"Core area lower left coordinate not on Core Site (${platform.y})."
+        )
+        assert(
+          divisible(coreArea._3, platform.x),
+          f"Core area upper right coordinate not on Core Site (${platform.x})."
+        )
+        assert(
+          divisible(coreArea._4, platform.y),
+          f"Core area upper right coordinate not on Core Site (${platform.y})."
+        )
+
         val filename = s"${config.className}.mk"
         val file = s"${config.zibalBuildPath}${filename}"
         val writer = new PrintWriter(new File(file))
-        SpinalInfo(s"Generate ${filename}")
+        SpinalInfo(s"Generating ${filename}")
 
         writer.write(s"""export DESIGN_NAME=${config.className}
-export PLATFORM=ihp-${platform}
-
-export VERILOG_FILES= ${config.zibalBuildPath}${config.className}.v
-export SDC_FILE=${config.zibalBuildPath}${config.className}.sdc
-
+export PLATFORM=ihp-${platform.platform}
+export SDC_FILE=${config.zibalBuildPath}${config.className}.sdc\n""")
+        writer.write(s"""export VERILOG_FILES=${config.zibalBuildPath}*.v\n""")
+        writer.write(s"""
 export SEAL_GDS = ${config.zibalBuildPath}/macros/sealring/sealring.gds.gz
 
 export DIE_AREA = ${dieArea._1} ${dieArea._2} ${dieArea._3} ${dieArea._4}
@@ -53,20 +89,28 @@ export MAX_ROUTING_LAYER = TopMetal2\n""")
         writer.write(s"""
 export TNS_END_PERCENT = 100
 export PLACE_DENSITY = ${placeDensity}
+export GDS_ALLOW_EMPTY = RM_IHPSG13_1P_BITKIT_16x2_*
 
 export FOOTPRINT_TCL = ${config.zibalBuildPath}${config.className}.pad.tcl
-export PDN_TCL = ${config.zibalBuildPath}${config.className}.pdn.tcl\n""")
+export PDN_TCL = ${config.zibalBuildPath}${config.className}.pdn.tcl\n
+export MACRO_PLACEMENT_TCL = ${config.zibalBuildPath}${config.className}.macro.tcl\n""")
 
         writer.write("""
 export LOAD_ADDITIONAL_FILES =
 export TECH_LEF = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lef/sg13g2_tech.lef
 export SC_LEF = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lef/sg13g2_stdcell.lef
 export ADDITIONAL_LEFS = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lef/sg13g2_io.lef \
+                         $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_512x32_c2_bm_bist.lef \
+                         $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lef/RM_IHPSG13_1P_1024x8_c2_bm_bist.lef \
                          $(PLATFORM_DIR)/lef/bondpad_70x70.lef
 export LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib \
-                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_typ_1p2V_3p3V_25C.lib
+                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_typ_1p2V_3p3V_25C.lib \
+                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/RM_IHPSG13_1P_512x32_c2_bm_bist_typ_1p20V_25C.lib \
+                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/RM_IHPSG13_1P_1024x8_c2_bm_bist_typ_1p20V_25C.lib
 export GDS_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/gds/sg13g2_stdcell.gds \
                    $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/gds/sg13g2_io.gds \
+                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_512x32_c2_bm_bist.gds \
+                   $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/gds/RM_IHPSG13_1P_1024x8_c2_bm_bist.gds \
                    $(PLATFORM_DIR)/gds/bondpad_70x70.gds
 """)
 
@@ -75,10 +119,38 @@ export GDS_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/gds/sg13g2_stdcell
         val sealringFilename = s"${config.className}.sealring.txt"
         val sealringFile = s"${config.zibalBuildPath}${sealringFilename}"
         val sealringWriter = new PrintWriter(new File(sealringFile))
-        SpinalInfo(s"Generate ${sealringFilename}")
+        SpinalInfo(s"Generating ${sealringFilename}")
 
         sealringWriter.write(s"${dieArea._3}\n${dieArea._4}\n")
         sealringWriter.close()
+      }
+    }
+
+    case class Macros(config: ElementsConfig.ElementsConfig) {
+
+      val macros = ArrayBuffer[(String, Double, Double, String)]()
+
+      def getName(comp: Component): String = {
+        if (comp.getName().equals("toplevel"))
+          return ""
+        return getName(comp.parent) + "." + comp.getName()
+      }
+
+      def addMacro(macroName: Component, x: Double, y: Double, orientation: String = "R0") = {
+        macros += ((getName(macroName).substring(1), x, y, orientation))
+      }
+
+      def generate() = {
+        val file = s"${config.zibalBuildPath}${config.className}.macro.tcl"
+        val writer = new PrintWriter(new File(file))
+        SpinalInfo(s"Generating ${config.className}.macro.tcl")
+
+        for ((macroName, x, y, orientation) <- macros) {
+          writer.write(
+            s"""place_macro -macro_name ${macroName} -location {${x} ${y}} -orientation ${orientation}\n"""
+          )
+        }
+        writer.close()
       }
     }
 
@@ -112,7 +184,7 @@ export GDS_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/gds/sg13g2_stdcell
         val filename = s"${config.className}.sdc"
         val file = s"${config.zibalBuildPath}${filename}"
         val writer = new PrintWriter(new File(file))
-        SpinalInfo(s"Generate ${filename}")
+        SpinalInfo(s"Generating ${filename}")
 
         io.component.getOrdredNodeIo.foreach { baseType =>
           val instance = baseType.parent.asInstanceOf[IhpCmosIo.IhpCmosIo]
@@ -198,7 +270,7 @@ set_load -pin_load 5 [all_outputs]\n""")
       def generate(io: Data) = {
         val file = s"${config.zibalBuildPath}${config.className}.pad.tcl"
         val writer = new PrintWriter(new File(file))
-        SpinalInfo(s"Generate ${config.className}.pad.tcl")
+        SpinalInfo(s"Generating ${config.className}.pad.tcl")
 
         io.component.getOrdredNodeIo.foreach { baseType =>
           val instance = baseType.parent.asInstanceOf[IhpCmosIo.IhpCmosIo]
@@ -256,7 +328,8 @@ make_io_sites \
     -corner_site IOLibCSite \
     -offset $IO_OFFSET
 
-# Place Pads\n""")
+# Place Pads
+""")
 
         pads("south").toSeq.sortBy(_._1).foreach { pad =>
           val total = pads("south").toSeq.length
@@ -321,16 +394,21 @@ remove_io_rows\n""")
       def generate() = {
         val file = s"${config.zibalBuildPath}${config.className}.pdn.tcl"
         val writer = new PrintWriter(new File(file))
-        SpinalInfo(s"Generate ${config.className}.pdn.tcl")
+        SpinalInfo(s"Generating ${config.className}.pdn.tcl")
 
         writer.write("""
 # stdcell power pins
 add_global_connection -net {VDD} -pin_pattern {^VDD$} -power
 add_global_connection -net {VDD} -pin_pattern {^VDDPE$}
 add_global_connection -net {VDD} -pin_pattern {^VDDCE$}
-
 add_global_connection -net {VSS} -pin_pattern {^VSS$} -ground
 add_global_connection -net {VSS} -pin_pattern {^VSSE$}
+
+# rams
+add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {VDDARRAY} -power
+add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {VDDARRAY!} -power
+add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {VDD!} -power
+add_global_connection -net {VSS} -inst_pattern {.*} -pin_pattern {VSS!} -ground
 
 # padframe core power pins
 add_global_connection -net {VDD} -pin_pattern {^vdd$} -power
@@ -347,6 +425,7 @@ set_voltage_domain -name {CORE} -power {VDD} -ground {VSS}
 
 # stdcell grid
 define_pdn_grid -name {grid} -voltage_domains {CORE}
+
 add_pdn_ring \
 	-grid {grid} \
 	-layers {Metal5 TopMetal1} \
@@ -387,286 +466,35 @@ add_pdn_connect -grid {grid} -layers {Metal1 Metal5}
 add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}
 add_pdn_connect -grid {grid} -layers {Metal5 TopMetal2}
 add_pdn_connect -grid {grid} -layers {TopMetal1 TopMetal2}
+
+# pdn for sram macros
+define_pdn_grid \
+	-name {sram_grid} \
+	-voltage_domains {CORE} \
+	-macro -cells {RM_IHPSG13_1P_512x32_c2_bm_bist RM_IHPSG13_1P_1024x8_c2_bm_bist} \
+	-grid_over_boundary
+add_pdn_ring \
+	-grid {sram_grid} \
+	-layer {Metal3 Metal4} \
+	-widths {8.0} \
+	-spacings {4.0} \
+	-core_offsets {16.0} \
+	-add_connect \
+	-connect_to_pads
+
+add_pdn_stripe \
+	-grid {sram_grid} \
+	-layer {TopMetal1} \
+	-width {8.0} \
+	-pitch {75.6} \
+	-offset {10.0} \
+	-extend_to_core_ring
+add_pdn_connect -grid sram_grid -layers {TopMetal1 Metal3}
+add_pdn_connect -grid sram_grid -layers {TopMetal1 Metal4}
+add_pdn_connect -grid sram_grid -layers {TopMetal1 TopMetal2}
 """)
         writer.close()
       }
-    }
-  }
-
-  case class Config(config: ElementsConfig.ElementsConfig) {
-
-    var speedOptimization = false
-    var areaOptimization = false
-    var fixViolations: Option[Int] = None
-
-    def fixTimingViolations(percentage: Int) = {
-      fixViolations = Some(percentage)
-    }
-
-    def optimizeSpeed() = {
-      speedOptimization = true
-      areaOptimization = false
-    }
-    def optimizeArea() = {
-      speedOptimization = false
-      areaOptimization = true
-    }
-
-    def generate(
-        platform: String,
-        dieArea: Tuple4[Double, Double, Double, Double],
-        ioMargin: Double
-    ) = {
-      val file = s"${config.zibalBuildPath}${config.className}.mk"
-      val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.className}.mk")
-
-      val coreArea =
-        s"${dieArea._1 + ioMargin} ${dieArea._2 + ioMargin} ${dieArea._3 - ioMargin} ${dieArea._4 - ioMargin}"
-
-      writer.write(s"""export PLATFORM=${platform}
-export DESIGN_NAME=${config.className}
-export SDC_FILE=${config.zibalBuildPath}${config.className}.sdc
-export VERILOG_FILES= ${config.zibalBuildPath}${config.className}.v
-
-export DIE_AREA = ${dieArea._1} ${dieArea._2} ${dieArea._3} ${dieArea._4}
-export CORE_AREA = ${coreArea}
-export RESYNTH_TIMING_RECOVER=1
-
-export FOOTPRINT_TCL = ${config.zibalBuildPath}${config.className}.pad.tcl
-export PDN_TCL = ${config.zibalBuildPath}${config.className}.pdn.tcl\n""")
-
-      if (fixViolations.isDefined) {
-        writer.write(s"""export TNS_END_PERCENT=${fixViolations.get}\n""")
-      }
-      if (speedOptimization) {
-        writer.write("export ABC_SPEED=1\n")
-      }
-      if (areaOptimization) {
-        writer.write("export ABC_AREA=1\n")
-      }
-      if (platform == PDKs.Skywater.sky130hd) {
-        writer.write(s"""
-export VERILOG_FILES= \\
-    ${config.zibalBuildPath}${config.className}.v \\
-    $$(PDK_SKY130_IO_DIR)/verilog/sky130_ef_io.v \\
-    $$(PDK_SKY130_IO_DIR)/verilog/sky130_fd_io__blackbox.v
-export ADDITIONAL_GDS = \\
-    $$(PDK_SKY130_IO_DIR)/gds/sky130_ef_io.gds \\
-    $$(PDK_SKY130_IO_DIR)/gds/sky130_fd_io.gds
-export ADDITIONAL_LEFS = \\
-    $$(PDK_SKY130_IO_DIR)/lef/sky130_ef_io.lef \\
-    $$(PDK_SKY130_IO_DIR)/lef/sky130_fd_io.lef\n""")
-      }
-
-      writer.close()
-    }
-  }
-
-  case class Sdc(config: ElementsConfig.ElementsConfig) {
-    val clocks = Map[String, (Float, Double)]()
-
-    def addClock(pin: Bool, frequency: HertzNumber, delay: Double) = {
-      val time = (frequency.toTime.toBigDecimal / 1.0e-9).floatValue()
-      val name = pin.getName()
-      clocks += name -> (time, delay)
-    }
-
-    def generate() = {
-      val file = s"${config.zibalBuildPath}${config.className}.sdc"
-      val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.className}.sdc")
-
-      writer.write(s"""current_design ${config.className}\n\n""")
-
-      clocks.foreach { case (name, (period, delay)) =>
-        writer.write(s"""create_clock -name "${name}" -period ${period} [get_ports ${name}]
-set_clock_latency -source 0  [get_clocks ${name}]
-set_clock_uncertainty 0.03  [get_clocks ${name}]
-set_clock_transition -min -fall 0.069 [get_clocks ${name}]
-set_clock_transition -min -rise 0.069 [get_clocks ${name}]
-set_clock_transition -max -fall 0.069 [get_clocks ${name}]
-set_clock_transition -max -rise 0.069 [get_clocks ${name}]\n""")
-        // Only one clock input is supported right now.
-        writer.write(
-          s"""set_input_delay [expr ${period} * ${delay}] -clock ${name} [lsearch -inline -all -not -exact [all_inputs] [get_ports ${name}]]\n"""
-        )
-        writer.write(
-          s"""set_input_delay [expr ${period} * ${delay}] -clock ${name} [all_outputs]\n"""
-        )
-      }
-
-      writer.close()
-    }
-  }
-
-  case class Io(config: ElementsConfig.ElementsConfig) {
-
-    val pads = Map(
-      "north" -> Map[Double, (String, String, String)](),
-      "west" -> Map[Double, (String, String, String)](),
-      "south" -> Map[Double, (String, String, String)](),
-      "east" -> Map[Double, (String, String, String)]()
-    )
-
-    def addPad(edge: String, offset: Double, name: String, cell: String) = {
-      pads(edge) += (offset -> (name, cell, ""))
-    }
-
-    def generate(io: Data) = {
-      val file = s"${config.zibalBuildPath}${config.className}.pad.tcl"
-      val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.className}.pad.tcl")
-
-      io.component.getOrdredNodeIo.foreach { baseType =>
-        val instance = baseType.parent.asInstanceOf[Sky130CmosIo.Sky130CmosIo]
-        pads(instance.edge) += (instance.offset -> (instance.getCellName, instance.cell, instance
-          .getName()))
-      }
-
-      writer.write(s"""make_fake_io_site -name IO_SITE -width 1 -height 200
-make_fake_io_site -name IO_CSITE -width 200 -height 204
-
-# Create IO Rows
-make_io_sites -horizontal_site IO_SITE \\
-    -vertical_site IO_SITE \\
-    -corner_site IO_CSITE \\
-    -offset 0 \\
-    -rotation_horizontal R180 \\
-    -rotation_vertical R180 \\
-    -rotation_corner R180
-
-# Place Pads\n""")
-
-      pads("south").toSeq.sortBy(_._1).foreach { pad =>
-        if (!pad._2._3.equals(""))
-          writer.write(s"# IO pin ${pad._2._3}\n")
-        writer.write(
-          s"place_pad -row IO_SOUTH -location ${pad._1} {${pad._2._1}} -master ${pad._2._2}\n"
-        )
-      }
-      pads("east").toSeq.sortBy(_._1).foreach { pad =>
-        if (!pad._2._3.equals(""))
-          writer.write(s"# IO pin ${pad._2._3}\n")
-        writer.write(
-          s"place_pad -row IO_EAST -location ${pad._1} {${pad._2._1}} -master ${pad._2._2}\n"
-        )
-      }
-      pads("north").toSeq.sortBy(_._1).foreach { pad =>
-        if (!pad._2._3.equals(""))
-          writer.write(s"# IO pin ${pad._2._3}\n")
-        writer.write(
-          s"place_pad -row IO_NORTH -location ${pad._1} {${pad._2._1}} -master ${pad._2._2}\n"
-        )
-      }
-      pads("west").toSeq.sortBy(_._1).foreach { pad =>
-        if (!pad._2._3.equals(""))
-          writer.write(s"# IO pin ${pad._2._3}\n")
-        writer.write(
-          s"place_pad -row IO_WEST -location ${pad._1} {${pad._2._1}} -master ${pad._2._2}\n"
-        )
-      }
-
-      writer.write(s"""# Place Corner Cells and Filler
-place_corners sky130_ef_io__corner_pad
-
-set iofill {
-    sky130_ef_io__com_bus_slice_20um
-    sky130_ef_io__com_bus_slice_10um
-    sky130_ef_io__com_bus_slice_5um
-    sky130_ef_io__com_bus_slice_1um
-}
-
-place_io_fill -row IO_NORTH {*}$$iofill
-place_io_fill -row IO_SOUTH {*}$$iofill
-place_io_fill -row IO_WEST {*}$$iofill
-place_io_fill -row IO_EAST {*}$$iofill
-
-connect_by_abutment
-
-place_io_terminals sky130_fd_io__top_gpiov2_*/PAD
-
-remove_io_rows""")
-
-      writer.close()
-    }
-  }
-
-  // IO handling is missing in current PDN file
-  case class Pdn(config: ElementsConfig.ElementsConfig) {
-    def generate() = {
-      val file = s"${config.zibalBuildPath}${config.className}.pdn.tcl"
-      val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.className}.pdn.tcl")
-
-      writer.write(s"""####################################
-# global connections
-####################################
-add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {^VDD$$} -power
-add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {^VDDPE$$}
-add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {^VDDCE$$}
-add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {VPWR}
-add_global_connection -net {VDD} -inst_pattern {.*} -pin_pattern {VPB}
-add_global_connection -net {VSS} -inst_pattern {.*} -pin_pattern {^VSS$$} -ground
-add_global_connection -net {VSS} -inst_pattern {.*} -pin_pattern {^VSSE$$}
-add_global_connection -net {VSS} -inst_pattern {.*} -pin_pattern {VGND}
-add_global_connection -net {VSS} -inst_pattern {.*} -pin_pattern {VNB}
-
-add_global_connection -net {VDD} -inst_pattern {pwr_core.*} -pin_pattern {P_CORE} -power
-add_global_connection -net {VSS} -inst_pattern {gnd_core.*} -pin_pattern {G_CORE} -ground
-
-global_connect
-####################################
-# voltage domains
-####################################
-set_voltage_domain -name {CORE} -power {VDD} -ground {VSS}
-####################################
-# standard cell grid
-####################################
-define_pdn_grid -name {grid} -voltage_domains {CORE}
-
-add_pdn_stripe -grid {grid} -layer {met1} -width {0.49} -pitch {5.44} -offset {0} -followpins
-add_pdn_ring -grid {grid} -layers {met4 met5} -widths {15 15} -spacings {2 2} \\
-    -pad_offsets {10 10} -connect_to_pads -starts_with POWER
-add_pdn_stripe -grid {grid} -layer {met4} -width {1.600} -pitch {27.140} -offset {13.570} \\
-    -extend_to_core_ring
-add_pdn_stripe -grid {grid} -layer {met5} -width {1.600} -pitch {27.200} -offset {13.600} \\
-    -extend_to_core_ring
-
-add_pdn_connect -grid {grid} -layers {met1 met4}
-add_pdn_connect -grid {grid} -layers {met3 met4}
-add_pdn_connect -grid {grid} -layers {met4 met5}
-
-####################################
-# macro grids
-####################################
-define_pdn_grid -name {pads} -voltage_domains {CORE} -macro \\
-    -halo {0.0 0.0 0.0 0.0} \\
-    -cells {
-        sky130_fd_io__top_gpiov2
-        sky130_fd_io__top_power_lvc_wpad
-        sky130_fd_io__top_ground_lvc_wpad
-        sky130_fd_io__top_power_hvc_wpadv2
-        sky130_fd_io__top_ground_hvc_wpad
-        sky130_ef_io__com_bus_slice_10um
-        sky130_ef_io__com_bus_slice_1um
-        sky130_ef_io__com_bus_slice_20um
-        sky130_ef_io__com_bus_slice_5um
-        sky130_ef_io__corner_pad
-    } \\
-    -grid_over_boundary
-add_pdn_connect -grid {pads} -layers {met4 met5}
-####################################
-# grid for: CORE_macro_grid_1
-####################################
-define_pdn_grid -name {CORE_macro_grid_1} -voltage_domains {CORE} -macro -orient {R0 R180 MX MY} -halo {2.0 2.0 2.0 2.0} -default -grid_over_boundary
-add_pdn_connect -grid {CORE_macro_grid_1} -layers {met4 met5}
-####################################
-# grid for: CORE_macro_grid_2
-####################################
-define_pdn_grid -name {CORE_macro_grid_2} -voltage_domains {CORE} -macro -orient {R90 R270 MXR90 MYR90} -halo {2.0 2.0 2.0 2.0} -default -grid_over_boundary
-add_pdn_connect -grid {CORE_macro_grid_2} -layers {met4 met5}""")
-      writer.close()
     }
   }
 }
