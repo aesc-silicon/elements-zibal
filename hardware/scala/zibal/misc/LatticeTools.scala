@@ -10,7 +10,7 @@ object LatticeTools {
     def generate(io: Data) = {
       val file = s"${config.zibalBuildPath}${config.className}.lpf"
       val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.className}.lpf")
+      SpinalInfo(s"Generating ${config.className}.lpf")
       writer.write("# IOs\n")
       io.component.getOrdredNodeIo.foreach { baseType =>
         val name = baseType.getName()
