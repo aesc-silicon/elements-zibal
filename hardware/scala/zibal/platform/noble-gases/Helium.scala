@@ -141,8 +141,7 @@ object Helium {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0x800000, 2 MB)
-      addInterrupt(False)
+      addApbDevice(plicCtrl.io.bus, 0x800000, 4 MB)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
       core.mtimerInterrupt := mtimerCtrl.io.interrupt

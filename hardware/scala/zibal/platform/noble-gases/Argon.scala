@@ -120,7 +120,7 @@ object Argon {
       axiCrossbar.addSlaves(
         onChipRamAxiPort -> (0x80000000L, parameter.onChipRamSize),
         hyperbus.ctrl.io.memory -> (0x90000000L, 64 MB),
-        apbBridge.io.axi -> (0xf0000000L, 1 MB)
+        apbBridge.io.axi -> (0xf0000000L, 16 MB)
       )
 
       axiCrossbar.addConnections(
@@ -168,8 +168,7 @@ object Argon {
       /* Peripheral IP-Cores */
       val plicCtrl = Apb3Plic(parameter.plic)
       core.globalInterrupt := plicCtrl.io.interrupt
-      addApbDevice(plicCtrl.io.bus, 0xf0000, 64 kB)
-      addInterrupt(False)
+      addApbDevice(plicCtrl.io.bus, 0xf0000, 4 MB)
 
       val mtimerCtrl = Apb3MachineTimer(parameter.mtimer)
       core.mtimerInterrupt := mtimerCtrl.io.interrupt
