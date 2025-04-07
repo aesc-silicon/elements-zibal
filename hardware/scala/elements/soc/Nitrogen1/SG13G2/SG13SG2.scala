@@ -34,7 +34,7 @@ case class ElemRVTop() extends Component {
   val socParameter = Nitrogen1.Parameter(boardParameter)
   val parameter = Nitrogen.Parameter(
     socParameter,
-    0,
+    1 kB,
     8 MB,
     hyperbusPartitions,
     (resetCtrl: ResetControllerCtrl, reset: Bool, _) => {
@@ -126,11 +126,11 @@ case class ElemRVTop() extends Component {
   io.hyperbus.rwds <> IOPadInOut30mA(soc.io_plat.hyperbus.rwds)
 
   for (index <- 0 until io.spiFlash.cs.length) {
-    io.spiFlash.cs(index) <> IOPadOut4mA(soc.io_plat.spiXip.cs(index))
+    io.spiFlash.cs(index) <> IOPadOut4mA(soc.io_plat.spi.cs(index))
   }
-  io.spiFlash.sck <> IOPadOut4mA(soc.io_plat.spiXip.sclk)
+  io.spiFlash.sck <> IOPadOut4mA(soc.io_plat.spi.sclk)
   for (index <- 0 until io.spiFlash.dq.length) {
-    io.spiFlash.dq(index) <> IOPadInOut4mA(soc.io_plat.spiXip.dq(index))
+    io.spiFlash.dq(index) <> IOPadInOut4mA(soc.io_plat.spi.dq(index))
   }
 }
 
