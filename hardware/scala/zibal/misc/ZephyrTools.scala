@@ -32,7 +32,7 @@ object ZephyrTools {
         .toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
       val writer = new PrintWriter(new File(file))
       SpinalInfo(
-        s"Generate ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
+        s"Generating ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}_defconfig"
       )
       writer.write(s"""CONFIG_SOC_SERIES_RISCV32_ELEMENTS_VEXRISCV=y
 CONFIG_SOC_RISCV32_ELEMENTS_VEXRISCV=y
@@ -80,7 +80,7 @@ CONFIG_SPI_ELEMENTS=y
     def generateKconfig() = {
       var file = s"${config.swStorageZephyrBoardPath(name)}/Kconfig.board"
       var writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate Kconfig.board")
+      SpinalInfo(s"Generating Kconfig.board")
 
       writer.write(
         s"""config BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
@@ -95,7 +95,7 @@ CONFIG_SPI_ELEMENTS=y
 
       file = s"${config.swStorageZephyrBoardPath(name)}/Kconfig.defconfig"
       writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate Kconfig.defconfig")
+      SpinalInfo(s"Generating Kconfig.defconfig")
 
       writer.write(s"""if BOARD_${config.socName.toUpperCase()}_${config.boardName.toUpperCase()}
 config BOARD
@@ -122,7 +122,9 @@ endif
       val file = s"${config.swStorageZephyrBoardPath(name)}/${config.socName
         .toLowerCase()}-${config.boardName.toLowerCase()}.dts"
       val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generate ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}.dts")
+      SpinalInfo(
+        s"Generating ${config.socName.toLowerCase()}-${config.boardName.toLowerCase()}.dts"
+      )
 
       writer.write(s"""/dts-v1/;
 #include <${config.socName.toLowerCase()}.dtsi>
@@ -189,7 +191,7 @@ endif
         irqMapping: ArrayBuffer[(Int, Bool)]
     ) = {
       val writer = new PrintWriter(new File(storage.path + filename))
-      SpinalInfo(s"Generate ${filename}")
+      SpinalInfo(s"Generating ${filename}")
 
       writer.write(s"""#include <$platform.dtsi>
 / {
@@ -211,12 +213,12 @@ endif
               case _: Apb3Uart =>
                 val ip = parent.asInstanceOf[Apb3Uart]
                 val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
                 ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
               case _: Apb3I2cController =>
                 val ip = parent.asInstanceOf[Apb3I2cController]
                 val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) -1 else irqLine(0)._1
+                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
                 ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
               case _: Apb3SpiController =>
                 val ip = parent.asInstanceOf[Apb3SpiController]
