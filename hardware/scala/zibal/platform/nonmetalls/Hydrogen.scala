@@ -6,6 +6,8 @@ import spinal.lib._
 import zibal.cores.VexRiscvCoreParameter
 import zibal.soc.SocParameter
 import zibal.misc.BinTools
+import zibal.misc.BaremetalTools
+import zibal.misc.ElementsConfig
 
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
@@ -55,6 +57,16 @@ object Hydrogen {
       val clock = in(Bool)
       val jtag = slave(Jtag())
       val spi = master(Spi.Io(parameter.spi.io))
+    }
+
+    def prepareBaremetal(name: String, elementsConfig: ElementsConfig.ElementsConfig) {
+      val header = BaremetalTools.Header(elementsConfig, name)
+      header.generate(
+        this.system.axiCrossbar.slavesConfigs,
+        this.system.apbBridge.io.axi,
+        this.apbMapping,
+        this.irqMapping
+      )
     }
 
     override def initOnChipRam(path: String) {}
