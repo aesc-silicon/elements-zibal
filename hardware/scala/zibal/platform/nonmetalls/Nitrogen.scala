@@ -37,13 +37,13 @@ object Nitrogen {
           ResetControllerCtrl.ResetControllerCtrl,
           Bool
       ) => Unit,
-      onChipRamLogic: (BigInt) => (Component, Axi4Shared, Component) = (onChipRamSize: BigInt) => {
+      onChipRamLogic: (BigInt) => (Component, Axi4Shared) = (onChipRamSize: BigInt) => {
         val ram = Axi4SharedOnChipRam(
           dataWidth = 32,
           byteCount = onChipRamSize,
           idWidth = 4
         )
-        (ram, ram.io.axi, ram.ram.asInstanceOf[Component])
+        (ram, ram.io.axi)
       }
   ) extends PlatformParameter(socParameter) {
     val core = VexRiscvCoreParameter.realtime(0xa0000000L).plugins
@@ -115,8 +115,7 @@ object Nitrogen {
       }
 
       /* AXI Subordinates */
-      val (onChipCtrl, onChipRamAxiPort, onChipRamMem) =
-        parameter.onChipRamLogic(parameter.onChipRamSize)
+      val (onChipCtrl, onChipRamAxiPort) = parameter.onChipRamLogic(parameter.onChipRamSize)
 
       val hyperbus = new Area {
         val ctrl = Axi4SharedHyperBus(parameter.hyperbus)
