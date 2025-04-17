@@ -34,13 +34,13 @@ object Hydrogen {
           ResetControllerCtrl.ResetControllerCtrl,
           Bool
       ) => Unit,
-      onChipRamLogic: (BigInt) => (Axi4Shared, Mem[Bits]) = (onChipRamSize: BigInt) => {
+      onChipRamLogic: (BigInt) => (Component, Axi4Shared) = (onChipRamSize: BigInt) => {
         val ram = Axi4SharedOnChipRam(
           dataWidth = 32,
           byteCount = onChipRamSize,
           idWidth = 4
         )
-        (ram.io.axi, ram.ram)
+        (ram, ram.io.axi)
       }
   ) extends PlatformParameter(socParameter) {
     val core = VexRiscvCoreParameter.realtime(0xa0000000L).plugins
@@ -110,7 +110,7 @@ object Hydrogen {
       }
 
       /* AXI Subordinates */
-      val (onChipRamAxiPort, onChipRamMem) = parameter.onChipRamLogic(parameter.onChipRamSize)
+      val (onChipCtrl, onChipRamAxiPort) = parameter.onChipRamLogic(parameter.onChipRamSize)
 
       val spiXipControllerCtrl = Axi4ReadOnlySpiXipController(parameter.spi)
       io_plat.spi <> spiXipControllerCtrl.io.spi
