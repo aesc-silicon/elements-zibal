@@ -103,12 +103,24 @@ tasks:
       - "{{.CONTAINER_CHECK}}"
       - ${RUN} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'
 
+  open-openroad:
+    desc: Starts OpenROAD with no layout file loaded.
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} '{{ .OPENROAD_EXE }} -gui'
+
   lib-view-klayout:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - ${RUN} 'klayout -n sg13g2
                 -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+
+  open-klayout:
+    desc: Starts KLayout with no layout file loaded.
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - ${RUN} 'klayout -n sg13g2 -e'
 
   lib-check-logs:
     internal: true
