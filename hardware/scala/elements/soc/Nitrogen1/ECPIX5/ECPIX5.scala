@@ -130,7 +130,7 @@ case class ECPIX5Top() extends Component {
       resetCtrl.buildXilinx(clock)
     },
     (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-      clockCtrl.buildDummy(clock)
+      clockCtrl.buildDummy(clock, resetCtrl)
     }
   )
 

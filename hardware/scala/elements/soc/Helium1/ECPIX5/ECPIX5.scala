@@ -90,7 +90,7 @@ case class ECPIX5Top() extends Component {
     128 kB,
     (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
     (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-      clockCtrl.buildDummy(clock)
+      clockCtrl.buildDummy(clock, resetCtrl)
       /* TODO PLLs don't work when booting from flash
       clockCtrl.buildXilinxECP5Pll(
         clock,
