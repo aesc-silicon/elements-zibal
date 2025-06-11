@@ -41,7 +41,7 @@ case class ElemRVTop() extends Component {
       resetCtrl.buildDummy(reset)
     },
     (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-      clockCtrl.buildDummy(clock)
+      clockCtrl.buildDummy(clock, resetCtrl)
     }
   )
 
