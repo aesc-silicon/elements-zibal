@@ -58,7 +58,7 @@ object Neon {
     val resetCtrl = ResetControllerCtrl(parameter.resets)
     parameter.resetLogic(resetCtrl, io_plat.reset, io_plat.clock)
 
-    val clockCtrl = ClockControllerCtrl(parameter.clocks, resetCtrl)
+    val clockCtrl = ClockControllerCtrl(parameter.clocks, parameter.resets, resetCtrl)
     parameter.clockLogic(clockCtrl, resetCtrl, io_plat.clock)
 
     val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {

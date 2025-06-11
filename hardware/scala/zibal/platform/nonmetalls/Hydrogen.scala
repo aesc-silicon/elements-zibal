@@ -74,40 +74,39 @@ object Hydrogen {
     val resetCtrl = ResetControllerCtrl(parameter.resets)
     parameter.resetLogic(resetCtrl, io_plat.reset, io_plat.clock)
 
-    val clockCtrl = ClockControllerCtrl(parameter.clocks, resetCtrl)
+    val clockCtrl = ClockControllerCtrl(parameter.clocks, parameter.resets, resetCtrl)
     parameter.clockLogic(clockCtrl, resetCtrl, io_plat.clock)
 
-    val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
+    val core = new ClockingArea(clockCtrl.getClockDomainByName("cpu")) {
+      val mtimerInterrupt = Bool
+      val globalInterrupt = Bool
 
-      /* AXI Manager */
-      val core = new Area {
-        val mtimerInterrupt = Bool
-        val globalInterrupt = Bool
+      val config = VexRiscvConfig(
+        plugins = parameter.core += new DebugPlugin(clockCtrl.getClockDomainByName("debug"))
+      )
 
-        val config = VexRiscvConfig(
-          plugins = parameter.core += new DebugPlugin(clockCtrl.getClockDomainByName("debug"))
-        )
-
-        val cpu = new VexRiscv(config)
-        var iBus: Axi4ReadOnly = null
-        var dBus: Axi4Shared = null
-        for (plugin <- config.plugins) plugin match {
-          case plugin: IBusSimplePlugin => iBus = plugin.iBus.toAxi4ReadOnly()
-          case plugin: IBusCachedPlugin => iBus = plugin.iBus.toAxi4ReadOnly()
-          case plugin: DBusSimplePlugin => dBus = plugin.dBus.toAxi4Shared()
-          case plugin: DBusCachedPlugin => dBus = plugin.dBus.toAxi4Shared()
-          case plugin: CsrPlugin => {
-            plugin.externalInterrupt := globalInterrupt
-            plugin.timerInterrupt := mtimerInterrupt
-          }
-          case plugin: DebugPlugin =>
-            clockCtrl.getClockDomainByName("debug") {
-              resetCtrl.triggerByNameWithCond("system", RegNext(plugin.io.resetOut))
-              io_plat.jtag <> plugin.io.bus.fromJtag()
-            }
-          case _ =>
+      val cpu = new VexRiscv(config)
+      var iBus: Axi4ReadOnly = null
+      var dBus: Axi4Shared = null
+      for (plugin <- config.plugins) plugin match {
+        case plugin: IBusSimplePlugin => iBus = plugin.iBus.toAxi4ReadOnly()
+        case plugin: IBusCachedPlugin => iBus = plugin.iBus.toAxi4ReadOnly()
+        case plugin: DBusSimplePlugin => dBus = plugin.dBus.toAxi4Shared()
+        case plugin: DBusCachedPlugin => dBus = plugin.dBus.toAxi4Shared()
+        case plugin: CsrPlugin => {
+          plugin.externalInterrupt := globalInterrupt
+          plugin.timerInterrupt := mtimerInterrupt
         }
+        case plugin: DebugPlugin =>
+          clockCtrl.getClockDomainByName("debug") {
+            resetCtrl.triggerByNameWithCond("system", RegNext(plugin.io.resetOut))
+            io_plat.jtag <> plugin.io.bus.fromJtag()
+          }
+        case _ =>
       }
+    }
+
+    val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
 
       /* AXI Subordinates */
       val (onChipCtrl, onChipRamAxiPort) = parameter.onChipRamLogic(parameter.onChipRamSize)
