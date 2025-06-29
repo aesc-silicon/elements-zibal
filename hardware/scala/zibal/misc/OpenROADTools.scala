@@ -504,7 +504,7 @@ object OpenROADTools {
           writer.write(s"export BLOCKS = ${blocks.mkString(" ")}\n")
         }
         if (usePdkFiles) {
-          writer.write("export LOAD_ADDITIONAL_FILES =\n")
+          writer.write("export LOAD_ADDITIONAL_FILES = 0\n")
           writer.write(
             "export TECH_LEF = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lef/sg13g2_tech.lef\n"
           )
