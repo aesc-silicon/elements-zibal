@@ -169,35 +169,41 @@ object OpenROADTools {
         writer.write("# core voltage domain\n")
         writer.write("set_voltage_domain -name {CORE} -power {VDD} -ground {VSS}\n")
         writer.write("# stdcell grid\n")
-        writer.write("define_pdn_grid -name {grid} -voltage_domains {CORE}\n")
-        writer.write(
-          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
-        )
         if (isBlock) {
           writer.write(
-            s"add_pdn_ring -grid {grid} -layers {Metal3 Metal4} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+            "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {Metal4 Metal5}\n"
           )
           writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal3} -width {1.880} -pitch {75.6} -offset {37.8} -extend_to_core_ring\n"
+            "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins\n"
           )
           writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal4} -width {1.880} -pitch {75.6} -offset {37.8} -extend_to_core_ring\n"
+            s"add_pdn_ring -grid {grid} -layers {Metal4 Metal5} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
           )
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal3}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
+          writer.write(
+            "add_pdn_stripe -grid {grid} -layer {Metal4} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
+          )
+          writer.write(
+            "add_pdn_stripe -grid {grid} -layer {Metal5} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
+          )
+          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
+          writer.write("add_pdn_connect -grid {grid} -layers {Metal4 Metal5}\n")
         } else {
           writer.write(
-            s"add_pdn_ring -grid {grid} -layers {Metal5 TopMetal1} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+            "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {TopMetal1 TopMetal2}\n"
           )
           writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal5} -width {2.200} -pitch {75.6} -offset {37.8} -extend_to_core_ring\n"
+            "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
           )
           writer.write(
-            "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {2.200} -pitch {75.6} -offset {37.8} -extend_to_core_ring\n"
+            s"add_pdn_ring -grid {grid} -layers {TopMetal1 TopMetal2} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
           )
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal5}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal2}\n")
+          writer.write(
+            "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {2.200} -pitch {75.6} -offset {13.600} -extend_to_core_ring\n"
+          )
+          writer.write(
+            "add_pdn_stripe -grid {grid} -layer {TopMetal2} -width {2.200} -pitch {75.6} -offset {13.600} -extend_to_core_ring\n"
+          )
+          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 TopMetal1}\n")
           writer.write("add_pdn_connect -grid {grid} -layers {TopMetal1 TopMetal2}\n")
           if (macros.length > 0) {
             val macroNames = macros.map(t => t._2).mkString(" ")
@@ -205,7 +211,7 @@ object OpenROADTools {
               s"define_pdn_grid -name {sram_grid} -voltage_domains {CORE} -macro -cells {${macroNames}} -grid_over_boundary\n"
             )
             writer.write(
-              "add_pdn_ring -grid {sram_grid} -layer {Metal3 Metal4} -widths {8.0} -spacings {4.0} -core_offsets {16.0} -add_connect -connect_to_pads\n"
+              "add_pdn_ring -grid {sram_grid} -layer {Metal4 Metal5} -widths {8.0} -spacings {4.0} -core_offsets {16.0} -add_connect -connect_to_pads\n"
             )
             writer.write(
               "add_pdn_stripe -grid {sram_grid} -layer {TopMetal1} -width {8.0} -pitch {75.6} -offset {10.0} -extend_to_core_ring\n"
@@ -218,8 +224,8 @@ object OpenROADTools {
             writer.write(
               s"define_pdn_grid -name {CORE_macro_grid_1} -voltage_domains {CORE} -macro -cells {${blockNames}} -grid_over_boundary\n"
             )
-            writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal3 TopMetal1}\n")
             writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal4 TopMetal1}\n")
+            writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal5 TopMetal1}\n")
           }
         }
 
@@ -248,11 +254,9 @@ object OpenROADTools {
         writer.write("set BONDPAD_SIZE 70\n")
         writer.write("set SEALRING_OFFSET 70\n")
         writer.write("set IO_OFFSET [expr {$BONDPAD_SIZE + $SEALRING_OFFSET}]\n")
-        writer.write("proc calc_horizontal_pad_location {index total} {\n")
-        writer.write("    global IO_LENGTH\n")
-        writer.write("    global IO_WIDTH\n")
-        writer.write("    global BONDPAD_SIZE\n")
-        writer.write("    global SEALRING_OFFSET\n")
+        writer.write(
+          "proc calc_horizontal_pad_location {index total IO_LENGTH IO_WIDTH BONDPAD_SIZE SEALRING_OFFSET } {\n"
+        )
         writer.write(
           "    set DIE_WIDTH [expr {[lindex $::env(DIE_AREA) 2] - [lindex $::env(DIE_AREA) 0]}]\n"
         )
@@ -265,11 +269,9 @@ object OpenROADTools {
           "    return [expr {$PAD_OFFSET + (($IO_WIDTH + $HORIZONTAL_PAD_DISTANCE) * $index) + ($HORIZONTAL_PAD_DISTANCE / 2)}]\n"
         )
         writer.write("}\n")
-        writer.write("proc calc_vertical_pad_location {index total} {\n")
-        writer.write("    global IO_LENGTH\n")
-        writer.write("    global IO_WIDTH\n")
-        writer.write("    global BONDPAD_SIZE\n")
-        writer.write("    global SEALRING_OFFSET\n")
+        writer.write(
+          "proc calc_vertical_pad_location {index total IO_LENGTH IO_WIDTH BONDPAD_SIZE SEALRING_OFFSET } {\n"
+        )
         writer.write(
           "    set DIE_HEIGHT [expr {[lindex $::env(DIE_AREA) 3] - [lindex $::env(DIE_AREA) 1]}]\n"
         )
@@ -295,7 +297,7 @@ object OpenROADTools {
           if (!pad._2._3.equals(""))
             writer.write(s"# IO pin ${pad._2._3}\n")
           writer.write(
-            s"place_pad -row IO_SOUTH -location [calc_horizontal_pad_location ${pad._1} ${total}] {${pad._2._1}} -master ${pad._2._2}\n"
+            s"place_pad -row IO_SOUTH -location [calc_horizontal_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
           )
         }
         pads("east").toSeq.sortBy(_._1).foreach { pad =>
@@ -303,7 +305,7 @@ object OpenROADTools {
           if (!pad._2._3.equals(""))
             writer.write(s"# IO pin ${pad._2._3}\n")
           writer.write(
-            s"place_pad -row IO_EAST -location [calc_vertical_pad_location ${pad._1} ${total}] {${pad._2._1}} -master ${pad._2._2}\n"
+            s"place_pad -row IO_EAST -location [calc_vertical_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
           )
         }
         pads("north").toSeq.sortBy(_._1).foreach { pad =>
@@ -311,7 +313,7 @@ object OpenROADTools {
           if (!pad._2._3.equals(""))
             writer.write(s"# IO pin ${pad._2._3}\n")
           writer.write(
-            s"place_pad -row IO_NORTH -location [calc_horizontal_pad_location ${pad._1} ${total}] {${pad._2._1}} -master ${pad._2._2}\n"
+            s"place_pad -row IO_NORTH -location [calc_horizontal_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
           )
         }
         pads("west").toSeq.sortBy(_._1).foreach { pad =>
@@ -319,7 +321,7 @@ object OpenROADTools {
           if (!pad._2._3.equals(""))
             writer.write(s"# IO pin ${pad._2._3}\n")
           writer.write(
-            s"place_pad -row IO_WEST -location [calc_vertical_pad_location ${pad._1} ${total}] {${pad._2._1}} -master ${pad._2._2}\n"
+            s"place_pad -row IO_WEST -location [calc_vertical_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
           )
         }
 
@@ -472,9 +474,14 @@ object OpenROADTools {
         writer.write(
           s"export CORE_AREA = ${coreArea._1} ${coreArea._2} ${coreArea._3} ${coreArea._4}\n"
         )
-        writer.write("export MAX_ROUTING_LAYER = TopMetal2\n")
+        if (isBlock) {
+          writer.write("export MAX_ROUTING_LAYER = TopMetal1\n")
+        } else {
+          writer.write("export MAX_ROUTING_LAYER = TopMetal2\n")
+        }
         writer.write("export TNS_END_PERCENT = 100\n")
         writer.write(s"export PLACE_DENSITY = ${placeDensity}\n")
+        writer.write("export MACRO_PLACE_HALO = 20 20\n")
         if (multiCornerEnabled) {
           if (isBlock) {
             writer.write("export CORNERS = slow typ fast\n")
@@ -524,7 +531,7 @@ object OpenROADTools {
           }
           // Lib Files
           writer.write(
-            "export LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib\n"
+            "export TYP_LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib\n"
           )
           writer.write(
             "export SLOW_LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_slow_1p08V_125C.lib\n"
@@ -534,7 +541,7 @@ object OpenROADTools {
           )
           if (hasIoRing) {
             writer.write(
-              "export LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_typ_1p2V_3p3V_25C.lib\n"
+              "export TYP_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_typ_1p2V_3p3V_25C.lib\n"
             )
             writer.write(
               "export SLOW_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_slow_1p08V_3p0V_125C.lib\n"
@@ -544,14 +551,14 @@ object OpenROADTools {
             )
           }
           for (instance: String <- macros.map(t => t._2).toSet) {
-            writer.write("export LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/")
+            writer.write("export TYP_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/")
             writer.write(s"${instance}_typ_1p20V_25C.lib\n")
             writer.write("export SLOW_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/")
             writer.write(s"${instance}_slow_1p08V_125C.lib\n")
             writer.write("export FAST_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/")
             writer.write(s"${instance}_fast_1p32V_m55C.lib\n")
           }
-          writer.write("export LIB_FILES += $(ADDITIONAL_LIBS)\n")
+          writer.write("export TYP_LIB_FILES += $(ADDITIONAL_LIBS)\n")
           writer.write("export SLOW_LIB_FILES += $(ADDITIONAL_SLOW_LIBS)\n")
           writer.write("export FAST_LIB_FILES += $(ADDITIONAL_FAST_LIBS)\n")
           // GDS Files
