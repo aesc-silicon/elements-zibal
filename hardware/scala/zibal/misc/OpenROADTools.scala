@@ -169,23 +169,27 @@ object OpenROADTools {
         writer.write("# core voltage domain\n")
         writer.write("set_voltage_domain -name {CORE} -power {VDD} -ground {VSS}\n")
         writer.write("# stdcell grid\n")
-        writer.write("define_pdn_grid -name {grid} -voltage_domains {CORE}\n")
-        writer.write(
-          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
-        )
         if (isBlock) {
+          writer.write("define_pdn_grid -name {grid} -voltage_domains {CORE}\n")
           writer.write(
-            s"add_pdn_ring -grid {grid} -layers {Metal3 Metal4} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+            "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins\n"
+          )
+//          writer.write(
+//            s"add_pdn_ring -grid {grid} -layers {Metal3 Metal4} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+//          )
+          writer.write(
+            "add_pdn_stripe -grid {grid} -layer {Metal5} -width {1.880} -pitch {75.6} -offset {37.8} -extend_to_boundary\n"
           )
           writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal3} -width {1.880} -pitch {75.6} -offset {37.8} -extend_to_core_ring\n"
+            "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {1.880} -pitch {75.6} -offset {37.8} -extend_to_boundary\n"
           )
-          writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal4} -width {1.880} -pitch {75.6} -offset {37.8} -extend_to_core_ring\n"
-          )
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal3}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
+          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal5}\n")
+          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}\n")
         } else {
+          writer.write("define_pdn_grid -name {grid} -voltage_domains {CORE}\n")
+          writer.write(
+            "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
+          )
           writer.write(
             s"add_pdn_ring -grid {grid} -layers {Metal5 TopMetal1} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
           )
@@ -197,8 +201,6 @@ object OpenROADTools {
           )
           writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal5}\n")
           writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal2}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {TopMetal1 TopMetal2}\n")
           if (macros.length > 0) {
             val macroNames = macros.map(t => t._2).mkString(" ")
             writer.write(
@@ -218,8 +220,10 @@ object OpenROADTools {
             writer.write(
               s"define_pdn_grid -name {CORE_macro_grid_1} -voltage_domains {CORE} -macro -cells {${blockNames}} -grid_over_boundary\n"
             )
-            writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal3 TopMetal1}\n")
-            writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal4 TopMetal1}\n")
+            writer.write(
+              s"add_pdn_ring -grid {CORE_macro_grid_1} -layers {Metal3 Metal4} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+            )
+            writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal3 Metal4}\n")
           }
         }
 
@@ -475,6 +479,7 @@ object OpenROADTools {
         writer.write("export MAX_ROUTING_LAYER = TopMetal2\n")
         writer.write("export TNS_END_PERCENT = 100\n")
         writer.write(s"export PLACE_DENSITY = ${placeDensity}\n")
+        writer.write("export MACRO_PLACE_HALO = 20 20\n")
         if (multiCornerEnabled) {
           if (isBlock) {
             writer.write("export CORNERS = slow typ fast\n")
