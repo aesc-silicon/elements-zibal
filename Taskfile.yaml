@@ -4,6 +4,8 @@ env:
   OPENROAD_EXE: "/opt/elements/tools/OpenROAD/bin/openroad"
   YOSYS_EXE: "/opt/elements/tools/yosys/bin/yosys"
   PATH: "/opt/elements/oss-cad-suite/bin/:{{ .PATH }}"
+
+vars:
   CONTAINER_CHECK: "podman ps | grep {{.CONTAINER_NAME}} >/dev/null || venv/bin/podman-compose {{if .IS_HEADLESS}} -f podman-compose-headless.yml{{end}} up -d"
   CONTAINER_CMD: "podman exec \
     {{if .CONTAINER_ENV}}{{.CONTAINER_ENV}}{{end}} \
@@ -20,45 +22,45 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'BOARD={{ .board }} sbt "runMain {{ .package }}.{{ .board }}Generate"'
+      - "{{.RUN}} 'BOARD={{ .board }} sbt \"runMain {{ .package }}.{{ .board }}Generate\"'"
 
   lib-simulate:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'BOARD={{ .board }} sbt "runMain {{ .package }}.{{ .board }}Simulate {{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }} {{ if .duration }}{{ .duration }}{{ else }}100{{ end }}"'
+      - "{{.RUN}} 'BOARD={{ .board }} sbt \"runMain {{ .package }}.{{ .board }}Simulate {{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }} {{ if .duration }}{{ .duration }}{{ else }}100{{ end }}\"'"
 
   lib-view-simulation:
     internal: true
     cmds:
-      - ${RUN} 'gtkwave -o {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Board/{{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }}/wave.vcd'
+      - "{{.RUN}} 'gtkwave -o {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Board/{{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }}/wave.vcd'"
 
   lib-synthesize-fpga:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'mkdir -p {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/fpga/'
-      - ${RUN} 'BOARD={{ .board }} ./modules/elements/zibal/eda/{{ .vendor }}/fpga/syn.sh'
+      - "{{.RUN}} 'mkdir -p {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/fpga/'"
+      - "{{.RUN}} 'BOARD={{ .board }} ./modules/elements/zibal/eda/{{ .vendor }}/fpga/syn.sh'"
 
   lib-flash-bitstream:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'openFPGALoader -b {{ .OPENFPGALOADER_BOARD }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/fpga/{{ .board }}Top.bit'
+      - "{{.RUN}} 'openFPGALoader -b {{ .OPENFPGALOADER_BOARD }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/fpga/{{ .board }}Top.bit'"
 
   lib-baremetal-firmware:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'BOARD={{ .board }} SOURCE={{ .PWD }}/hardware/scala/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/software/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/software/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'
+      - "{{.RUN}} 'BOARD={{ .board }} SOURCE={{ .PWD }}/hardware/scala/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/software/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/software/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'"
 
   lib-sealring:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'klayout -n sg13g2 -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/sealring.py
+      - "{{.RUN}} 'klayout -n sg13g2 -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/sealring.py
                 -rd width={{ .WIDTH }} -rd height={{ .HEIGHT }}
-                -rd output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/macros/sealring/sealring.gds.gz'
+                -rd output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/macros/sealring/sealring.gds.gz'"
     vars:
       WIDTH:
         sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.sealring.txt
@@ -69,60 +71,60 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/'
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/'"
 
   lib-filler:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       # Don't use KLAYOUT_HOME with any PDK path
-      - ${RUN} 'KLAYOUT_HOME= gdsfill fill {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'
+      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill fill {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'"
 
   lib-run-drc:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'python3 {{ .KLAYOUT_HOME }}/tech/drc/run_drc.py --path {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds --topcell {{ .board }}Top --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/ --no_recommended {{ if .level }}--disable_extra_rules{{end}}'
+      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/drc/run_drc.py --path {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds --topcell {{ .board }}Top --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/ --no_recommended {{ if .level }}--disable_extra_rules{{end}}'"
 
   lib-view-drc:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'klayout -n sg13g2
+      - "{{.RUN}} 'klayout -n sg13g2
                 -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
-                -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/6_final_{{ .board }}Top_full.lyrdb'
+                -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/6_final_{{ .board }}Top_full.lyrdb'"
 
   lib-view-openroad:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top{{if .block}}_{{ .block }}{{end}}/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'
+      - "{{.RUN}} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top{{if .block}}_{{ .block }}{{end}}/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'"
 
   open-openroad:
     desc: Starts OpenROAD with no layout file loaded.
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} '{{ .OPENROAD_EXE }} -gui'
+      - "{{.RUN}} '{{ .OPENROAD_EXE }} -gui'"
 
   lib-view-klayout:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'klayout -n sg13g2
-                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top{{if .block}}_{{ .block }}{{end}}/base/6_final.gds'
+      - "{{.RUN}} 'klayout -n sg13g2
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top{{if .block}}_{{ .block }}{{end}}/base/6_final.gds'"
 
   open-klayout:
     desc: Starts KLayout with no layout file loaded.
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} 'klayout -n sg13g2 -e'
+      - "{{.RUN}} 'klayout -n sg13g2 -e'"
 
   lib-check-logs:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - ${RUN} "find {{ .BUILD_ROOT  }}/{{ .SOC }}/{{ .board }}/orfs/ -type f -iname '*.log' -exec grep -v -e 'already destroyed' -e 'XDG_RUNTIME_DIR not set' -i {} \+ |
-                grep --color -e WARNING -e ERROR"
+      - "{{.RUN}} 'find {{ .BUILD_ROOT  }}/{{ .SOC }}/{{ .board }}/orfs/ -type f -iname \"*.log\" -exec grep -v -e \"already destroyed\" -e \"XDG_RUNTIME_DIR not set\" -i {} \\+ |
+                grep --color -e WARNING -e ERROR'"
 
   clean-zibal:
     desc: Cleans up Zibal-specific files and artifacts.
