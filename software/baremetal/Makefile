@@ -18,8 +18,8 @@ MAP = ${BUILD}/kernel.map
 LINKER = ${SOURCE}/kernel.ld
 
 AFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall
-CFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall -g
-LFLAGS = -march=rv32im_zicsr -mabi=ilp32 -m elf32lriscv --no-undefined -g
+CFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall -g -ffunction-sections -fdata-sections
+LFLAGS = -march=rv32im_zicsr -mabi=ilp32 -m elf32lriscv --no-undefined -g --gc-sections
 
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 OBJECTS += $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
@@ -38,7 +38,7 @@ $(LIST): $(BUILD)output.elf
 
 # Rule to make the image file.
 $(TARGET): $(BUILD)output.elf
-	$(GCC)-objcopy --input-target=elf32-littleriscv $(BUILD)output.elf -O binary $(TARGET) 
+	$(GCC)-objcopy --input-target=elf32-littleriscv $(BUILD)output.elf -O binary $(TARGET)
 
 # Rule to make the elf file.
 $(BUILD)output.elf: $(OBJECTS) $(LINKER)
@@ -58,7 +58,7 @@ $(BUILD)%.o: $(MISC)%.c $(BUILD)
 	$(GCC)-gcc $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 $(BUILD):
-	mkdir $@
+	mkdir -p $@
 
 # Rule to clean files.
 clean:
