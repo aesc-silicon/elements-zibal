@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
 ${TCL_PATH}/../pdks/${PDK}_sim.sh
 
 if [ "${SIM_TYPE}" == "generated" ]; then

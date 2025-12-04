@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
 #Start post-synthesize simulation
 source $::env(TCL_PATH)/../../common/board.tcl
 source $::env(TCL_PATH)/../../common/general.tcl

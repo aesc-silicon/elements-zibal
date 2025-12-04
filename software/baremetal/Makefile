@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: Apache-2.0
+
 GCC ?= ${ELEMENTS_BASE}/zephyr-sdk-0.16.0/riscv64-zephyr-elf/bin/riscv64-zephyr-elf
 
 # The intermediate directory for compiled object files.

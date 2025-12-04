@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 aesc silicon
+//
+// SPDX-License-Identifier: CERN-OHL-W-2.0
+
 package zibal.misc
 
 import spinal.core._
@@ -33,7 +37,8 @@ object ElementsConfig {
     val spdx = s"""
 SPDX-FileCopyrightText: ${LocalDate.now().getYear} aesc silicon
 
-SPDX-License-Identifier: CERN-OHL-W-2.0"""
+SPDX-License-Identifier: CERN-OHL-W-2.0
+"""
 
     // Prepare class will create files and therefore replace with Top
     val className = top

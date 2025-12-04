@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
 ZIBAL_BUILD=${BUILD_ROOT}/${SOC}/${BOARD}/zibal/
 FPGA_BUILD=${BUILD_ROOT}/${SOC}/${BOARD}/fpga/
 TOP=${BOARD}Top
