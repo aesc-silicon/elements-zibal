@@ -16,7 +16,7 @@ object ElementsConfig {
     val openroadBuildPath = buildPath + "openroad/"
 
     def zephyrBinary = buildRoot + "zephyr/zephyr.bin"
-    val softwareBuildPath = buildPath + "software/"
+    val softwareBuildPath = buildPath + "firmware/"
     def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
     def swStorageBaremetalImage(name: String) = swStorageBuildPath(name) + "kernel.img"
     def swStorageZephyrBinary(name: String) = swStorageBuildPath(name) + "zephyr/zephyr/zephyr.bin"
