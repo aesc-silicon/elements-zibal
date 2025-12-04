@@ -10,12 +10,17 @@ import scala.collection.mutable.ArrayBuffer
 
 import spinal.lib.bus.amba3.apb._
 import spinal.lib.bus.amba4.axi._
-import spinal.lib.bus.misc.SizeMapping
+import spinal.lib.bus.bmb._
+import spinal.lib.bus.wishbone._
+import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
 import spinal.lib.io.{TriStateArray, TriState}
 import spinal.lib.io.ReadableOpenDrain
 
 import nafarr.system.plic.Apb3Plic
 import nafarr.peripherals.pinmux.Apb3Pinmux
+import nafarr.system.plic.WishbonePlic
+import nafarr.peripherals.pinmux.WishbonePinmux
+import nafarr.bus.wishbone._
 
 abstract class PlatformParameter(socParameter: SocParameter) {
   def getKitParameter = socParameter.getKitParameter
@@ -25,22 +30,26 @@ abstract class PlatformParameter(socParameter: SocParameter) {
 
 abstract class PlatformComponent(parameter: PlatformParameter) extends Component {
   val apbMapping = ArrayBuffer[(Apb3, SizeMapping)]()
+  val wishboneMapping = ArrayBuffer[(Wishbone, SizeMapping)]()
   val irqMapping = ArrayBuffer[(Int, Bool)]()
   val pinmuxInputs = Map[String, (Int, TriState[Bool])]()
   val pinmuxMapping = ArrayBuffer[(Int, List[Int])]()
 
-  var apbBridge: Axi4SharedToApb3Bridge = null
-  var plicCtrl: Apb3Plic = null
+  var wishboneBridge: BmbToWishbone = null
+  var plicCtrl: WishbonePlic = null
 
-  def publishApbComponents(bridge: Axi4SharedToApb3Bridge, plic: Apb3Plic) {
-    apbBridge = bridge
+  def publishApbComponents(bridge: Axi4SharedToApb3Bridge, plic: Apb3Plic) {}
+
+  def publishPeripheralComponents(bridge: BmbToWishbone, plic: WishbonePlic) {
+    wishboneBridge = bridge
     plicCtrl = plic
   }
 
   def connectPeripherals() {
-    val apbDecoder = Apb3Decoder(
-      master = apbBridge.io.apb,
-      slaves = apbMapping
+    val decoder = WishboneDecoder2(
+      master = wishboneBridge.io.output,
+      slaves = wishboneMapping,
+      2
     )
 
     for ((index, interrupt) <- irqMapping) {
@@ -48,8 +57,11 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
     }
   }
 
-  def addApbDevice(port: Apb3, address: BigInt, size: BigInt) {
-    apbMapping += port -> (address, size)
+  def addApbDevice(port: Apb3, address: BigInt, size: BigInt) {}
+
+  def addPeripheralDevice(port: Wishbone, address: BigInt, size: BigInt) {
+    // wishboneMapping += port -> SizeMapping(address >> 2, size >> 2)
+    wishboneMapping += port -> SizeMapping(address, size)
   }
 
   var nextInterruptNumber = 0
@@ -106,7 +118,7 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
 
   def getPinmuxMapping() = pinmuxMapping
 
-  def connectPinmuxInputs(pinmux: Apb3Pinmux) {
+  def connectPinmuxInputs(pinmux: WishbonePinmux) {
     for ((key, (index, pin)) <- pinmuxInputs) {
       pinmux.io.inputs(index).write := pin.write
       pinmux.io.inputs(index).writeEnable := pin.writeEnable
