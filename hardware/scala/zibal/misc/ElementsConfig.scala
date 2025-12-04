@@ -3,6 +3,8 @@ package zibal.misc
 import spinal.core._
 import spinal.core.sim._
 
+import java.time.LocalDate
+
 object ElementsConfig {
   def apply(top: Object) = ElementsConfig(top)
   case class ElementsConfig(top: Object) {
@@ -28,6 +30,11 @@ object ElementsConfig {
       swStorageBuildPath(name) + "zephyr-boards/boards/riscv/" + socName
     /* --- */
 
+    val spdx = s"""
+SPDX-FileCopyrightText: ${LocalDate.now().getYear} aesc silicon
+
+SPDX-License-Identifier: CERN-OHL-W-2.0"""
+
     // Prepare class will create files and therefore replace with Top
     val className = top
       .getClass()
@@ -38,14 +45,16 @@ object ElementsConfig {
       .split("\\$")
       .last
       .replace("Generate", "Top")
-    def genFPGASpinalConfig = SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath)
+    def genFPGASpinalConfig =
+      SpinalConfig(noRandBoot = false, targetDirectory = zibalBuildPath, rtlHeader = spdx)
     def genFPGASimConfig = SimConfig
       .withConfig(this.genFPGASpinalConfig)
       .withWave
-      .addSimulatorFlag("--trace-max-width 100000")
+      .addSimulatorFlag("--trace-max-width 100000 --Wno-SPECIFYIGN")
       .workspacePath(this.zibalBuildPath)
       .allOptimisation
-    def genASICSpinalConfig = SpinalConfig(noRandBoot = true, targetDirectory = zibalBuildPath)
+    def genASICSpinalConfig =
+      SpinalConfig(noRandBoot = true, targetDirectory = zibalBuildPath, rtlHeader = spdx)
     def genASICSimConfig = SimConfig
       .withConfig(this.genASICSpinalConfig)
       .withWave
