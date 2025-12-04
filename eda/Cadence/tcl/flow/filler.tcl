@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
 proc elements_filler {type} {
 	set fillerIOList [get_filler_ios]
 	set fillerCapList [get_filler_caps]

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
 set path $::env(ELEMENTS_BASE)
 set path_rtl ${path}/build/${SOC}/${BOARD}/zibal/
 set path_syn ${path}/build/${SOC}/${BOARD}/vivado/syn/

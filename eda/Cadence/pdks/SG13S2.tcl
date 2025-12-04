@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
 proc setup_library {} {
 	set_db library "ng-stdcell/lib/ixc013g2ng_stdcell_typ_1p20V_25C.lib iocell/lib/ixc013g2_iocell_typ_1p2V_3p3V_25C.lib"
 

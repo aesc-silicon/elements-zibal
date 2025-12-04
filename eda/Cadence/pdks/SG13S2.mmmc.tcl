@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
 ## library_sets
 set timing_max [get_lib_max_files]
 set timing_min [get_lib_min_files]
