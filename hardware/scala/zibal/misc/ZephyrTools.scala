@@ -10,8 +10,8 @@ import spinal.lib.bus.misc.SizeMapping
 import nafarr.peripherals.io.gpio.Apb3Gpio
 import nafarr.peripherals.com.uart.Apb3Uart
 import nafarr.peripherals.com.spi.Apb3SpiController
-import nafarr.peripherals.com.spi.Axi4ReadOnlySpiXipController
 import nafarr.peripherals.com.i2c.Apb3I2cController
+import nafarr.memory.spi.Axi4ReadOnlySpiXipController
 
 object ZephyrTools {
 
