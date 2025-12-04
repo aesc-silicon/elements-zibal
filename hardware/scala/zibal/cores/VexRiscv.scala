@@ -4,6 +4,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 import spinal.core._
+import spinal.lib.bus.bmb._
 import vexriscv.ip.{DataCacheConfig, InstructionCacheConfig}
 import vexriscv.plugin._
 import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
@@ -13,13 +14,34 @@ case class VexRiscvCoreParameter(
 ) {}
 
 object VexRiscvCoreParameter {
+  val iBusConfig = BmbParameter(
+    addressWidth = 32,
+    dataWidth = 32,
+    lengthWidth = 2,
+    sourceWidth = 4,
+    contextWidth = 4,
+    canRead = true,
+    canWrite = true,
+    alignment = BmbParameter.BurstAlignement.LENGTH
+  )
+
+  val dBusConfig = BmbParameter(
+    addressWidth = 32,
+    dataWidth = 32,
+    lengthWidth = 2,
+    sourceWidth = 4,
+    contextWidth = 4,
+    canRead = true,
+    canWrite = true,
+    alignment = BmbParameter.BurstAlignement.LENGTH
+  )
   val yamlPath = scala.util.Properties.envOrElse("BUILD_ROOT", "./build") + "/" +
     System.getenv("SOC") + "/" + System.getenv("BOARD") + "/zibal/VexRiscv.yaml"
   def realtime(resetAddress: BigInt) = VexRiscvCoreParameter(
     plugins = ArrayBuffer(
       new IBusSimplePlugin(
         resetVector = resetAddress,
-        cmdForkOnSecondStage = true,
+        cmdForkOnSecondStage = false,
         cmdForkPersistence = true,
         prediction = NONE,
         catchAccessFault = false,
