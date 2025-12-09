@@ -56,7 +56,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'BOARD={{ .board }} SOURCE={{ .PWD }}/software/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'"
+      - "if [ -d {{ .PWD }}/software/{{ .package }}/{{ .app }}/ ]; then {{.RUN}} 'BOARD={{ .board }} SOURCE={{ .PWD }}/software/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'; fi"
 
   lib-sealring:
     internal: true
