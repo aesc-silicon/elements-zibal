@@ -21,7 +21,7 @@ object VexRiscvCoreParameter {
   val iBusConfig = BmbParameter(
     addressWidth = 32,
     dataWidth = 32,
-    lengthWidth = 2,
+    lengthWidth = 4,
     sourceWidth = 4,
     contextWidth = 4,
     canRead = true,
@@ -32,7 +32,7 @@ object VexRiscvCoreParameter {
   val dBusConfig = BmbParameter(
     addressWidth = 32,
     dataWidth = 32,
-    lengthWidth = 2,
+    lengthWidth = 4,
     sourceWidth = 4,
     contextWidth = 4,
     canRead = true,
