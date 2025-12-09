@@ -125,7 +125,7 @@ object OpenROADTools {
 
         for ((macroName, instance, x, y, orientation) <- macros) {
           writer.write(
-            s"place_macro -macro_name ${macroName} -location {${x} ${y}} -orientation ${orientation}\n"
+            s"place_macro -macro_name ${macroName} -location {${x} ${y}} -orientation ${orientation} -exact\n"
           )
         }
 
@@ -218,10 +218,8 @@ object OpenROADTools {
               "add_pdn_ring -grid {sram_grid} -layer {Metal4 Metal5} -widths {8.0} -spacings {4.0} -core_offsets {16.0} -add_connect -connect_to_pads\n"
             )
             writer.write(
-              "add_pdn_stripe -grid {sram_grid} -layer {TopMetal1} -width {8.0} -pitch {75.6} -offset {10.0} -extend_to_core_ring\n"
+              "add_pdn_stripe -grid {sram_grid} -layer {Metal5} -width {2.2} -pitch {20.0} -offset {10.0} -extend_to_core_ring\n"
             )
-            writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal3 TopMetal1}\n")
-            writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 TopMetal1}\n")
           }
           if (blocks.length > 0) {
             val blockNames = blocks.mkString(" ")
