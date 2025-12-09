@@ -17,6 +17,7 @@ import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
 import spinal.lib.bus.bmb._
 import spinal.lib.bus.wishbone._
 
+import nafarr.bus.bmb.BmbCache
 import nafarr.system.mtimer.{WishboneMachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{WishbonePlic, Plic, PlicCtrl}
 import nafarr.system.reset.{WishboneResetController, ResetControllerCtrl}
@@ -150,6 +151,9 @@ object Hydrogen {
         )
         val ctrl = BmbSpiXipController(parameter.spi, bmbParameter, wishboneConfig)
         io_plat.spi <> ctrl.io.spi
+
+        val cache = BmbCache(bmbParameter, 4)
+        ctrl.io.dataBus << cache.io.output
       }
 
       /* Generate BMB Crossbar */
@@ -193,7 +197,7 @@ object Hydrogen {
         outputParameter = spiXipController.bmbParameter,
         lowerFirstPriority = true
       )
-      spiXipController.ctrl.io.dataBus << spiXipControllerArbiter.io.output
+      spiXipController.cache.io.input << spiXipControllerArbiter.io.output
       spiXipControllerArbiter.io.inputs(0) << iBusDecoder.io.outputs(1)
       spiXipControllerArbiter.io.inputs(1) << dBusDecoder.io.outputs(1)
 
