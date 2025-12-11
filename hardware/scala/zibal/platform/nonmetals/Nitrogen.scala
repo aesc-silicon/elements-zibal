@@ -261,7 +261,8 @@ object Nitrogen {
 
       addPeripheralDevice(hyperbus.ctrl.io.cfgBus, 0x23000, 4 kB)
 
-      addPeripheralDevice(spiXipController.ctrl.io.cfgBus, 0x24000, 4 kB)
+      addPeripheralDevice(spiXipController.ctrl.io.cfgSpiBus, 0x24000, 4 kB)
+      addPeripheralDevice(spiXipController.ctrl.io.cfgXipBus, 0x25000, 4 kB)
 
       publishPeripheralComponents(wishboneBridge.bridge, plicCtrl)
     }
