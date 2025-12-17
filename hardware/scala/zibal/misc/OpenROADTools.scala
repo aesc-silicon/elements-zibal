@@ -220,6 +220,8 @@ object OpenROADTools {
             writer.write(
               "add_pdn_stripe -grid {sram_grid} -layer {Metal5} -width {2.2} -pitch {20.0} -offset {10.0} -extend_to_core_ring\n"
             )
+            writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 TopMetal1}\n")
+            writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal5 TopMetal1}\n")
           }
           if (blocks.length > 0) {
             val blockNames = blocks.mkString(" ")
