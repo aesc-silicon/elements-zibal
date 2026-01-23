@@ -199,7 +199,7 @@ object OpenROADTools {
             "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
           )
           writer.write(
-            s"add_pdn_ring -grid {grid} -layers {TopMetal1 TopMetal2} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+            s"add_pdn_ring -grid {grid} -layers {TopMetal1 Metal5} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
           )
           writer.write(
             "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {2.200} -pitch {75.6} -offset {13.600} -extend_to_core_ring\n"
@@ -208,6 +208,8 @@ object OpenROADTools {
             "add_pdn_stripe -grid {grid} -layer {TopMetal2} -width {2.200} -pitch {75.6} -offset {13.600} -extend_to_core_ring\n"
           )
           writer.write("add_pdn_connect -grid {grid} -layers {Metal1 TopMetal1}\n")
+          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}\n")
+          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal2}\n")
           writer.write("add_pdn_connect -grid {grid} -layers {TopMetal1 TopMetal2}\n")
           if (macros.length > 0) {
             val macroNames = macros.map(t => t._2).mkString(" ")
