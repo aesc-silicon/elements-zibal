@@ -444,10 +444,11 @@ object OpenROADTools {
           }
           writer.write(s"}]\n")
           writer.write("set_driving_cell -lib_cell sg13g2_IOPadIn -pin pad $clock_ports\n")
+
+          writer.write(s"set_load -pin_load 5 [all_inputs]\n")
+          writer.write(s"set_load -pin_load 5 [all_outputs]\n")
         }
 
-        writer.write(s"set_load -pin_load 5 [all_inputs]\n")
-        writer.write(s"set_load -pin_load 5 [all_outputs]\n")
         writer.write(s"set_timing_derate -early 0.95\n")
         writer.write(s"set_timing_derate -late 1.05\n")
 
