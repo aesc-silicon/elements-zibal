@@ -163,12 +163,6 @@ object OpenROADTools {
         writer.write(
           "add_global_connection -net {VSS} -inst_pattern {.*} -pin_pattern {^VSS$} -ground\n"
         )
-        writer.write("# padframe core power pins\n")
-        writer.write("add_global_connection -net {VDD} -pin_pattern {^vdd$} -power\n")
-        writer.write("add_global_connection -net {VSS} -pin_pattern {^vss$} -ground\n")
-        writer.write("# padframe io power pins\n")
-        writer.write("add_global_connection -net {IOVDD} -pin_pattern {^iovdd$} -power\n")
-        writer.write("add_global_connection -net {IOVSS} -pin_pattern {^iovss$} -ground\n")
         writer.write("global_connect\n")
         writer.write("# core voltage domain\n")
         writer.write("set_voltage_domain -name {CORE} -power {VDD} -ground {VSS}\n")
@@ -290,6 +284,13 @@ object OpenROADTools {
           "    return [expr {$PAD_OFFSET + (($IO_WIDTH + $VERTICAL_PAD_DISTANCE) * $index) + ($VERTICAL_PAD_DISTANCE / 2)}]\n"
         )
         writer.write("}\n")
+        writer.write("# padframe core power pins\n")
+        writer.write("add_global_connection -net {VDD} -pin_pattern {^vdd$} -power\n")
+        writer.write("add_global_connection -net {VSS} -pin_pattern {^vss$} -ground\n")
+        writer.write("# padframe io power pins\n")
+        writer.write("add_global_connection -net {IOVDD} -pin_pattern {^iovdd$} -power\n")
+        writer.write("add_global_connection -net {IOVSS} -pin_pattern {^iovss$} -ground\n")
+        writer.write("# fake IO sites\n")
         writer.write("make_fake_io_site -name IOLibSite -width 1 -height $IO_LENGTH\n")
         writer.write("make_fake_io_site -name IOLibCSite -width $IO_LENGTH -height $IO_LENGTH\n")
         writer.write("# Create IO Rows\n")
