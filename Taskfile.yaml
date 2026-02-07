@@ -75,7 +75,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/ {{if .stage }}{{ .stage }}{{end}}'"
 
   lib-filler:
     internal: true
