@@ -62,7 +62,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'klayout -n sg13g2 -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/sealring.py
+      - "{{.RUN}} 'klayout -n {{ .TECH }} -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/sealring.py
                 -rd width={{ .WIDTH }} -rd height={{ .HEIGHT }}
                 -rd output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/macros/sealring/sealring.gds.gz'"
     vars:
@@ -70,6 +70,15 @@ tasks:
         sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.sealring.txt
       HEIGHT:
         sh: tail -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.sealring.txt
+
+  lib-bondpad:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'klayout -n {{ .TECH }} -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/bondpad.py
+                -rd diameter=70.0 -rd shape=square
+                -rd gds_output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/macros/bondpad/bondpad_70x70.gds.gz
+                -rd lef_output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .board }}/zibal/macros/bondpad/bondpad_70x70.lef'"
 
   lib-layout:
     internal: true
@@ -82,7 +91,7 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       # Don't use KLAYOUT_HOME with any PDK path
-      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill fill {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'"
+      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill fill --process {{ .PDK }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'"
 
   lib-run-drc:
     internal: true
@@ -94,7 +103,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'klayout -n sg13g2
+      - "{{.RUN}} 'klayout -n {{ .TECH }}
                 -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
                 -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/6_final_{{ .board }}Top_full.lyrdb'"
 
@@ -114,14 +123,14 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'klayout -n sg13g2
+      - "{{.RUN}} 'klayout -n {{ .TECH }}
                 -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top{{if .block}}_{{ .block }}{{end}}/base/6_final.gds'"
 
   open-klayout:
     desc: Starts KLayout with no layout file loaded.
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'klayout -n sg13g2 -e'"
+      - "{{.RUN}} 'klayout -n {{ .TECH }} -e'"
 
   lib-check-logs:
     internal: true

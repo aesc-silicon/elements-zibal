@@ -7,17 +7,21 @@ package zibal.misc
 import java.io._
 import spinal.core._
 import nafarr.blackboxes.skywater.sky130._
-import nafarr.blackboxes.ihp.sg13g2._
+import nafarr.blackboxes.ihp.{sg13g2, sg13cmos5l}
 import scala.collection.mutable.Map
 import scala.collection.mutable.ArrayBuffer
 
 object OpenROADTools {
 
-  case class PDKTech(platform: String, x: Double, y: Double)
+  type IhpCmosIoSg13g2 = sg13g2.IhpCmosIo.IhpCmosIo
+  type IhpCmosIoSg13cmos5l = sg13cmos5l.IhpCmosIo.IhpCmosIo
+
+  case class PDKTech(tech: String, x: Double, y: Double)
 
   object PDKs {
     object IHP {
       val sg13g2 = PDKTech("sg13g2", 0.48, 3.78)
+      val sg13cmos5l = PDKTech("sg13cmos5l", 0.48, 3.78)
     }
   }
 
@@ -61,13 +65,13 @@ object OpenROADTools {
       val blocks = ArrayBuffer[String]()
       // booleans represent (input, output)
       val ioClockGroups = Map[String, (String, Boolean, Boolean)](
-        "input_ports" -> ("sg13g2_IOPadIn", true, false),
-        "output_4mA_ports" -> ("sg13g2_IOPadOut4mA", false, true),
-        "output_16mA_ports" -> ("sg13g2_IOPadOut16mA", false, true),
-        "output_30mA_ports" -> ("sg13g2_IOPadOut30mA", false, true),
-        "inout_4mA_ports" -> ("sg13g2_IOPadInOut4mA", true, true),
-        "inout_16mA_ports" -> ("sg13g2_IOPadInOut16mA", true, true),
-        "inout_30mA_ports" -> ("sg13g2_IOPadInOut30mA", true, true)
+        "input_ports" -> (s"${platform.tech}_IOPadIn", true, false),
+        "output_4mA_ports" -> (s"${platform.tech}_IOPadOut4mA", false, true),
+        "output_16mA_ports" -> (s"${platform.tech}_IOPadOut16mA", false, true),
+        "output_30mA_ports" -> (s"${platform.tech}_IOPadOut30mA", false, true),
+        "inout_4mA_ports" -> (s"${platform.tech}_IOPadInOut4mA", true, true),
+        "inout_16mA_ports" -> (s"${platform.tech}_IOPadInOut16mA", true, true),
+        "inout_30mA_ports" -> (s"${platform.tech}_IOPadInOut30mA", true, true)
       )
       val clocks = Map[String, (String, Float, String, ArrayBuffer[(String, String)])]()
       val falsePath = ArrayBuffer[(String, String)]()
@@ -94,8 +98,12 @@ object OpenROADTools {
       def addClock(pin: Bool, frequency: HertzNumber, group: String = "") = {
         val time = (frequency.toTime.toBigDecimal / 1.0e-9).floatValue()
         if (pin.parent != null) {
-          val instance = pin.parent.asInstanceOf[IhpCmosIo.IhpCmosIo]
-          clocks += group -> (pin.getName(), time, instance.cellName, ArrayBuffer())
+          pin.parent match {
+            case instance: IhpCmosIoSg13g2 =>
+              clocks += group -> (pin.getName(), time, instance.cellName, ArrayBuffer())
+            case instance: IhpCmosIoSg13cmos5l =>
+              clocks += group -> (pin.getName(), time, instance.cellName, ArrayBuffer())
+          }
         } else {
           clocks += pin.getName() -> (pin.getName(), time, "", ArrayBuffer())
         }
@@ -132,7 +140,92 @@ object OpenROADTools {
         writer.close()
       }
 
-      def generateFootprint(designName: String) = {
+      def generatePdnBlock(writer: PrintWriter) = {
+        writer.write(
+          "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {Metal4 Metal5}\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins\n"
+        )
+        writer.write(
+          s"add_pdn_ring -grid {grid} -layers {Metal4 Metal5} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {Metal4} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {Metal5} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
+        )
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal4 Metal5}\n")
+      }
+
+      def generatePdnMainG2(writer: PrintWriter) = {
+        writer.write(
+          "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {TopMetal1 TopMetal2}\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
+        )
+        writer.write(
+          s"add_pdn_ring -grid {grid} -layers {Metal5 TopMetal1} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {4.0} -pitch {75.0} -offset {13.0} -extend_to_core_ring\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {TopMetal2} -width {4.0} -pitch {75.0} -offset {15.0} -extend_to_core_ring\n"
+        )
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal1 TopMetal1}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal2}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {TopMetal1 TopMetal2}\n")
+        if (macros.length > 0) {
+          val macroNames = macros.map(t => t._2).mkString(" ")
+          writer.write(
+            s"define_pdn_grid -name {sram_grid} -voltage_domains {CORE} -macro -cells {${macroNames}} -grid_over_boundary\n"
+          )
+          writer.write(
+            "add_pdn_ring -grid {sram_grid} -layer {Metal4 Metal5} -widths {8.0} -spacings {4.0} -core_offsets {16.0} -add_connect -connect_to_pads\n"
+          )
+          writer.write(
+            "add_pdn_stripe -grid {sram_grid} -layer {Metal5} -width {2.2} -pitch {20.0} -offset {10.0} -extend_to_core_ring\n"
+          )
+          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 TopMetal1}\n")
+          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal5 TopMetal1}\n")
+        }
+        if (blocks.length > 0) {
+          val blockNames = blocks.mkString(" ")
+          writer.write(
+            s"define_pdn_grid -name {CORE_macro_grid_1} -voltage_domains {CORE} -macro -cells {${blockNames}} -grid_over_boundary\n"
+          )
+          writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal4 TopMetal1}\n")
+          writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal5 TopMetal1}\n")
+        }
+      }
+
+      def generatePdnMainCMOS5L(writer: PrintWriter) = {
+        writer.write(
+          "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {Metal4 TopMetal1}\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
+        )
+        writer.write(
+          s"add_pdn_ring -grid {grid} -layers {Metal3 Metal4} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {Metal4} -width {4.0} -pitch {75.0} -offset {25.0} -extend_to_core_ring\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {4.0} -pitch {75.0} -offset {25.0} -extend_to_core_ring\n"
+        )
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal4 TopMetal1}\n")
+      }
+
+      def generatePdn(designName: String) = {
         val filename = s"${designName}.pdn.tcl"
         val file = s"${config.zibalBuildPath}${filename}"
         val writer = new PrintWriter(new File(file))
@@ -168,64 +261,12 @@ object OpenROADTools {
         writer.write("set_voltage_domain -name {CORE} -power {VDD} -ground {VSS}\n")
         writer.write("# stdcell grid\n")
         if (isBlock) {
-          writer.write(
-            "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {Metal4 Metal5}\n"
-          )
-          writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins\n"
-          )
-          writer.write(
-            s"add_pdn_ring -grid {grid} -layers {Metal4 Metal5} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
-          )
-          writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal4} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
-          )
-          writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal5} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
-          )
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal4 Metal5}\n")
+          generatePdnBlock(writer)
         } else {
-          writer.write(
-            "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {TopMetal1 TopMetal2}\n"
-          )
-          writer.write(
-            "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
-          )
-          writer.write(
-            s"add_pdn_ring -grid {grid} -layers {TopMetal1 Metal5} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
-          )
-          writer.write(
-            "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {2.200} -pitch {75.6} -offset {13.600} -extend_to_core_ring\n"
-          )
-          writer.write(
-            "add_pdn_stripe -grid {grid} -layer {TopMetal2} -width {2.200} -pitch {75.6} -offset {13.600} -extend_to_core_ring\n"
-          )
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal1 TopMetal1}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal2}\n")
-          writer.write("add_pdn_connect -grid {grid} -layers {TopMetal1 TopMetal2}\n")
-          if (macros.length > 0) {
-            val macroNames = macros.map(t => t._2).mkString(" ")
-            writer.write(
-              s"define_pdn_grid -name {sram_grid} -voltage_domains {CORE} -macro -cells {${macroNames}} -grid_over_boundary\n"
-            )
-            writer.write(
-              "add_pdn_ring -grid {sram_grid} -layer {Metal4 Metal5} -widths {8.0} -spacings {4.0} -core_offsets {16.0} -add_connect -connect_to_pads\n"
-            )
-            writer.write(
-              "add_pdn_stripe -grid {sram_grid} -layer {Metal5} -width {2.2} -pitch {20.0} -offset {10.0} -extend_to_core_ring\n"
-            )
-            writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 TopMetal1}\n")
-            writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal5 TopMetal1}\n")
-          }
-          if (blocks.length > 0) {
-            val blockNames = blocks.mkString(" ")
-            writer.write(
-              s"define_pdn_grid -name {CORE_macro_grid_1} -voltage_domains {CORE} -macro -cells {${blockNames}} -grid_over_boundary\n"
-            )
-            writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal4 TopMetal1}\n")
-            writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal5 TopMetal1}\n")
+          if (platform.tech == "sg13g2") {
+            generatePdnMainG2(writer)
+          } else {
+            generatePdnMainCMOS5L(writer)
           }
         }
 
@@ -239,14 +280,24 @@ object OpenROADTools {
         SpinalInfo(s"Generating ${filename}")
 
         io.get.component.getOrdredNodeIo.foreach { baseType =>
-          val instance = baseType.parent.asInstanceOf[IhpCmosIo.IhpCmosIo]
-          pads(instance.edge) += (instance.number -> (
-            (
-              instance.cellName,
-              instance.cell,
-              instance.getName()
-            )
-          ))
+          baseType.parent match {
+            case instance: IhpCmosIoSg13g2 =>
+              pads(instance.edge) += (instance.number -> (
+                (
+                  instance.cellName,
+                  instance.cell,
+                  instance.getName()
+                )
+              ))
+            case instance: IhpCmosIoSg13cmos5l =>
+              pads(instance.edge) += (instance.number -> (
+                (
+                  instance.cellName,
+                  instance.cell,
+                  instance.getName()
+                )
+              ))
+          }
         }
 
         writer.write("set IO_LENGTH 180\n")
@@ -333,21 +384,23 @@ object OpenROADTools {
         }
 
         writer.write("# Place Corner Cells and Filler\n")
-        writer.write("place_corners sg13g2_Corner\n")
+        writer.write(s"place_corners ${platform.tech}_Corner\n")
         writer.write("set iofill {\n")
-        writer.write("    sg13g2_Filler10000\n")
-        writer.write("    sg13g2_Filler4000\n")
-        writer.write("    sg13g2_Filler2000\n")
-        writer.write("    sg13g2_Filler1000\n")
-        writer.write("    sg13g2_Filler400\n")
-        writer.write("    sg13g2_Filler200\n")
+        writer.write(s"    ${platform.tech}_Filler10000\n")
+        writer.write(s"    ${platform.tech}_Filler4000\n")
+        writer.write(s"    ${platform.tech}_Filler2000\n")
+        writer.write(s"    ${platform.tech}_Filler1000\n")
+        writer.write(s"    ${platform.tech}_Filler400\n")
+        writer.write(s"    ${platform.tech}_Filler200\n")
         writer.write("}\n")
         writer.write("place_io_fill -row IO_NORTH {*}$iofill\n")
         writer.write("place_io_fill -row IO_SOUTH {*}$iofill\n")
         writer.write("place_io_fill -row IO_WEST {*}$iofill\n")
         writer.write("place_io_fill -row IO_EAST {*}$iofill\n")
         writer.write("connect_by_abutment\n")
-        writer.write("place_bondpad -bond bondpad_70x70 sg13g2_IOPad* -offset {5.0 -70.0}\n")
+        writer.write(
+          s"place_bondpad -bond bondpad_70x70 ${platform.tech}_IOPad* -offset {5.0 -70.0}\n"
+        )
         writer.write("remove_io_rows\n")
 
         writer.close()
@@ -361,9 +414,15 @@ object OpenROADTools {
 
         if (hasIoRing) {
           io.get.component.getOrdredNodeIo.foreach { baseType =>
-            val instance = baseType.parent.asInstanceOf[IhpCmosIo.IhpCmosIo]
-            if (!instance.clockGroup.equals("")) {
-              clocks(instance.clockGroup)._4 += ((instance.getName(), instance.clockPort))
+            baseType.parent match {
+              case instance: IhpCmosIoSg13g2 =>
+                if (!instance.clockGroup.equals("")) {
+                  clocks(instance.clockGroup)._4 += ((instance.getName(), instance.clockPort))
+                }
+              case instance: IhpCmosIoSg13cmos5l =>
+                if (!instance.clockGroup.equals("")) {
+                  clocks(instance.clockGroup)._4 += ((instance.getName(), instance.clockPort))
+                }
             }
           }
         }
@@ -444,7 +503,9 @@ object OpenROADTools {
             writer.write(s"\t${clock._2._1}\n")
           }
           writer.write(s"}]\n")
-          writer.write("set_driving_cell -lib_cell sg13g2_IOPadIn -pin pad $clock_ports\n")
+          writer.write(
+            s"set_driving_cell -lib_cell ${platform.tech}_IOPadIn -pin pad $$clock_ports\n"
+          )
 
           writer.write(s"set_load -pin_load 5 [all_inputs]\n")
           writer.write(s"set_load -pin_load 5 [all_outputs]\n")
@@ -476,7 +537,7 @@ object OpenROADTools {
         } else {
           writer.write(s"export DESIGN_NICKNAME=${designName}\n");
         }
-        writer.write(s"export PLATFORM=ihp-${platform.platform}\n");
+        writer.write(s"export PLATFORM=ihp-${platform.tech}\n");
         writer.write(s"export VERILOG_FILES=${config.zibalBuildPath}*.v\n")
         writer.write(s"export DIE_AREA = ${dieArea._1} ${dieArea._2} ${dieArea._3} ${dieArea._4}\n")
         writer.write(
@@ -485,7 +546,11 @@ object OpenROADTools {
         if (isBlock) {
           writer.write("export MAX_ROUTING_LAYER = TopMetal1\n")
         } else {
-          writer.write("export MAX_ROUTING_LAYER = TopMetal2\n")
+          if (platform.tech == "sg13g2") {
+            writer.write("export MAX_ROUTING_LAYER = TopMetal2\n")
+          } else {
+            writer.write("export MAX_ROUTING_LAYER = TopMetal1\n")
+          }
         }
         writer.write("export TNS_END_PERCENT = 100\n")
         writer.write(s"export PLACE_DENSITY = ${placeDensity}\n")
@@ -521,49 +586,59 @@ object OpenROADTools {
         if (usePdkFiles) {
           writer.write("export LOAD_ADDITIONAL_FILES = 0\n")
           writer.write(
-            "export TECH_LEF = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lef/sg13g2_tech.lef\n"
+            s"export TECH_LEF = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/lef/${platform.tech}_tech.lef\n"
           )
           writer.write(
-            "export SC_LEF = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lef/sg13g2_stdcell.lef\n"
+            s"export SC_LEF = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/lef/${platform.tech}_stdcell.lef\n"
           )
           // LEF Files
           if (hasIoRing) {
             writer.write(
-              "export ADDITIONAL_LEFS += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lef/sg13g2_io.lef\n"
+              s"export ADDITIONAL_LEFS += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/lef/${platform.tech}_io.lef\n"
             )
-            writer.write("export ADDITIONAL_LEFS += $(PLATFORM_DIR)/lef/bondpad_70x70.lef\n")
+            writer.write(
+              s"export ADDITIONAL_LEFS += ${config.zibalBuildPath}/macros/bondpad/bondpad_70x70.lef\n"
+            )
           }
           for (instance: String <- macros.map(t => t._2).toSet) {
-            writer.write("export ADDITIONAL_LEFS += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lef/")
+            writer.write(
+              s"export ADDITIONAL_LEFS += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/lef/"
+            )
             writer.write(s"${instance}.lef\n")
           }
           // Lib Files
           writer.write(
-            "export TYP_LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib\n"
+            s"export TYP_LIB_FILES = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/lib/${platform.tech}_stdcell_typ_1p20V_25C.lib\n"
           )
           writer.write(
-            "export SLOW_LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_slow_1p08V_125C.lib\n"
+            s"export SLOW_LIB_FILES = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/lib/${platform.tech}_stdcell_slow_1p08V_125C.lib\n"
           )
           writer.write(
-            "export FAST_LIB_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_fast_1p32V_m40C.lib\n"
+            s"export FAST_LIB_FILES = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/lib/${platform.tech}_stdcell_fast_1p32V_m40C.lib\n"
           )
           if (hasIoRing) {
             writer.write(
-              "export TYP_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_typ_1p2V_3p3V_25C.lib\n"
+              s"export TYP_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/lib/${platform.tech}_io_typ_1p2V_3p3V_25C.lib\n"
             )
             writer.write(
-              "export SLOW_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_slow_1p08V_3p0V_125C.lib\n"
+              s"export SLOW_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/lib/${platform.tech}_io_slow_1p08V_3p0V_125C.lib\n"
             )
             writer.write(
-              "export FAST_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/lib/sg13g2_io_fast_1p32V_3p6V_m40C.lib\n"
+              s"export FAST_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/lib/${platform.tech}_io_fast_1p32V_3p6V_m40C.lib\n"
             )
           }
           for (instance: String <- macros.map(t => t._2).toSet) {
-            writer.write("export TYP_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/")
+            writer.write(
+              s"export TYP_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/lib/"
+            )
             writer.write(s"${instance}_typ_1p20V_25C.lib\n")
-            writer.write("export SLOW_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/")
+            writer.write(
+              s"export SLOW_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/lib/"
+            )
             writer.write(s"${instance}_slow_1p08V_125C.lib\n")
-            writer.write("export FAST_LIB_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/lib/")
+            writer.write(
+              s"export FAST_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/lib/"
+            )
             writer.write(s"${instance}_fast_1p32V_m55C.lib\n")
           }
           writer.write("export TYP_LIB_FILES += $(ADDITIONAL_LIBS)\n")
@@ -571,16 +646,20 @@ object OpenROADTools {
           writer.write("export FAST_LIB_FILES += $(ADDITIONAL_FAST_LIBS)\n")
           // GDS Files
           writer.write(
-            "export GDS_FILES = $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_stdcell/gds/sg13g2_stdcell.gds\n"
+            s"export GDS_FILES = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/gds/${platform.tech}_stdcell.gds\n"
           )
           if (hasIoRing) {
             writer.write(
-              "export GDS_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_io/gds/sg13g2_io.gds\n"
+              s"export GDS_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/gds/${platform.tech}_io.gds\n"
             )
-            writer.write("export GDS_FILES += $(PLATFORM_DIR)/gds/bondpad_70x70.gds\n")
+            writer.write(
+              s"export GDS_FILES += ${config.zibalBuildPath}/macros/bondpad/bondpad_70x70.gds.gz\n"
+            )
           }
           for (instance: String <- macros.map(t => t._2).toSet) {
-            writer.write("export GDS_FILES += $(PDK_ROOT)/$(PDK)/libs.ref/sg13g2_sram/gds/")
+            writer.write(
+              s"export GDS_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/gds/"
+            )
             writer.write(s"${instance}.gds\n")
           }
           writer.write("export GDS_FILES += $(ADDITIONAL_GDS)\n")
@@ -598,7 +677,7 @@ object OpenROADTools {
           generateSdc(design)
         }
         if (hasPdn) {
-          generateFootprint(design)
+          generatePdn(design)
         }
       }
 
