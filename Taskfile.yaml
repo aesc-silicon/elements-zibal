@@ -91,7 +91,7 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       # Don't use KLAYOUT_HOME with any PDK path
-      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill fill --process {{ .PDK }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'"
+      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill --process {{ .PDK }} fill {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds'"
 
   lib-run-drc:
     internal: true
