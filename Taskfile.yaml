@@ -86,7 +86,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Top.mk WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/ {{if .stage }}{{ .stage }}{{end}}'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .board }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/ {{if .stage}}{{.stage}}{{end}}'"
 
   lib-filler:
     internal: true
@@ -113,7 +113,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top{{if .block}}_{{ .block }}{{end}}/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'"
+      - "{{.RUN}} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board}}Top{{if .macro}}_{{ .macro }}{{end}}/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'"
 
   open-openroad:
     desc: Starts OpenROAD with no layout file loaded.
@@ -126,7 +126,7 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'klayout -n {{ .TECH }}
-                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top{{if .block}}_{{ .block }}{{end}}/base/6_final.gds'"
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top{{if .macro}}_{{ .macro }}{{end}}/base/6_final.gds'"
 
   open-klayout:
     desc: Starts KLayout with no layout file loaded.
