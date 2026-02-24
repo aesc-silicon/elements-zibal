@@ -34,7 +34,7 @@ object W956A8MBYA {
     )
 
     object HyperBusState extends SpinalEnum {
-      val START, LATENCY, READ = newElement()
+      val START, LATENCY, READ, WRITE = newElement()
     }
 
     val device = new ClockingArea(dummyClockDomain2) {
@@ -44,9 +44,14 @@ object W956A8MBYA {
       val data = Mem(UInt(8 bits), 8 MB)
       val output = Reg(Bits(8 bits)).init(B"00000000")
       val address = Reg(UInt(log2Up(8 MB) bits)).init(0)
+      val isWrite = Reg(Bool).init(False)
 
       switch(state) {
         is(HyperBusState.START) {
+          when(counter.value === 0) {
+            // CA[47]: 1 = read, 0 = write
+            isWrite := !io.dqIn(7)
+          }
           when(counter.value === 27) {
             rwds := False
             counter.clear()
@@ -56,16 +61,29 @@ object W956A8MBYA {
         is(HyperBusState.LATENCY) {
           when(counter.value === 104) {
             counter.clear()
-            state := HyperBusState.READ
             rwds := True
-            output := data(address).asBits
-            address := address + 1
+            when(isWrite) {
+              state := HyperBusState.WRITE
+            } otherwise {
+              state := HyperBusState.READ
+              output := data(address).asBits
+              address := address + 1
+            }
           }
         }
         is(HyperBusState.READ) {
           when(counter.value === 3) {
             rwds := !rwds
             output := data(address).asBits
+            address := address + 1
+            counter.clear()
+          }
+        }
+        is(HyperBusState.WRITE) {
+          when(counter.value === 3) {
+            when(!io.rwdsIn) {
+              data(address) := io.dqIn.asUInt
+            }
             address := address + 1
             counter.clear()
           }
