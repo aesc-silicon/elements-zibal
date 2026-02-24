@@ -55,7 +55,11 @@ object OpenROADTools {
       var ioPercentage: Double = 0.2
       var pdnRingWidth: Double = 5.0
       var pdnRingSpace: Double = 2.0
-      var pdnRingCoreOffset: Double = 4.5
+      var pdnRingCoreOffset: Double = 4.0
+      var pdnMetal4Pitch: Double = 40.0
+      var pdnMetal5Pitch: Double = 40.0
+      var pdnTopMetal1Pitch: Double = 40.0
+      var pdnTopMetal2Pitch: Double = 40.0
 
       val pads = Map(
         Edge.North -> Map[Int, String](),
@@ -64,7 +68,7 @@ object OpenROADTools {
         Edge.West -> Map[Int, String]()
       )
       val macros = ArrayBuffer[(String, String, Double, Double, String)]()
-      val blocks = ArrayBuffer[String]()
+      val blocks = ArrayBuffer[(String, String, Double, Double, String)]()
       // booleans represent (input, output)
       val ioClockGroups = Map[String, (String, Boolean, Boolean)](
         "input_ports" -> (s"${platform.tech}_IOPadIn", true, false),
@@ -77,6 +81,13 @@ object OpenROADTools {
       )
       val clocks = Map[String, (String, Float, String, ArrayBuffer[(String, String)])]()
       val falsePath = ArrayBuffer[(String, String)]()
+      var hasIoConstrains: Boolean = false
+      val ioPinConstraints = Map(
+        "top" -> ArrayBuffer[String](),
+        "right" -> ArrayBuffer[String](),
+        "bottom" -> ArrayBuffer[String](),
+        "left" -> ArrayBuffer[String]()
+      )
 
       def getCompName(comp: Component): String = {
         if (comp.getName().equals("toplevel"))
@@ -84,13 +95,27 @@ object OpenROADTools {
         return getCompName(comp.parent) + "." + comp.getName()
       }
 
-      def addMacro(macroComp: Component, x: Double, y: Double, orientation: String = "R0") = {
+      def addMacro(
+          macroComp: Component,
+          x: Double,
+          y: Double,
+          orientation: String = "R0",
+          depth: Int = 2
+      ) = {
         val macroName = macroComp.getClass.toString().split('$')(1)
-        macros += ((getCompName(macroComp).substring(1), macroName, x, y, orientation))
+        val compName = getCompName(macroComp).substring(1).split('.').takeRight(depth).mkString(".")
+        macros += ((compName, macroName, x, y, orientation))
       }
 
-      def addBlock(blockName: String) = {
-        blocks += blockName
+      def addBlock(
+          macroComp: Component,
+          blockName: String,
+          x: Double,
+          y: Double,
+          orientation: String = "R0"
+      ) = {
+        val compName = getCompName(macroComp).substring(1).split('.').takeRight(2).mkString(".")
+        blocks += ((compName, blockName, x, y, orientation))
       }
 
       def addClock(pin: Bool, frequency: HertzNumber, group: String = "") = {
@@ -111,6 +136,13 @@ object OpenROADTools {
         falsePath += ((from, to))
         if (inverse)
           falsePath += ((to, from))
+      }
+
+      def setIoPinConstraint(io: Data, location: String) = {
+        hasIoConstrains = true
+        io.flatten.filter(_.getBitsWidth != 0).foreach { name =>
+          ioPinConstraints(location) += name.name
+        }
       }
 
       def generateSealring(designName: String) = {
@@ -134,7 +166,11 @@ object OpenROADTools {
             s"place_macro -macro_name ${macroName} -location {${x} ${y}} -orientation ${orientation} -exact\n"
           )
         }
-
+        for ((macroName, instance, x, y, orientation) <- blocks) {
+          writer.write(
+            s"place_macro -macro_name ${macroName} -location {${x} ${y}} -orientation ${orientation} -exact\n"
+          )
+        }
         writer.close()
       }
 
@@ -143,21 +179,34 @@ object OpenROADTools {
           "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {Metal4 Metal5}\n"
         )
         writer.write(
-          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins\n"
+          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
         )
         writer.write(
-          s"add_pdn_ring -grid {grid} -layers {Metal4 Metal5} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
+          s"add_pdn_ring -grid {grid} -layers {Metal4 Metal5} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}}\n"
         )
         writer.write(
-          "add_pdn_stripe -grid {grid} -layer {Metal4} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
+          s"add_pdn_stripe -grid {grid} -layer {Metal4} -width {2.0} -pitch {${pdnMetal4Pitch}} -offset {10.0} -extend_to_core_ring\n"
         )
         writer.write(
-          "add_pdn_stripe -grid {grid} -layer {Metal5} -width {1.840} -pitch {75.6} -offset {13.6} -extend_to_core_ring\n"
+          s"add_pdn_stripe -grid {grid} -layer {Metal5} -width {2.0} -pitch {${pdnMetal5Pitch}} -offset {10.0} -extend_to_core_ring\n"
         )
         writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal4 Metal5}\n")
+
+        if (macros.length > 0) {
+          val macroNames = macros.map(t => t._2).mkString(" ")
+          writer.write(
+            s"define_pdn_grid -name {sram_grid} -voltage_domains {CORE} -macro -cells {${macroNames}} -grid_over_boundary\n"
+          )
+          writer.write(
+            "add_pdn_ring -grid {sram_grid} -layer {Metal4 Metal3} -widths {3.0} -spacings {2.0} -core_offsets {4.0}\n"
+          )
+          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal3 Metal4}\n")
+          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 Metal5}\n")
+        }
       }
 
+      // TODO
       def generatePdnMainG2(writer: PrintWriter) = {
         writer.write(
           "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {TopMetal1 TopMetal2}\n"
@@ -169,10 +218,10 @@ object OpenROADTools {
           s"add_pdn_ring -grid {grid} -layers {Metal5 TopMetal1} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
         )
         writer.write(
-          "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {4.0} -pitch {75.0} -offset {13.0} -extend_to_core_ring\n"
+          s"add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {4.0} -pitch {${pdnTopMetal1Pitch}} -offset {10.0} -extend_to_core_ring\n"
         )
         writer.write(
-          "add_pdn_stripe -grid {grid} -layer {TopMetal2} -width {4.0} -pitch {75.0} -offset {15.0} -extend_to_core_ring\n"
+          s"add_pdn_stripe -grid {grid} -layer {TopMetal2} -width {4.0} -pitch {${pdnTopMetal2Pitch}} -offset {10.0} -extend_to_core_ring\n"
         )
         writer.write("add_pdn_connect -grid {grid} -layers {Metal1 TopMetal1}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal5 TopMetal1}\n")
@@ -184,20 +233,20 @@ object OpenROADTools {
             s"define_pdn_grid -name {sram_grid} -voltage_domains {CORE} -macro -cells {${macroNames}} -grid_over_boundary\n"
           )
           writer.write(
-            "add_pdn_ring -grid {sram_grid} -layer {Metal4 Metal5} -widths {8.0} -spacings {4.0} -core_offsets {16.0} -add_connect -connect_to_pads\n"
+            "add_pdn_ring -grid {sram_grid} -layer {Metal4 Metal5} -widths {3.0} -spacings {2.0} -core_offsets {4.0}\n"
           )
           writer.write(
-            "add_pdn_stripe -grid {sram_grid} -layer {Metal5} -width {2.2} -pitch {20.0} -offset {10.0} -extend_to_core_ring\n"
+            "add_pdn_stripe -grid {sram_grid} -layer {Metal5} -width {2.0} -pitch {20.0} -offset {10.0} -extend_to_core_ring\n"
           )
-          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 TopMetal1}\n")
+          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 Metal5}\n")
           writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal5 TopMetal1}\n")
         }
         if (blocks.length > 0) {
-          val blockNames = blocks.mkString(" ")
+          val blockNames = blocks.map(t => t._2).mkString(" ")
           writer.write(
             s"define_pdn_grid -name {CORE_macro_grid_1} -voltage_domains {CORE} -macro -cells {${blockNames}} -grid_over_boundary\n"
           )
-          writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal4 TopMetal1}\n")
+          // writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal4 TopMetal1}\n")
           writer.write("add_pdn_connect -grid {CORE_macro_grid_1} -layers {Metal5 TopMetal1}\n")
         }
       }
@@ -271,6 +320,22 @@ object OpenROADTools {
         writer.close()
       }
 
+      def generateIoConstraints(designName: String) = {
+        val filename = s"${designName}.io.tcl"
+        val file = s"${config.zibalBuildPath}${filename}"
+        val writer = new PrintWriter(new File(file))
+        SpinalInfo(s"Generating ${filename}")
+
+        Seq("top", "right", "bottom", "left").foreach { location =>
+          if (ioPinConstraints(location).length > 0) {
+            val pins = ioPinConstraints(location).mkString(" ")
+            writer.write(s"set_io_pin_constraint -pin_names {${pins}} -region ${location}:*\n")
+          }
+        }
+
+        writer.close()
+      }
+
       def generateSdc(designName: String) = {
         val filename = s"${designName}.sdc"
         val file = s"${config.zibalBuildPath}${filename}"
@@ -301,7 +366,7 @@ object OpenROADTools {
 
         clocks.foreach { clock =>
           val clockDef =
-            if (hasIoRing) s"[get_pins ${clock._2._3}/p2c]" else s"[get_ports ${clock._2._1}]"
+            if (hasIoRing) s"[get_pins ${clock._2._3}/p2c]" else s"[get_ports ${clock._2._1}_1]"
 
           writer.write(
             s"create_clock ${clockDef} -name ${clock._1} -period ${clock._2._2} -waveform {0 ${clock._2._2 / 2}}\n"
@@ -341,7 +406,7 @@ object OpenROADTools {
             }
           } else {
             writer.write(
-              s"set clk_indx_${clock._1} [lsearch [all_inputs] [get_port ${clock._2._1}]]\n"
+              s"set clk_indx_${clock._1} [lsearch [all_inputs] ${clockDef}]\n"
             )
             writer.write(
               s"""set all_inputs_wo_clk_rst_${clock._1} [lreplace [all_inputs] $$clk_indx_${clock._1} $$clk_indx_${clock._1} ""]\n"""
@@ -410,7 +475,7 @@ object OpenROADTools {
         )
         writer.write("export LEC_CHECK = 0\n")
         if (isBlock) {
-          writer.write("export MAX_ROUTING_LAYER = TopMetal1\n")
+          writer.write("export MAX_ROUTING_LAYER = Metal5\n")
         } else {
           if (platform.tech == "sg13g2") {
             writer.write("export MAX_ROUTING_LAYER = TopMetal2\n")
@@ -468,8 +533,11 @@ object OpenROADTools {
             s"export MACRO_PLACEMENT_TCL = ${config.zibalBuildPath}${design}.macros.tcl\n"
           )
         }
+        if (hasIoConstrains) {
+          writer.write(s"export IO_CONSTRAINTS = ${config.zibalBuildPath}${design}.io.tcl\n")
+        }
         if (blocks.length > 0) {
-          writer.write(s"export BLOCKS = ${blocks.mkString(" ")}\n")
+          writer.write(s"export BLOCKS = ${blocks.map(t => t._2).mkString(" ")}\n")
         }
         if (usePdkFiles) {
           writer.write("export LOAD_ADDITIONAL_FILES = 0\n")
@@ -565,6 +633,9 @@ object OpenROADTools {
         }
         if (hasPdn) {
           generatePdn(design)
+        }
+        if (hasIoConstrains) {
+          generateIoConstraints(design)
         }
       }
 
