@@ -112,96 +112,96 @@ object VexRiscvCoreParameter {
       new YamlPlugin(yamlPath)
     )
   )
-  def mcu(resetAddress: BigInt) = VexRiscvCoreParameter(
-    plugins = ArrayBuffer(
-      new IBusCachedPlugin(
-        resetVector = resetAddress,
-        // prediction = DYNAMIC_TARGET,
-        prediction = DYNAMIC,
-        compressedGen = true,
-        config = InstructionCacheConfig(
-          cacheSize = 4096,
-          bytePerLine = 16,
-          wayCount = 1,
-          addressWidth = 32,
-          cpuDataWidth = 32,
-          memDataWidth = 32,
-          catchIllegalAccess = true,
-          catchAccessFault = true,
-          asyncTagMemory = false,
-          twoCycleRam = false,
-          twoCycleCache = true
-        )
-      ),
-      new DBusCachedPlugin(
-        config = new DataCacheConfig(
-          cacheSize = 4096,
-          bytePerLine = 16,
-          wayCount = 1,
-          addressWidth = 32,
-          cpuDataWidth = 32,
-          memDataWidth = 32,
-          catchAccessError = true,
-          catchIllegal = true,
-          catchUnaligned = true
-        )
-      ),
-      new StaticMemoryTranslatorPlugin(
-        ioRange = _(31 downto 28) === 0xf
-      ),
-      new DecoderSimplePlugin(
-        catchIllegalInstruction = true
-      ),
-      new RegFilePlugin(
-        regFileReadyKind = plugin.ASYNC
-      ),
-      new IntAluPlugin,
-      new SrcPlugin(
-        separatedAddSub = false,
-        executeInsertion = true
-      ),
-      new FullBarrelShifterPlugin(earlyInjection = true),
-      new HazardSimplePlugin(
-        bypassExecute = true,
-        bypassMemory = true,
-        bypassWriteBack = true,
-        bypassWriteBackBuffer = true,
-        pessimisticUseSrc = false,
-        pessimisticWriteRegFile = false,
-        pessimisticAddressMatch = false
-      ),
-      new MulPlugin,
-      new DivPlugin,
-      new CsrPlugin(
-        CsrPluginConfig(
-          catchIllegalAccess = true,
-          mvendorid = 0,
-          marchid = 0,
-          mimpid = 0,
-          mhartid = 0x0,
-          misaExtensionsInit = 0x001100,
-          misaAccess = CsrAccess.READ_WRITE,
-          mtvecAccess = CsrAccess.READ_WRITE,
-          mtvecInit = resetAddress,
-          mepcAccess = CsrAccess.READ_WRITE,
-          mscratchGen = true,
-          mcauseAccess = CsrAccess.READ_WRITE,
-          mbadaddrAccess = CsrAccess.READ_WRITE,
-          mcycleAccess = CsrAccess.READ_WRITE,
-          minstretAccess = CsrAccess.READ_WRITE,
-          ucycleAccess = CsrAccess.READ_ONLY,
-          wfiGenAsWait = true,
-          ecallGen = true,
-          ebreakGen = true
-        )
-      ),
-      new BranchPlugin(
-        earlyBranch = false,
-        catchAddressMisaligned = true
-      ),
-      new YamlPlugin(yamlPath)
+  def mcu(resetAddress: BigInt, instCacheSize: Int = 4096, dataCacheSize: Int = 4096) =
+    VexRiscvCoreParameter(
+      plugins = ArrayBuffer(
+        new IBusCachedPlugin(
+          resetVector = resetAddress,
+          prediction = DYNAMIC,
+          compressedGen = true,
+          config = InstructionCacheConfig(
+            cacheSize = instCacheSize,
+            bytePerLine = 16,
+            wayCount = 1,
+            addressWidth = 32,
+            cpuDataWidth = 32,
+            memDataWidth = 32,
+            catchIllegalAccess = true,
+            catchAccessFault = true,
+            asyncTagMemory = false,
+            twoCycleRam = false,
+            twoCycleCache = true
+          )
+        ),
+        new DBusCachedPlugin(
+          config = new DataCacheConfig(
+            cacheSize = dataCacheSize,
+            bytePerLine = 16,
+            wayCount = 1,
+            addressWidth = 32,
+            cpuDataWidth = 32,
+            memDataWidth = 32,
+            catchAccessError = true,
+            catchIllegal = true,
+            catchUnaligned = true
+          )
+        ),
+        new StaticMemoryTranslatorPlugin(
+          ioRange = _(31 downto 28) === 0xf
+        ),
+        new DecoderSimplePlugin(
+          catchIllegalInstruction = true
+        ),
+        new RegFilePlugin(
+          regFileReadyKind = plugin.ASYNC
+        ),
+        new IntAluPlugin,
+        new SrcPlugin(
+          separatedAddSub = false,
+          executeInsertion = true
+        ),
+        new FullBarrelShifterPlugin(earlyInjection = true),
+        new HazardSimplePlugin(
+          bypassExecute = true,
+          bypassMemory = true,
+          bypassWriteBack = true,
+          bypassWriteBackBuffer = true,
+          pessimisticUseSrc = false,
+          pessimisticWriteRegFile = false,
+          pessimisticAddressMatch = false
+        ),
+        new MulPlugin,
+        new DivPlugin,
+        new CsrPlugin(
+          CsrPluginConfig(
+            catchIllegalAccess = true,
+            mvendorid = 0,
+            marchid = 0,
+            mimpid = 0,
+            mhartid = 0x0,
+            misaExtensionsInit = 0x001100,
+            misaAccess = CsrAccess.READ_WRITE,
+            mtvecAccess = CsrAccess.READ_WRITE,
+            mtvecInit = resetAddress,
+            mepcAccess = CsrAccess.READ_WRITE,
+            mscratchGen = true,
+            mcauseAccess = CsrAccess.READ_WRITE,
+            mbadaddrAccess = CsrAccess.READ_WRITE,
+            mcycleAccess = CsrAccess.READ_WRITE,
+            minstretAccess = CsrAccess.READ_WRITE,
+            ucycleAccess = CsrAccess.READ_ONLY,
+            wfiGenAsWait = true,
+            ecallGen = true,
+            ebreakGen = true
+          )
+        ),
+        new BranchPlugin(
+          earlyBranch = false,
+          catchAddressMisaligned = true
+        ),
+        new YamlPlugin(yamlPath)
+      )
     )
-  )
 }
 
 object VexRiscvCore extends App {
