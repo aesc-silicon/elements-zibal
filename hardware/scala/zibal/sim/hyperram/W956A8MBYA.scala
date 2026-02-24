@@ -34,7 +34,7 @@ object W956A8MBYA {
     )
 
     object HyperBusState extends SpinalEnum {
-      val START, LATENCY, READ = newElement()
+      val START, LATENCY, READ, WRITE = newElement()
     }
 
     val device = new ClockingArea(dummyClockDomain2) {
@@ -44,10 +44,32 @@ object W956A8MBYA {
       val data = Mem(UInt(8 bits), 8 MB)
       val output = Reg(Bits(8 bits)).init(B"00000000")
       val address = Reg(UInt(log2Up(8 MB) bits)).init(0)
+      val isWrite = Reg(Bool).init(False).addTag(crossClockDomain)
 
       switch(state) {
         is(HyperBusState.START) {
+          when(counter.value === 7) {
+            // CA[47]: 1 = read, 0 = write
+            isWrite := !io.dqIn(7)
+          }
+          when(counter.value === 11) {
+            // CA[39:32]: A[26:19] — only A[22:19] relevant for 8MB
+            address(22 downto 19) := io.dqIn(3 downto 0).asUInt
+          }
+          when(counter.value === 15) {
+            // CA[31:24]: A[18:11]
+            address(18 downto 11) := io.dqIn.asUInt
+          }
+          when(counter.value === 19) {
+            // CA[23:16]: A[10:3]
+            address(10 downto 3) := io.dqIn.asUInt
+          }
+          when(counter.value === 23) {
+            // CA[15:8]
+          }
           when(counter.value === 27) {
+            // CA[7:0]: A[2:0] in bits [2:0]
+            address(2 downto 0) := io.dqIn(2 downto 0).asUInt
             rwds := False
             counter.clear()
             state := HyperBusState.LATENCY
@@ -56,22 +78,36 @@ object W956A8MBYA {
         is(HyperBusState.LATENCY) {
           when(counter.value === 104) {
             counter.clear()
-            state := HyperBusState.READ
             rwds := True
-            output := data(address).asBits
-            address := address + 1
+            when(isWrite) {
+              state := HyperBusState.WRITE
+            } otherwise {
+              state := HyperBusState.READ
+              output := data(address ^ 1).asBits
+              address := address + 1
+            }
           }
         }
         is(HyperBusState.READ) {
           when(counter.value === 3) {
             rwds := !rwds
-            output := data(address).asBits
+            output := data(address ^ 1).asBits
+            address := address + 1
+            counter.clear()
+          }
+        }
+        is(HyperBusState.WRITE) {
+          when(counter.value === 3) {
+            when(io.rwdsIn) {
+              data(address ^ 1) := io.dqIn.asUInt
+            }
             address := address + 1
             counter.clear()
           }
         }
       }
     }
+
     io.rwdsOut := device.rwds
     io.dqOut := device.output
   }
