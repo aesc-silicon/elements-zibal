@@ -16,19 +16,20 @@ import zibal.misc.ElementsConfig
 import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
 import spinal.lib.bus.bmb._
 import spinal.lib.bus.wishbone._
+import nafarr.bus.wishbone._
 
 import nafarr.bus.bmb.BmbCache
 import nafarr.system.mtimer.{WishboneMachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{WishbonePlic, Plic, PlicCtrl}
 import nafarr.system.reset.{WishboneResetController, ResetControllerCtrl}
 import nafarr.system.clock.{WishboneClockController, ClockControllerCtrl}
-import nafarr.memory.hyperbus.{BmbHyperBus, HyperBus, HyperBusCtrl}
-import nafarr.memory.hyperbus.phy.HyperBusGenericPhy
+import nafarr.memory.hyperbus.{BmbHyperBusGenericPhyCluster, HyperBus, HyperBusCtrl}
 import nafarr.memory.spi.{BmbSpiXipController}
 import nafarr.peripherals.com.spi.{Spi, SpiControllerCtrl}
 import spinal.lib.com.jtag.Jtag
 
 import vexriscv._
+import vexriscv.ip._
 import vexriscv.plugin._
 
 object Nitrogen {
@@ -53,7 +54,7 @@ object Nitrogen {
           (ram, ram.io.bus)
         }
   ) extends PlatformParameter(socParameter) {
-    val core = VexRiscvCoreParameter.realtime(0xa0000000L).plugins
+    val core = VexRiscvCoreParameter.mcu(0xa0000000L, 1024, 1024).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
@@ -92,11 +93,43 @@ object Nitrogen {
       val mtimerInterrupt = Bool
       val globalInterrupt = Bool
 
-      val config = VexRiscvConfig(
-        plugins = parameter.core += new DebugPlugin(clockCtrl.getClockDomainByName("debug"))
-      )
+      val configs = parameter.core += new DebugPlugin(clockCtrl.getClockDomainByName("debug"))
+      for ((plugin, index) <- configs.zipWithIndex) plugin match {
+        case p: IBusCachedPlugin =>
+          configs(index) = new IBusCachedPlugin(
+            resetVector = p.resetVector,
+            config = p.config,
+            memoryTranslatorPortConfig = p.memoryTranslatorPortConfig,
+            instructionCacheGen = new IhpInstructionCache(_, _)
+          )
+        case p: DBusCachedPlugin =>
+          configs(index) = new DBusCachedPlugin(
+            config = p.config,
+            memoryTranslatorPortConfig = p.memoryTranslatorPortConfig,
+            dBusCmdMasterPipe = p.dBusCmdMasterPipe,
+            dataCacheGen = new IhpDataCache(_, _)
+          )
+        case _ =>
+      }
+
+      val config = VexRiscvConfig(plugins = configs)
 
       val cpu = new VexRiscv(config)
+      val internal = new Area {
+        val iCacheBanks =
+          cpu.service(classOf[IBusCachedPlugin]).cacheIp.asInstanceOf[IhpInstructionCache].banks
+        val iCacheTags =
+          cpu.service(classOf[IBusCachedPlugin]).cacheIp.asInstanceOf[IhpInstructionCache].ways
+        val dCacheWays =
+          cpu.service(classOf[DBusCachedPlugin]).cacheIp.asInstanceOf[IhpDataCache].ways
+        val iBus = cpu.service(classOf[IBusCachedPlugin]).iBus
+        val dBus = cpu.service(classOf[DBusCachedPlugin]).dBus
+        val debugBus = cpu.service(classOf[DebugPlugin]).io.bus
+        val debugResetOut = cpu.service(classOf[DebugPlugin]).io.resetOut
+        val externalInterrupt = cpu.service(classOf[CsrPlugin]).externalInterrupt
+        val timerInterrupt = cpu.service(classOf[CsrPlugin]).timerInterrupt
+      }
+
       var iBus: Bmb = null
       var dBus: Bmb = null
       for (plugin <- config.plugins) plugin match {
@@ -118,7 +151,6 @@ object Nitrogen {
     }
 
     val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
-
       /* BMB Subordinates */
       val onChipRam = new Area {
         val mapping = SizeMapping(0x80000000L, parameter.onChipRamSize)
@@ -144,44 +176,81 @@ object Nitrogen {
         val bridge = BmbToWishbone(p = bmbParameter)
       }
       val wishboneConfig = BmbToWishbone.getWishboneConfig(wishboneBridge.bmbParameter.access)
+    }
 
-      val hyperbus = new Area {
-        val mapping = SizeMapping(0x90000000L, 64 MB)
-        val bmbParameter = BmbParameter(
-          addressWidth = log2Up(mapping.size) + 2,
-          dataWidth = 32,
-          lengthWidth = 6,
-          sourceWidth = 4,
-          contextWidth = 4
-        )
-        val ctrl = BmbHyperBus(parameter.hyperbus, bmbParameter, wishboneConfig)
-        val phy = HyperBusGenericPhy(parameter.hyperbus)
-        ctrl.io.phy <> phy.io.phy
-        io_plat.hyperbus <> phy.io.hyperbus
-      }
+    val hyperbus = new ClockingArea(clockCtrl.getClockDomainByName("hyperbus")) {
+      val mapping = SizeMapping(0x90000000L, 64 MB)
+      val bmbParameter = BmbParameter(
+        addressWidth = log2Up(mapping.size) + 2,
+        dataWidth = 32,
+        lengthWidth = 6,
+        sourceWidth = 4,
+        contextWidth = 4
+      )
+      val ctrl =
+        BmbHyperBusGenericPhyCluster(parameter.hyperbus, bmbParameter, system.wishboneConfig)
+      io_plat.hyperbus <> ctrl.io.hyperbus
 
-      val spiXipController = new Area {
-        val mapping = SizeMapping(0xa0000000L, parameter.spiRomSize)
-        val bmbParameter = BmbParameter(
-          addressWidth = log2Up(mapping.size) + 2,
-          dataWidth = 32,
-          lengthWidth = 6,
-          sourceWidth = 4,
-          contextWidth = 4
-        )
-        val ctrl = BmbSpiXipController(parameter.spi, bmbParameter, wishboneConfig)
-        io_plat.spi <> ctrl.io.spi
+      val bmbCc = BmbCcFifo(
+        p = bmbParameter,
+        cmdDepth = 2,
+        rspDepth = 2,
+        inputCd = clockCtrl.getClockDomainByName("system"),
+        outputCd = clockCtrl.getClockDomainByName("hyperbus")
+      )
+      ctrl.io.dataBus << bmbCc.io.output
 
-        val cache = BmbCache(bmbParameter, 4)
-        ctrl.io.dataBus << cache.io.output
-      }
+      val wishboneCc = WishboneCcToggle(
+        cfg = system.wishboneConfig,
+        inputCd = clockCtrl.getClockDomainByName("system"),
+        outputCd = clockCtrl.getClockDomainByName("hyperbus")
+      )
+      ctrl.io.cfgBus << wishboneCc.io.output
+    }
 
+    val spiXip = new ClockingArea(clockCtrl.getClockDomainByName("spiXip")) {
+      val mapping = SizeMapping(0xa0000000L, parameter.spiRomSize)
+      val bmbParameter = BmbParameter(
+        addressWidth = log2Up(mapping.size) + 2,
+        dataWidth = 32,
+        lengthWidth = 6,
+        sourceWidth = 4,
+        contextWidth = 4
+      )
+      val ctrl = BmbSpiXipController(parameter.spi, bmbParameter, system.wishboneConfig)
+      io_plat.spi <> ctrl.io.spi
+
+      val bmbCc = BmbCcFifo(
+        p = bmbParameter,
+        cmdDepth = 2,
+        rspDepth = 2,
+        inputCd = clockCtrl.getClockDomainByName("system"),
+        outputCd = clockCtrl.getClockDomainByName("spiXip")
+      )
+      ctrl.io.dataBus << bmbCc.io.output
+
+      val wishboneSpiCc = WishboneCcToggle(
+        cfg = system.wishboneConfig,
+        inputCd = clockCtrl.getClockDomainByName("system"),
+        outputCd = clockCtrl.getClockDomainByName("spiXip")
+      )
+      ctrl.io.cfgSpiBus << wishboneSpiCc.io.output
+
+      val wishboneXipCc = WishboneCcToggle(
+        cfg = system.wishboneConfig,
+        inputCd = clockCtrl.getClockDomainByName("system"),
+        outputCd = clockCtrl.getClockDomainByName("spiXip")
+      )
+      ctrl.io.cfgXipBus << wishboneXipCc.io.output
+    }
+
+    val crossbar = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
       /* Generate BMB Crossbar */
       val iBusDecoder = BmbDecoder(
         p = VexRiscvCoreParameter.iBusConfig,
-        mappings = Seq(onChipRam.mapping, hyperbus.mapping, spiXipController.mapping),
+        mappings = Seq(system.onChipRam.mapping, hyperbus.mapping, spiXip.mapping),
         capabilities =
-          Seq(onChipRam.bmbParameter, hyperbus.bmbParameter, spiXipController.bmbParameter)
+          Seq(system.onChipRam.bmbParameter, hyperbus.bmbParameter, spiXip.bmbParameter)
       )
       iBusDecoder.io.input << core.iBus.pipelined(
         cmdValid = true,
@@ -194,16 +263,16 @@ object Nitrogen {
       val dBusDecoder = BmbDecoder(
         p = VexRiscvCoreParameter.dBusConfig,
         mappings = Seq(
-          onChipRam.mapping,
+          system.onChipRam.mapping,
           hyperbus.mapping,
-          spiXipController.mapping,
-          wishboneBridge.mapping
+          spiXip.mapping,
+          system.wishboneBridge.mapping
         ),
         capabilities = Seq(
-          onChipRam.bmbParameter,
+          system.onChipRam.bmbParameter,
           hyperbus.bmbParameter,
-          spiXipController.bmbParameter,
-          wishboneBridge.bmbParameter
+          spiXip.bmbParameter,
+          system.wishboneBridge.bmbParameter
         )
       )
       dBusDecoder.io.input << core.dBus.pipelined(
@@ -215,10 +284,10 @@ object Nitrogen {
 
       val onChipRamArbiter = BmbArbiter(
         inputsParameter = Seq(VexRiscvCoreParameter.iBusConfig, VexRiscvCoreParameter.dBusConfig),
-        outputParameter = onChipRam.bmbParameter,
+        outputParameter = system.onChipRam.bmbParameter,
         lowerFirstPriority = true
       )
-      onChipRam.port << onChipRamArbiter.io.output
+      system.onChipRam.port << onChipRamArbiter.io.output
       onChipRamArbiter.io.inputs(0) << iBusDecoder.io.outputs(0)
       onChipRamArbiter.io.inputs(1) << dBusDecoder.io.outputs(0)
 
@@ -227,44 +296,44 @@ object Nitrogen {
         outputParameter = hyperbus.bmbParameter,
         lowerFirstPriority = true
       )
-      hyperbus.ctrl.io.dataBus << hyperbusArbiter.io.output
+      hyperbus.bmbCc.io.input << hyperbusArbiter.io.output
       hyperbusArbiter.io.inputs(0) << iBusDecoder.io.outputs(1)
       hyperbusArbiter.io.inputs(1) << dBusDecoder.io.outputs(1)
 
       val spiXipControllerArbiter = BmbArbiter(
         inputsParameter = Seq(VexRiscvCoreParameter.iBusConfig, VexRiscvCoreParameter.dBusConfig),
-        outputParameter = spiXipController.bmbParameter,
+        outputParameter = spiXip.bmbParameter,
         lowerFirstPriority = true
       )
-      spiXipController.cache.io.input << spiXipControllerArbiter.io.output
+      spiXip.bmbCc.io.input << spiXipControllerArbiter.io.output
       spiXipControllerArbiter.io.inputs(0) << iBusDecoder.io.outputs(2)
       spiXipControllerArbiter.io.inputs(1) << dBusDecoder.io.outputs(2)
 
-      wishboneBridge.bridge.io.input << dBusDecoder.io.outputs(3)
+      system.wishboneBridge.bridge.io.input << dBusDecoder.io.outputs(3)
 
       /* Peripheral IP-Cores */
-      val plicCtrl = WishbonePlic(parameter.plic, wishboneConfig)
+      val plicCtrl = WishbonePlic(parameter.plic, system.wishboneConfig)
       core.globalInterrupt := plicCtrl.io.interrupt
       addPeripheralDevice(plicCtrl.io.bus, 0x800000, 4 MB)
 
-      val mtimerCtrl = WishboneMachineTimer(parameter.mtimer, wishboneConfig)
+      val mtimerCtrl = WishboneMachineTimer(parameter.mtimer, system.wishboneConfig)
       core.mtimerInterrupt := mtimerCtrl.io.interrupt
       addPeripheralDevice(mtimerCtrl.io.bus, 0x20000, 4 kB)
 
-      val resetCtrlMapper = WishboneResetController(parameter.resets, wishboneConfig)
+      val resetCtrlMapper = WishboneResetController(parameter.resets, system.wishboneConfig)
       resetCtrlMapper.io.config <> resetCtrl.io.config
       addPeripheralDevice(resetCtrlMapper.io.bus, 0x21000, 4 kB)
 
-      val clockCtrlMapper = WishboneClockController(parameter.clocks, wishboneConfig)
+      val clockCtrlMapper = WishboneClockController(parameter.clocks, system.wishboneConfig)
       clockCtrlMapper.io.config <> clockCtrl.io.config
       addPeripheralDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
 
-      addPeripheralDevice(hyperbus.ctrl.io.cfgBus, 0x23000, 4 kB)
+      addPeripheralDevice(hyperbus.wishboneCc.io.input, 0x23000, 4 kB)
 
-      addPeripheralDevice(spiXipController.ctrl.io.cfgSpiBus, 0x24000, 4 kB)
-      addPeripheralDevice(spiXipController.ctrl.io.cfgXipBus, 0x25000, 4 kB)
+      addPeripheralDevice(spiXip.wishboneSpiCc.io.input, 0x24000, 4 kB)
+      addPeripheralDevice(spiXip.wishboneXipCc.io.input, 0x25000, 4 kB)
 
-      publishPeripheralComponents(wishboneBridge.bridge, plicCtrl)
+      publishPeripheralComponents(system.wishboneBridge.bridge, plicCtrl)
     }
   }
 }
