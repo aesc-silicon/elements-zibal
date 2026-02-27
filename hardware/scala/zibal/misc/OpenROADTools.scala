@@ -408,6 +408,7 @@ object OpenROADTools {
         writer.write(
           s"export CORE_AREA = ${coreArea._1} ${coreArea._2} ${coreArea._3} ${coreArea._4}\n"
         )
+        writer.write("export LEC_CHECK = 0\n")
         if (isBlock) {
           writer.write("export MAX_ROUTING_LAYER = TopMetal1\n")
         } else {
