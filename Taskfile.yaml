@@ -7,6 +7,7 @@ version: '3'
 env:
   OPENROAD_EXE: "/opt/elements/tools/OpenROAD/bin/openroad"
   YOSYS_EXE: "/opt/elements/tools/yosys/bin/yosys"
+  KEPLER_FORMAL_EXE: "/opt/elements/tools/kepler-formal/bin/kepler-formal"
   PATH: "/opt/elements/oss-cad-suite/bin/:{{ .PATH }}"
 
 vars:
@@ -15,6 +16,7 @@ vars:
     {{if .CONTAINER_ENV}}{{.CONTAINER_ENV}}{{end}} \
     -e OPENROAD_EXE={{ .OPENROAD_EXE }} \
     -e YOSYS_EXE={{ .YOSYS_EXE }} \
+    -e KEPLER_FORMAL_EXE={{ .KEPLER_FORMAL_EXE }} \
     -e PATH={{ .PATH }} \
     --workdir={{ .PWD }} \
     -it {{.CONTAINER_NAME}} \
