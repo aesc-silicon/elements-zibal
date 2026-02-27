@@ -8,6 +8,7 @@ import java.io._
 import spinal.core._
 import nafarr.blackboxes.skywater.sky130._
 import nafarr.blackboxes.ihp.{sg13g2, sg13cmos5l}
+import nafarr.blackboxes.ihp.common._
 import scala.collection.mutable.Map
 import scala.collection.mutable.ArrayBuffer
 
@@ -44,6 +45,7 @@ object OpenROADTools {
       var multiCornerEnabled: Boolean = true
       var hasIoRing: Boolean = false
       var io: Option[Data] = null
+      var ioPower: Option[Seq[IhpPowerIo.IhpPowerIo]] = null
       var usePdkFiles: Boolean = true
       var placeDensity: Double = 0.75
       var maxFanout: Int = 8
@@ -56,10 +58,10 @@ object OpenROADTools {
       var pdnRingCoreOffset: Double = 4.5
 
       val pads = Map(
-        "north" -> Map[Int, (String, String, String)](),
-        "west" -> Map[Int, (String, String, String)](),
-        "south" -> Map[Int, (String, String, String)](),
-        "east" -> Map[Int, (String, String, String)]()
+        Edge.North -> Map[Int, String](),
+        Edge.East -> Map[Int, String](),
+        Edge.South -> Map[Int, String](),
+        Edge.West -> Map[Int, String]()
       )
       val macros = ArrayBuffer[(String, String, Double, Double, String)]()
       val blocks = ArrayBuffer[String]()
@@ -75,10 +77,6 @@ object OpenROADTools {
       )
       val clocks = Map[String, (String, Float, String, ArrayBuffer[(String, String)])]()
       val falsePath = ArrayBuffer[(String, String)]()
-
-      def addPad(edge: String, number: Int, cell: String) = {
-        pads(edge) += (number -> (s"${cell}_${edge}_${number}", cell, ""))
-      }
 
       def getCompName(comp: Component): String = {
         if (comp.getName().equals("toplevel"))
@@ -273,139 +271,6 @@ object OpenROADTools {
         writer.close()
       }
 
-      def generateIo(designName: String) = {
-        val filename = s"${designName}.pad.tcl"
-        val file = s"${config.zibalBuildPath}${filename}"
-        val writer = new PrintWriter(new File(file))
-        SpinalInfo(s"Generating ${filename}")
-
-        io.get.component.getOrdredNodeIo.foreach { baseType =>
-          baseType.parent match {
-            case instance: IhpCmosIoSg13g2 =>
-              pads(instance.edge) += (instance.number -> (
-                (
-                  instance.cellName,
-                  instance.cell,
-                  instance.getName()
-                )
-              ))
-            case instance: IhpCmosIoSg13cmos5l =>
-              pads(instance.edge) += (instance.number -> (
-                (
-                  instance.cellName,
-                  instance.cell,
-                  instance.getName()
-                )
-              ))
-          }
-        }
-
-        writer.write("set IO_LENGTH 180\n")
-        writer.write("set IO_WIDTH 80\n")
-        writer.write("set BONDPAD_SIZE 70\n")
-        writer.write("set SEALRING_OFFSET 70\n")
-        writer.write("set IO_OFFSET [expr {$BONDPAD_SIZE + $SEALRING_OFFSET}]\n")
-        writer.write(
-          "proc calc_horizontal_pad_location {index total IO_LENGTH IO_WIDTH BONDPAD_SIZE SEALRING_OFFSET } {\n"
-        )
-        writer.write(
-          "    set DIE_WIDTH [expr {[lindex $::env(DIE_AREA) 2] - [lindex $::env(DIE_AREA) 0]}]\n"
-        )
-        writer.write("    set PAD_OFFSET [expr {$IO_LENGTH + $BONDPAD_SIZE + $SEALRING_OFFSET}]\n")
-        writer.write("    set PAD_AREA_WIDTH [expr {$DIE_WIDTH - ($PAD_OFFSET * 2)}]\n")
-        writer.write(
-          "    set HORIZONTAL_PAD_DISTANCE [expr {($PAD_AREA_WIDTH / $total) - $IO_WIDTH}]\n"
-        )
-        writer.write(
-          "    return [expr {$PAD_OFFSET + (($IO_WIDTH + $HORIZONTAL_PAD_DISTANCE) * $index) + ($HORIZONTAL_PAD_DISTANCE / 2)}]\n"
-        )
-        writer.write("}\n")
-        writer.write(
-          "proc calc_vertical_pad_location {index total IO_LENGTH IO_WIDTH BONDPAD_SIZE SEALRING_OFFSET } {\n"
-        )
-        writer.write(
-          "    set DIE_HEIGHT [expr {[lindex $::env(DIE_AREA) 3] - [lindex $::env(DIE_AREA) 1]}]\n"
-        )
-        writer.write("    set PAD_OFFSET [expr {$IO_LENGTH + $BONDPAD_SIZE + $SEALRING_OFFSET}]\n")
-        writer.write("    set PAD_AREA_HEIGHT [expr {$DIE_HEIGHT - ($PAD_OFFSET * 2)}]\n")
-        writer.write(
-          "    set VERTICAL_PAD_DISTANCE [expr {($PAD_AREA_HEIGHT / $total) - $IO_WIDTH}]\n"
-        )
-        writer.write(
-          "    return [expr {$PAD_OFFSET + (($IO_WIDTH + $VERTICAL_PAD_DISTANCE) * $index) + ($VERTICAL_PAD_DISTANCE / 2)}]\n"
-        )
-        writer.write("}\n")
-        writer.write("# padframe core power pins\n")
-        writer.write("add_global_connection -net {VDD} -pin_pattern {^vdd$} -power\n")
-        writer.write("add_global_connection -net {VSS} -pin_pattern {^vss$} -ground\n")
-        writer.write("# padframe io power pins\n")
-        writer.write("add_global_connection -net {IOVDD} -pin_pattern {^iovdd$} -power\n")
-        writer.write("add_global_connection -net {IOVSS} -pin_pattern {^iovss$} -ground\n")
-        writer.write("# fake IO sites\n")
-        writer.write("make_fake_io_site -name IOLibSite -width 1 -height $IO_LENGTH\n")
-        writer.write("make_fake_io_site -name IOLibCSite -width $IO_LENGTH -height $IO_LENGTH\n")
-        writer.write("# Create IO Rows\n")
-        writer.write(
-          "make_io_sites -horizontal_site IOLibSite -vertical_site IOLibSite -corner_site IOLibCSite -offset $IO_OFFSET\n"
-        )
-        writer.write("# Place Pads\n")
-
-        pads("south").toSeq.sortBy(_._1).foreach { pad =>
-          val total = pads("south").toSeq.length
-          if (!pad._2._3.equals(""))
-            writer.write(s"# IO pin ${pad._2._3}\n")
-          writer.write(
-            s"place_pad -row IO_SOUTH -location [calc_horizontal_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
-          )
-        }
-        pads("east").toSeq.sortBy(_._1).foreach { pad =>
-          val total = pads("east").toSeq.length
-          if (!pad._2._3.equals(""))
-            writer.write(s"# IO pin ${pad._2._3}\n")
-          writer.write(
-            s"place_pad -row IO_EAST -location [calc_vertical_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
-          )
-        }
-        pads("north").toSeq.sortBy(_._1).foreach { pad =>
-          val total = pads("north").toSeq.length
-          if (!pad._2._3.equals(""))
-            writer.write(s"# IO pin ${pad._2._3}\n")
-          writer.write(
-            s"place_pad -row IO_NORTH -location [calc_horizontal_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
-          )
-        }
-        pads("west").toSeq.sortBy(_._1).foreach { pad =>
-          val total = pads("west").toSeq.length
-          if (!pad._2._3.equals(""))
-            writer.write(s"# IO pin ${pad._2._3}\n")
-          writer.write(
-            s"place_pad -row IO_WEST -location [calc_vertical_pad_location ${pad._1} ${total} $$IO_LENGTH $$IO_WIDTH $$BONDPAD_SIZE $$SEALRING_OFFSET] {${pad._2._1}} -master ${pad._2._2}\n"
-          )
-        }
-
-        writer.write("# Place Corner Cells and Filler\n")
-        writer.write(s"place_corners ${platform.tech}_Corner\n")
-        writer.write("set iofill {\n")
-        writer.write(s"    ${platform.tech}_Filler10000\n")
-        writer.write(s"    ${platform.tech}_Filler4000\n")
-        writer.write(s"    ${platform.tech}_Filler2000\n")
-        writer.write(s"    ${platform.tech}_Filler1000\n")
-        writer.write(s"    ${platform.tech}_Filler400\n")
-        writer.write(s"    ${platform.tech}_Filler200\n")
-        writer.write("}\n")
-        writer.write("place_io_fill -row IO_NORTH {*}$iofill\n")
-        writer.write("place_io_fill -row IO_SOUTH {*}$iofill\n")
-        writer.write("place_io_fill -row IO_WEST {*}$iofill\n")
-        writer.write("place_io_fill -row IO_EAST {*}$iofill\n")
-        writer.write("connect_by_abutment\n")
-        writer.write(
-          s"place_bondpad -bond bondpad_70x70 ${platform.tech}_IOPad* -offset {5.0 -70.0}\n"
-        )
-        writer.write("remove_io_rows\n")
-
-        writer.close()
-      }
-
       def generateSdc(designName: String) = {
         val filename = s"${designName}.sdc"
         val file = s"${config.zibalBuildPath}${filename}"
@@ -570,10 +435,32 @@ object OpenROADTools {
         }
         if (hasIoRing) {
           writer.write("export HAS_IO_RING = 1\n")
+
+          io.get.component.getOrdredNodeIo.foreach { baseType =>
+            baseType.parent match {
+              case instance: IhpCmosIoSg13g2 =>
+                pads(instance.edge) += (instance.number -> (instance.cellName))
+              case instance: IhpCmosIoSg13cmos5l =>
+                pads(instance.edge) += (instance.number -> (instance.cellName))
+            }
+          }
+          ioPower.get.foreach { instance =>
+            pads(instance.edge) += (instance.number -> (instance.getName()))
+          }
+
+          Edge.values.foreach { edge =>
+            if (pads(edge).toSeq.length > 0) {
+              val cells = pads(edge).toSeq.sortBy(_._1) map (t => t._2)
+              writer.write(
+                s"export IO_${edge.toString().toUpperCase()}_PINS = ${cells.mkString(" ")}\n"
+              )
+            }
+          }
+
           writer.write(
             s"export SEAL_GDS = ${config.zibalBuildPath}/macros/sealring/sealring.gds.gz\n"
           )
-          writer.write(s"export FOOTPRINT_TCL = ${config.zibalBuildPath}${design}.pad.tcl\n")
+          writer.write("export FOOTPRINT_TCL = $(PLATFORM_DIR)/pad.tcl\n")
         }
         if (macros.length > 0) {
           writer.write(
@@ -668,7 +555,6 @@ object OpenROADTools {
 
         if (hasIoRing) {
           generateSealring(design)
-          generateIo(design)
         }
         if (macros.length > 0) {
           generateMacros(design)
