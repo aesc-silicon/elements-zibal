@@ -200,7 +200,7 @@ object Nitrogen {
       )
       ctrl.io.dataBus << bmbCc.io.output
 
-      val wishboneCc = WishboneCcToggle(
+      val wishboneCc = WishboneCcFifo(
         cfg = system.wishboneConfig,
         inputCd = clockCtrl.getClockDomainByName("system"),
         outputCd = clockCtrl.getClockDomainByName("hyperbus")
@@ -229,7 +229,7 @@ object Nitrogen {
       )
       ctrl.io.dataBus << bmbCc.io.output
 
-      val wishboneSpiCc = WishboneCcToggle(
+      val wishboneSpiCc = WishboneCcFifo(
         cfg = system.wishboneConfig,
         inputCd = clockCtrl.getClockDomainByName("system"),
         outputCd = clockCtrl.getClockDomainByName("spiXip")
