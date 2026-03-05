@@ -26,6 +26,7 @@ object ElementsConfig {
     def swStorageBuildPath(name: String) = softwareBuildPath + name + "/"
     def swStorageBaremetalImage(name: String) = swStorageBuildPath(name) + "kernel.img"
     def swStorageZephyrBinary(name: String) = swStorageBuildPath(name) + "zephyr/zephyr/zephyr.bin"
+    def swStorageImageContainer = softwareBuildPath + "image_container.img"
 
     /* Probably not used anymore */
     val symbiflowBuildPath = buildPath + "symbiflow/"
