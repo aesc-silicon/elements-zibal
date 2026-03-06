@@ -99,7 +99,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/drc/run_drc.py --path {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds --topcell {{ .board }}Top --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/ --no_recommended --mp={{numCPU}} {{ if .level }}--disable_extra_rules{{end}}'"
+      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/drc/run_drc.py --path {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds --topcell {{ .board }}Top --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/drc/ --no_recommended --mp={{numCPU}} {{ if .level }}--disable_extra_rules{{end}}'"
 
   lib-view-drc:
     internal: true
@@ -107,7 +107,7 @@ tasks:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'klayout -n {{ .TECH }}
                 -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/results/{{ .PDK }}/{{ .board }}Top/base/6_final.gds
-                -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/6_final_{{ .board }}Top_full.lyrdb'"
+                -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/drc/6_final_{{ .board }}Top_full.lyrdb'"
 
   lib-view-openroad:
     internal: true
