@@ -625,7 +625,7 @@ object OpenROADTools {
         if (hasIoRing) {
           generateSealring(design)
         }
-        if (macros.length > 0) {
+        if (macros.length > 0 || blocks.length > 0) {
           generateMacros(design)
         }
         if (hasSdc) {
