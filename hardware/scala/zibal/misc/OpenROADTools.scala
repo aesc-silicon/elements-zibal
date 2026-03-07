@@ -617,6 +617,11 @@ object OpenROADTools {
             writer.write(s"${instance}.gds\n")
           }
           writer.write("export GDS_FILES += $(ADDITIONAL_GDS)\n")
+
+          // HACK: OpenROAD generates M1.b violations with decap_4 next to and2_1.
+          writer.write(
+            s"export FILL_CELLS = ${platform.tech}_fill_1 ${platform.tech}_fill_2 ${platform.tech}_decap_8\n"
+          )
         }
         writer.close()
 
