@@ -55,11 +55,11 @@ object OpenROADTools {
       var ioPercentage: Double = 0.2
       var pdnRingWidth: Double = 5.0
       var pdnRingSpace: Double = 2.0
-      var pdnRingCoreOffset: Double = 4.0
+      var pdnRingCoreOffset: Double = 4.5
       var pdnMetal4Pitch: Double = 40.0
       var pdnMetal5Pitch: Double = 40.0
-      var pdnTopMetal1Pitch: Double = 40.0
-      var pdnTopMetal2Pitch: Double = 40.0
+      var pdnTopMetal1Pitch: Double = 60.0
+      var pdnTopMetal2Pitch: Double = 60.0
 
       val pads = Map(
         Edge.North -> Map[Int, String](),
