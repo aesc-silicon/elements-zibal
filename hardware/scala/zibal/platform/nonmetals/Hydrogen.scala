@@ -35,12 +35,13 @@ object Hydrogen {
       socParameter: SocParameter,
       onChipRamSize: BigInt,
       spiRomSize: BigInt,
-      resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
-      clockLogic: (
-          ClockControllerCtrl.ClockControllerCtrl,
-          ResetControllerCtrl.ResetControllerCtrl,
-          Bool
-      ) => Unit,
+      resetCtrl: (
+          ResetControllerCtrl.Parameter
+      ) => ResetControllerCtrl.ResetControllerBase,
+      clockCtrl: (
+          ClockControllerCtrl.Parameter,
+          ResetControllerCtrl.ResetControllerBase
+      ) => ClockControllerCtrl.ClockControllerBase,
       onChipRamLogic: (BmbParameter, BigInt) => (Component, Bmb) =
         (p: BmbParameter, onChipRamSize: BigInt) => {
           val ram = BmbOnChipRam(
@@ -77,11 +78,15 @@ object Hydrogen {
 
     override def initOnChipRam(path: String) {}
 
-    val resetCtrl = ResetControllerCtrl(parameter.resets)
-    parameter.resetLogic(resetCtrl, io_plat.reset, io_plat.clock)
+    val resetCtrl = parameter.resetCtrl(parameter.resets)
+    resetCtrl.io.mainReset := io_plat.reset
+    resetCtrl.io.mainClock := io_plat.clock
+    resetCtrl.io.trigger := 0
 
-    val clockCtrl = ClockControllerCtrl(parameter.clocks, parameter.resets, resetCtrl)
-    parameter.clockLogic(clockCtrl, resetCtrl, io_plat.clock)
+    val clockCtrl = parameter.clockCtrl(parameter.clocks, resetCtrl)
+    ClockControllerCtrl.connect(parameter.clocks, clockCtrl, resetCtrl)
+    clockCtrl.io.mainReset := io_plat.reset
+    clockCtrl.io.mainClock := io_plat.clock
 
     val core = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
       val mtimerInterrupt = Bool
