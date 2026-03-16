@@ -88,6 +88,9 @@ object MT25Q {
         deviceManagement.protocol := B(2)
         cycles := 1
       }
+      when(deviceManagement.protocol === B(2)) {
+        cycles := 1
+      }
 
       val samplesSingles = History(
         that = io.dqIn(0),
@@ -167,7 +170,10 @@ object MT25Q {
       output := B(0)
       switch(deviceIn.state) {
         is(SpiState.RESPONSE) {
-          when(counter.value === cycles) {
+          when(deviceManagement.protocol === B(2) && counter.value(0)) {
+            offset := offset + 1
+          }
+          when(deviceManagement.protocol === B(0) && counter.value === cycles) {
             offset := offset + 1
           }
           counter.increment()
