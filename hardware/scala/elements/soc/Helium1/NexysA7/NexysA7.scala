@@ -9,9 +9,7 @@ import spinal.core.sim._
 import spinal.lib._
 
 import nafarr.system.reset._
-import nafarr.system.reset.ResetControllerCtrl._
 import nafarr.system.clock._
-import nafarr.system.clock.ClockControllerCtrl._
 import nafarr.blackboxes.xilinx.a7._
 
 import zibal.misc._
@@ -80,6 +78,7 @@ case class NexysA7Board() extends Component {
 
 case class NexysA7Top() extends Component {
   val resets = List[ResetParameter](ResetParameter("system", 64), ResetParameter("debug", 64))
+  val inputClock = ClockParameter("input", 100 MHz, "input")
   val clocks = List[ClockParameter](
     ClockParameter("system", 100 MHz, "system"),
     ClockParameter("debug", 100 MHz, "debug", synchronousWith = "system")
@@ -91,9 +90,20 @@ case class NexysA7Top() extends Component {
   val parameter = Helium.Parameter(
     socParameter,
     128 kB,
-    (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
-    (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-      clockCtrl.buildDummy(clock, resetCtrl)
+    (parameter: ResetControllerCtrl.Parameter) => {
+      val resetCtrl = new ResetControllerCtrl.GeneratorResetController(parameter)
+      resetCtrl
+    },
+    (
+        parameter: ClockControllerCtrl.Parameter,
+        resetCtrl: ResetControllerCtrl.ResetControllerBase
+    ) => {
+      val clockCtrl = new ClockControllerCtrl.ClockDividerController(
+        parameter,
+        inputClock,
+        List("system", "debug")
+      )
+      clockCtrl
     }
   )
 

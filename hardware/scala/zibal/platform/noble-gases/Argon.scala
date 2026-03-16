@@ -31,12 +31,13 @@ object Argon {
       socParameter: SocParameter,
       onChipRamSize: BigInt,
       hyperbusPartitions: List[(BigInt, Boolean)],
-      resetLogic: (ResetControllerCtrl.ResetControllerCtrl, Bool, Bool) => Unit,
-      clockLogic: (
-          ClockControllerCtrl.ClockControllerCtrl,
-          ResetControllerCtrl.ResetControllerCtrl,
-          Bool
-      ) => Unit,
+      resetCtrl: (
+          ResetControllerCtrl.Parameter
+      ) => ResetControllerCtrl.ResetControllerBase,
+      clockCtrl: (
+          ClockControllerCtrl.Parameter,
+          ResetControllerCtrl.ResetControllerBase
+      ) => ClockControllerCtrl.ClockControllerBase,
       onChipRamLogic: (BigInt) => (Axi4Shared, Mem[Bits]) = (onChipRamSize: BigInt) => {
         val ram = Axi4SharedOnChipRam(
           dataWidth = 32,
@@ -64,11 +65,14 @@ object Argon {
 
     override def initOnChipRam(path: String) = BinTools.initRam(system.onChipRamMem, path)
 
-    val resetCtrl = ResetControllerCtrl(parameter.resets)
-    parameter.resetLogic(resetCtrl, io_plat.reset, io_plat.clock)
+    val resetCtrl = parameter.resetCtrl(parameter.resets)
+    resetCtrl.io.mainReset := io_plat.reset
+    resetCtrl.io.mainClock := io_plat.clock
 
-    val clockCtrl = ClockControllerCtrl(parameter.clocks, parameter.resets, resetCtrl)
-    parameter.clockLogic(clockCtrl, resetCtrl, io_plat.clock)
+    val clockCtrl = parameter.clockCtrl(parameter.clocks, resetCtrl)
+    ClockControllerCtrl.connect(parameter.clocks, clockCtrl, resetCtrl)
+    clockCtrl.io.mainReset := io_plat.reset
+    clockCtrl.io.mainClock := io_plat.clock
 
     val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
 

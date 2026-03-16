@@ -9,9 +9,7 @@ import spinal.core.sim._
 import spinal.lib._
 
 import nafarr.system.reset._
-import nafarr.system.reset.ResetControllerCtrl._
 import nafarr.system.clock._
-import nafarr.system.clock.ClockControllerCtrl._
 import nafarr.blackboxes.lattice.ecp5._
 
 import zibal.misc._
@@ -81,6 +79,7 @@ case class ECPIX5Board() extends Component {
 
 case class ECPIX5Top() extends Component {
   val resets = List[ResetParameter](ResetParameter("system", 128), ResetParameter("debug", 128))
+  val inputClock = ClockParameter("input", 100 MHz, "input")
   val clocks = List[ClockParameter](
     ClockParameter("system", 100 MHz, "system"),
     ClockParameter("debug", 10 MHz, "debug", synchronousWith = "system")
@@ -92,19 +91,20 @@ case class ECPIX5Top() extends Component {
   val parameter = Helium.Parameter(
     socParameter,
     128 kB,
-    (resetCtrl: ResetControllerCtrl, _, clock: Bool) => { resetCtrl.buildXilinx(clock) },
-    (clockCtrl: ClockControllerCtrl, resetCtrl: ResetControllerCtrl, clock: Bool) => {
-      clockCtrl.buildDummy(clock, resetCtrl)
-      /* TODO PLLs don't work when booting from flash
-      clockCtrl.buildXilinxECP5Pll(
-        clock,
-        boardParameter.getOscillatorFrequency,
-        List("system", "debug"),
-        2,
-        1,
-        9
+    (parameter: ResetControllerCtrl.Parameter) => {
+      val resetCtrl = new ResetControllerCtrl.GeneratorResetController(parameter)
+      resetCtrl
+    },
+    (
+        parameter: ClockControllerCtrl.Parameter,
+        resetCtrl: ResetControllerCtrl.ResetControllerBase
+    ) => {
+      val clockCtrl = new ClockControllerCtrl.LatticeECP5PllController(
+        parameter,
+        inputClock,
+        List("system", "debug")
       )
-       */
+      clockCtrl
     }
   )
 
