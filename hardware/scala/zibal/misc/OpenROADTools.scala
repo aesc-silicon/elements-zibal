@@ -622,6 +622,10 @@ object OpenROADTools {
           writer.write(
             s"export FILL_CELLS = ${platform.tech}_fill_1 ${platform.tech}_fill_2 ${platform.tech}_decap_8\n"
           )
+          // HACK: Remove Filler4000 and Filler10000 because these narrow pad to core connections blocking the PDN stripes.
+          writer.write(
+            s"export IO_FILLER_CELLS = ${platform.tech}_Filler2000 ${platform.tech}_Filler1000 ${platform.tech}_Filler400 ${platform.tech}_Filler200\n"
+          )
         }
         writer.close()
 
