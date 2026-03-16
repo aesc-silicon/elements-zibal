@@ -80,6 +80,8 @@ object OpenROADTools {
         "inout_30mA_ports" -> (s"${platform.tech}_IOPadInOut30mA", true, true)
       )
       val clocks = Map[String, (String, Float, String, ArrayBuffer[(String, String)])]()
+      val generatedClocks =
+        Map[String, (Int, Float, String, String, ArrayBuffer[(String, String)])]()
       val falsePath = ArrayBuffer[(String, String)]()
       var hasIoConstrains: Boolean = false
       val ioPinConstraints = Map(
@@ -129,6 +131,44 @@ object OpenROADTools {
           }
         } else {
           clocks += pin.getName() -> (pin.getName(), time, "", ArrayBuffer())
+        }
+      }
+
+      def addGeneratedClock(
+          inputClock: Bool,
+          inputFrequency: HertzNumber,
+          name: String,
+          outputClock: UInt,
+          outputBit: Int,
+          outputFrequency: HertzNumber
+      ) = {
+        val divider = (inputFrequency / outputFrequency).toInt
+        val time = (outputFrequency.toTime.toBigDecimal / 1.0e-9).floatValue()
+        val compRelPath = outputClock.component.getPath().split("/").drop(1).mkString(".")
+        val netName =
+          if (compRelPath.isEmpty) outputClock.getName()
+          else s"${compRelPath}_${outputClock.getName()}"
+        val outputClockName = s"$netName[$outputBit]"
+
+        val inputClockname = inputClock.parent match {
+          case instance: IhpCmosIoSg13g2 =>
+            instance.cellName
+          case instance: IhpCmosIoSg13cmos5l =>
+            instance.cellName
+        }
+        generatedClocks += name -> (divider, time, inputClockname, outputClockName, ArrayBuffer())
+      }
+
+      def addReset(pin: Bool) = {
+        if (pin.parent != null) {
+          pin.parent match {
+            case instance: IhpCmosIoSg13g2 =>
+              setFalsePath(pin.getName(), "", false)
+            case instance: IhpCmosIoSg13cmos5l =>
+              setFalsePath(pin.getName(), "", false)
+          }
+        } else {
+          setFalsePath(pin.getName(), "", false)
         }
       }
 
@@ -345,33 +385,51 @@ object OpenROADTools {
             baseType.parent match {
               case instance: IhpCmosIoSg13g2 =>
                 if (!instance.clockGroup.equals("")) {
-                  clocks(instance.clockGroup)._4 += ((instance.getName(), instance.clockPort))
+                  if (clocks.contains(instance.clockGroup)) {
+                    clocks(instance.clockGroup)._4 += ((instance.getName(), instance.clockPort))
+                  }
+                  if (generatedClocks.contains(instance.clockGroup)) {
+                    generatedClocks(instance.clockGroup)._5 += (
+                      (
+                        instance.getName(),
+                        instance.clockPort
+                      )
+                    )
+                  }
                 }
               case instance: IhpCmosIoSg13cmos5l =>
                 if (!instance.clockGroup.equals("")) {
-                  clocks(instance.clockGroup)._4 += ((instance.getName(), instance.clockPort))
+                  if (clocks.contains(instance.clockGroup)) {
+                    clocks(instance.clockGroup)._4 += ((instance.getName(), instance.clockPort))
+                  }
+                  if (generatedClocks.contains(instance.clockGroup)) {
+                    generatedClocks(instance.clockGroup)._5 += (
+                      (
+                        instance.getName(),
+                        instance.clockPort
+                      )
+                    )
+                  }
                 }
             }
           }
         }
 
         writer.write(s"current_design ${designName}\n")
-        writer.write("set_units -time ns -resistance kOhm -capacitance pF -voltage V -current uA\n")
-        writer.write(s"set_max_fanout ${maxFanout} [current_design]\n")
-        writer.write(s"set_max_capacitance ${maxCapacitance} [current_design]\n")
-        writer.write(s"set_max_transition ${maxTransition} [current_design]\n")
-        writer.write(s"set_max_area ${maxArea}\n\n")
+        writer.write("\n")
 
         clocks.foreach { clock =>
           val clockDef =
-            if (hasIoRing) s"[get_pins ${clock._2._3}/p2c]" else s"[get_ports ${clock._2._1}_1]"
+            if (hasIoRing) s"[get_pins ${clock._2._3}/p2c]" else s"[get_ports ${clock._2._1}]"
+          val clockUncertainty = if (hasIoRing) 0.05 else 0.15
 
           writer.write(
             s"create_clock ${clockDef} -name ${clock._1} -period ${clock._2._2} -waveform {0 ${clock._2._2 / 2}}\n"
           )
-          writer.write(s"set_ideal_network ${clockDef}\n")
-          writer.write(s"set_clock_uncertainty 0.15 [get_clocks ${clock._1}]\n")
+
+          writer.write(s"set_clock_uncertainty ${clockUncertainty} [get_clocks ${clock._1}]\n")
           writer.write(s"set_clock_transition 0.25 [get_clocks ${clock._1}]\n")
+
           writer.write(s"set input_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
           writer.write(s"set output_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
 
@@ -387,42 +445,113 @@ object OpenROADTools {
                 }
                 writer.write(s"}]\n")
 
-                writer.write(
-                  s"set_driving_cell -lib_cell ${group._2._1} -pin pad $$${clockName}_${groupName}\n"
-                )
                 if (group._2._2) {
                   writer.write(
-                    s"set_input_delay $$input_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
+                    s"set_driving_cell -lib_cell ${group._2._1} -pin pad $$${clockName}_${groupName}\n"
+                  )
+                  writer.write(
+                    s"set_input_delay -max $$input_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
+                  )
+                  writer.write(
+                    s"set_input_delay -min 0.5 -clock ${clock._1} $$${clockName}_${groupName}\n"
                   )
                 }
                 if (group._2._3) {
+                  writer.write(s"set_load -pin_load 10 $$${clockName}_${groupName}\n")
                   writer.write(
-                    s"set_output_delay $$output_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
+                    s"set_output_delay -max $$output_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
+                  )
+                  writer.write(
+                    s"set_output_delay -min 0.5 -clock ${clock._1} $$${clockName}_${groupName}\n"
                   )
                 }
               }
             }
           } else {
+            writer.write(s"set all_inputs_wo_clk_rst_${clock._1} {}\n")
             writer.write(
-              s"set clk_indx_${clock._1} [lsearch [all_inputs] ${clockDef}]\n"
+              s"""foreach port [all_inputs] { if {[get_full_name $$port] ni {${clock._2._1} ${clock._2._1
+                .replace(
+                  "_clk",
+                  "_resetn"
+                )}}} { lappend all_inputs_wo_clk_rst_${clock._1} $$port } }\n"""
             )
             writer.write(
-              s"""set all_inputs_wo_clk_rst_${clock._1} [lreplace [all_inputs] $$clk_indx_${clock._1} $$clk_indx_${clock._1} ""]\n"""
+              s"set_false_path -from [get_ports ${clock._2._1.replace("_clk", "_resetn")}]\n"
             )
             writer.write(
-              s"set_input_delay $$input_delay_value_${clock._1} -clock [get_clocks ${clock._2._1}] $$all_inputs_wo_clk_rst_${clock._1}\n"
+              s"set_input_delay -max 0 -clock ${clock._1} $$all_inputs_wo_clk_rst_${clock._1}\n"
             )
             writer.write(
-              s"set_output_delay $$output_delay_value_${clock._1} -clock [get_clocks ${clock._2._1}] [all_outputs]\n"
+              s"set_input_delay -min 0 -clock ${clock._1} $$all_inputs_wo_clk_rst_${clock._1}\n"
+            )
+            writer.write(
+              s"set_output_delay -max 0 -clock ${clock._1} [all_outputs]\n"
+            )
+            writer.write(
+              s"set_output_delay -min 0 -clock ${clock._1} [all_outputs]\n"
             )
           }
           writer.write(s"\n")
         }
 
-        falsePath.foreach { falsePath =>
+        generatedClocks.foreach { clock =>
+          val clockUncertainty = if (hasIoRing) 0.05 else 0.15
+
           writer.write(
-            s"set_false_path -from [get_clocks ${falsePath._1}] -to [get_clocks ${falsePath._2}]\n"
+            s"create_generated_clock -name ${clock._1} -source [get_pins ${clock._2._3}/p2c] -divide_by ${clock._2._1} [get_nets ${clock._2._4}]\n"
           )
+          writer.write(s"set_clock_uncertainty ${clockUncertainty} [get_clocks ${clock._1}]\n")
+          writer.write(s"set input_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
+          writer.write(s"set output_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
+
+          if (hasIoRing) {
+            val clockName = clock._1
+            ioClockGroups.foreach { group =>
+              val groupName = group._1
+              val signals = clock._2._5.toSeq.filter(_._2.equals(groupName))
+              if (signals.length > 0) {
+                writer.write(s"set ${clockName}_${groupName} [get_ports {\n")
+                signals.foreach { sig =>
+                  writer.write(s"\t${sig._1}_PAD\n")
+                }
+                writer.write(s"}]\n")
+
+                if (group._2._2) {
+                  writer.write(
+                    s"set_driving_cell -lib_cell ${group._2._1} -pin pad $$${clockName}_${groupName}\n"
+                  )
+                  writer.write(
+                    s"set_input_delay -max $$input_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
+                  )
+                  writer.write(
+                    s"set_input_delay -min 0.5 -clock ${clock._1} $$${clockName}_${groupName}\n"
+                  )
+                }
+                if (group._2._3) {
+                  writer.write(s"set_load -pin_load 10 $$${clockName}_${groupName}\n")
+                  writer.write(
+                    s"set_output_delay -max $$output_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
+                  )
+                  writer.write(
+                    s"set_output_delay -min 0.5 -clock ${clock._1} $$${clockName}_${groupName}\n"
+                  )
+                }
+              }
+            }
+          }
+        }
+
+        falsePath.foreach { falsePath =>
+          if (falsePath._2 == "") {
+            writer.write(
+              s"set_false_path -from [get_ports ${falsePath._1}] -to [all_registers]\n"
+            )
+          } else {
+            writer.write(
+              s"set_false_path -from [get_clocks ${falsePath._1}] -to [get_clocks ${falsePath._2}]\n"
+            )
+          }
         }
 
         if (hasIoRing) {
@@ -434,9 +563,6 @@ object OpenROADTools {
           writer.write(
             s"set_driving_cell -lib_cell ${platform.tech}_IOPadIn -pin pad $$clock_ports\n"
           )
-
-          writer.write(s"set_load -pin_load 5 [all_inputs]\n")
-          writer.write(s"set_load -pin_load 5 [all_outputs]\n")
         }
 
         writer.write(s"set_timing_derate -early 0.95\n")
