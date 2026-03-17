@@ -140,6 +140,7 @@ tasks:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'find {{ .BUILD_ROOT  }}/{{ .SOC }}/{{ .board }}/orfs/ -type f -iname \"*.log\" -exec grep -v -e \"already destroyed\" -e \"XDG_RUNTIME_DIR not set\" -i {} \\+ |
                 grep --color -e WARNING -e ERROR'"
+      - "{{.RUN}} 'find {{ .BUILD_ROOT  }}/{{ .SOC }}/{{ .board }}/orfs/reports/ -type f -iname \"6_finish.rpt\" -exec grep  \"violation count\" {} \\+'"
 
   clean-zibal:
     desc: Cleans up Zibal-specific files and artifacts.
