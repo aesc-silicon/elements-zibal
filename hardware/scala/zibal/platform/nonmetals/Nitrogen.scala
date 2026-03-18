@@ -241,7 +241,7 @@ object Nitrogen {
       )
       ctrl.io.cfgSpiBus << wishboneSpiCc.io.output
 
-      val wishboneXipCc = WishboneCcToggle(
+      val wishboneXipCc = WishboneCcFifo(
         cfg = system.wishboneConfig,
         inputCd = clockCtrl.getClockDomainByName("system"),
         outputCd = clockCtrl.getClockDomainByName("spiXip")
