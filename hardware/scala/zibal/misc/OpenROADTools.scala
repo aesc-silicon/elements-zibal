@@ -48,10 +48,7 @@ object OpenROADTools {
       var ioPower: Option[Seq[IhpPowerIo.IhpPowerIo]] = null
       var usePdkFiles: Boolean = true
       var placeDensity: Double = 0.75
-      var maxFanout: Int = 8
-      var maxCapacitance: Double = 0.5
-      var maxTransition: Int = 3
-      var maxArea: Int = 0
+      var holdSlackMargin: Double = 0.0
       var ioPercentage: Double = 0.2
       var pdnRingWidth: Double = 5.0
       var pdnRingSpace: Double = 2.0
@@ -609,6 +606,7 @@ object OpenROADTools {
         }
         writer.write("export TNS_END_PERCENT = 100\n")
         writer.write(s"export PLACE_DENSITY = ${placeDensity}\n")
+        writer.write(s"export HOLD_SLACK_MARGIN = ${holdSlackMargin}\n")
         writer.write("export MACRO_PLACE_HALO = 20 20\n")
         if (multiCornerEnabled) {
           if (isBlock) {
