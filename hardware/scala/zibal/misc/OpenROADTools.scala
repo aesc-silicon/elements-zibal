@@ -427,8 +427,8 @@ object OpenROADTools {
           writer.write(s"set_clock_uncertainty ${clockUncertainty} [get_clocks ${clock._1}]\n")
           writer.write(s"set_clock_transition 0.25 [get_clocks ${clock._1}]\n")
 
-          writer.write(s"set input_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
-          writer.write(s"set output_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
+          writer.write(f"set input_delay_value_${clock._1} ${clock._2._2 * ioPercentage}%.2f\n")
+          writer.write(f"set output_delay_value_${clock._1} ${clock._2._2 * ioPercentage}%.2f\n")
 
           if (hasIoRing) {
             val clockName = clock._1
@@ -499,8 +499,8 @@ object OpenROADTools {
             s"create_generated_clock -name ${clock._1} -source [get_pins ${clock._2._3}/p2c] -divide_by ${clock._2._1} [get_nets ${clock._2._4}]\n"
           )
           writer.write(s"set_clock_uncertainty ${clockUncertainty} [get_clocks ${clock._1}]\n")
-          writer.write(s"set input_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
-          writer.write(s"set output_delay_value_${clock._1} ${clock._2._2 * ioPercentage}\n")
+          writer.write(f"set input_delay_value_${clock._1} ${clock._2._2 * ioPercentage}%.2f\n")
+          writer.write(f"set output_delay_value_${clock._1} ${clock._2._2 * ioPercentage}%.2f\n")
 
           if (hasIoRing) {
             val clockName = clock._1
