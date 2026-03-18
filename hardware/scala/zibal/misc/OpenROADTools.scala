@@ -454,7 +454,7 @@ object OpenROADTools {
                   )
                 }
                 if (group._2._3) {
-                  writer.write(s"set_load -pin_load 10 $$${clockName}_${groupName}\n")
+                  writer.write(s"set_load -pin_load 4 $$${clockName}_${groupName}\n")
                   writer.write(
                     s"set_output_delay -max $$output_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
                   )
@@ -526,7 +526,7 @@ object OpenROADTools {
                   )
                 }
                 if (group._2._3) {
-                  writer.write(s"set_load -pin_load 10 $$${clockName}_${groupName}\n")
+                  writer.write(s"set_load -pin_load 4 $$${clockName}_${groupName}\n")
                   writer.write(
                     s"set_output_delay -max $$output_delay_value_${clock._1} -clock ${clock._1} $$${clockName}_${groupName}\n"
                   )
