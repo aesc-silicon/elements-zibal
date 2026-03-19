@@ -305,6 +305,7 @@ object OpenROADTools {
         writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal4 TopMetal1}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal3 TopMetal1}\n")
       }
 
       def generatePdn(designName: String) = {
