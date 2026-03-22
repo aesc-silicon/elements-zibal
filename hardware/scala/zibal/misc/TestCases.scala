@@ -7,6 +7,7 @@ package zibal.misc
 import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
+import spinal.lib.io.ReadableOpenDrain
 import scala.util.matching.Regex
 
 object TestCases {
@@ -78,6 +79,18 @@ object TestCases {
       fork {
         SimulationHelper.waitUntilOrFail(gpio0.toBoolean == true, 250 us, 100 ns)
         SimulationHelper.waitUntilOrFail(gpio1.toBoolean == true, 250 us, 100 ns)
+        simSuccess
+      }
+    }
+
+    def gpioCheckStates(gpio: Seq[Bool], compare: BigInt, delay: TimeNumber) {
+      fork {
+        SimulationHelper.wait(delay)
+        var buffer: BigInt = 0
+        (0 to 7).foreach { bitId =>
+          buffer |= gpio(bitId).toInt << bitId
+        }
+        assert(buffer == compare, s"GPIO ${buffer} doesn't match ${compare}")
         simSuccess
       }
     }
@@ -186,6 +199,67 @@ object TestCases {
           case Some(_) => simSuccess
           case None => assert(false, s"Read: 10001 not found in $stdout")
         }
+      }
+    }
+
+    def i2cDeviceWrite(
+        sda: Bool,
+        sdaOpenDrain: ReadableOpenDrain[Bool],
+        scl: Bool,
+        tickPeriod: Int,
+        delay: TimeNumber,
+        address: BigInt,
+        data: Seq[(BigInt, BigInt)]
+    ) {
+      fork {
+        sda #= true
+        scl #= true
+        // Wait for reset.
+        SimulationHelper.wait(delay)
+
+        for (transaction <- data) {
+          SimulationHelper.i2cDeviceStart(sda, scl, tickPeriod)
+          SimulationHelper.i2cDeviceAddress(sda, scl, tickPeriod, address, false)
+          SimulationHelper.i2cDeviceCheckAck(sdaOpenDrain, scl, tickPeriod)
+          SimulationHelper.i2cDeviceWriteByte(sda, scl, tickPeriod, transaction._1)
+          SimulationHelper.i2cDeviceCheckAck(sdaOpenDrain, scl, tickPeriod)
+          SimulationHelper.i2cDeviceWriteByte(sda, scl, tickPeriod, transaction._2)
+          SimulationHelper.i2cDeviceCheckAck(sdaOpenDrain, scl, tickPeriod)
+          SimulationHelper.i2cDeviceStop(sda, scl, tickPeriod)
+        }
+      }
+    }
+
+    def i2cDeviceRead(
+        sda: Bool,
+        sdaOpenDrain: ReadableOpenDrain[Bool],
+        scl: Bool,
+        tickPeriod: Int,
+        delay: TimeNumber,
+        address: BigInt,
+        register: BigInt,
+        compare: BigInt
+    ) {
+      fork {
+        sda #= true
+        scl #= true
+        // Wait for reset.
+        SimulationHelper.wait(delay)
+
+        SimulationHelper.i2cDeviceStart(sda, scl, tickPeriod)
+        SimulationHelper.i2cDeviceAddress(sda, scl, tickPeriod, address, false)
+        SimulationHelper.i2cDeviceCheckAck(sdaOpenDrain, scl, tickPeriod)
+        SimulationHelper.i2cDeviceWriteByte(sda, scl, tickPeriod, register)
+        SimulationHelper.i2cDeviceCheckAck(sdaOpenDrain, scl, tickPeriod)
+        SimulationHelper.i2cDeviceStop(sda, scl, tickPeriod)
+
+        SimulationHelper.i2cDeviceStart(sda, scl, tickPeriod)
+        SimulationHelper.i2cDeviceAddress(sda, scl, tickPeriod, address, true)
+        SimulationHelper.i2cDeviceCheckAck(sdaOpenDrain, scl, tickPeriod)
+        SimulationHelper.i2cDeviceReadByte(sdaOpenDrain, scl, tickPeriod, compare)
+        SimulationHelper.i2cDeviceStop(sda, scl, tickPeriod)
+
+        simSuccess
       }
     }
   }

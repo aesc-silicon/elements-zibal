@@ -7,6 +7,7 @@ package zibal.misc
 import spinal.core._
 import spinal.core.sim._
 import spinal.lib._
+import spinal.lib.io.ReadableOpenDrain
 import scala.util.matching.Regex
 
 object SimulationHelper {
@@ -96,6 +97,85 @@ object SimulationHelper {
     txd #= true
     sleep(baudPeriod * 1000)
   }
+
+  def i2cDeviceStart(sda: Bool, scl: Bool, tickPeriod: Int) = {
+    sleep(tickPeriod * 1000)
+    sda #= false
+    sleep(tickPeriod * 1000)
+    sleep(tickPeriod * 1000)
+    scl #= false
+    sleep(tickPeriod * 1000)
+  }
+
+  def i2cDeviceStop(sda: Bool, scl: Bool, tickPeriod: Int) = {
+    sleep(tickPeriod * 1000)
+    scl #= true
+    sleep(tickPeriod * 1000)
+    sleep(tickPeriod * 1000)
+    sda #= true
+    sleep(tickPeriod * 1000)
+  }
+
+  def i2cDeviceWriteBit(sda: Bool, scl: Bool, tickPeriod: Int, value: Boolean) = {
+    sda #= value
+    sleep(tickPeriod * 1000)
+    scl #= true
+    sleep(tickPeriod * 1000)
+    sleep(tickPeriod * 1000)
+    scl #= false
+    sleep(tickPeriod * 1000)
+    sda #= true
+  }
+
+  def i2cDeviceReadBit(sda: ReadableOpenDrain[Bool], scl: Bool, tickPeriod: Int): Boolean = {
+    var value = false
+
+    sleep(tickPeriod * 1000)
+    scl #= true
+    sleep(tickPeriod * 1000)
+    value = !sda.write.toBoolean
+    sleep(tickPeriod * 1000)
+    scl #= false
+    sleep(tickPeriod * 1000)
+    value
+  }
+
+  def i2cDeviceCheckAck(sda: ReadableOpenDrain[Bool], scl: Bool, tickPeriod: Int) = {
+    sleep(tickPeriod * 1000)
+    scl #= true
+    sleep(tickPeriod * 1000)
+    assert(sda.write.toBoolean == true, "Address ACK not high")
+    sleep(tickPeriod * 1000)
+    scl #= false
+    sleep(tickPeriod * 1000)
+  }
+
+  def i2cDeviceAddress(sda: Bool, scl: Bool, tickPeriod: Int, address: BigInt, write: Boolean) = {
+    (0 to 6).foreach { bitId =>
+      i2cDeviceWriteBit(sda, scl, tickPeriod, ((address >> bitId) & 1) != 0)
+    }
+    i2cDeviceWriteBit(sda, scl, tickPeriod, write)
+  }
+
+  def i2cDeviceWriteByte(sda: Bool, scl: Bool, tickPeriod: Int, data: BigInt) = {
+    (0 to 7).foreach { bitId =>
+      i2cDeviceWriteBit(sda, scl, tickPeriod, ((data >> bitId) & 1) != 0)
+    }
+  }
+  def i2cDeviceReadByte(
+      sda: ReadableOpenDrain[Bool],
+      scl: Bool,
+      tickPeriod: Int,
+      compare: BigInt
+  ) = {
+    var buffer = 0
+    (0 to 7).foreach { bitId =>
+      if (i2cDeviceReadBit(sda, scl, tickPeriod))
+        buffer |= 1 << bitId
+    }
+    assert(buffer == compare, s"Received ${buffer} but expected ${compare}")
+  }
+
   def dumpStdout(rxd: Bool, baudPeriod: Int) = {
     fork {
       waitUntil(rxd.toBoolean == true)
