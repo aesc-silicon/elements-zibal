@@ -6,7 +6,7 @@ version: '3'
 
 env:
   OPENROAD_EXE: "/opt/elements/tools/OpenROAD/bin/openroad"
-  YOSYS_EXE: "/opt/elements/tools/yosys/bin/yosys"
+  YOSYS_EXE: "/usr/local/bin/yosys"
   KEPLER_FORMAL_EXE: "/opt/elements/tools/kepler-formal/bin/kepler-formal"
   PATH: "/usr/local/bin/:/opt/elements/tools/OpenROAD/bin/:/opt/elements/oss-cad-suite/bin/:{{ .PATH }}"
 
