@@ -22,7 +22,8 @@ object Neon1 {
 
   case class Parameter(boardParameter: BoardParameter) extends SocParameter(boardParameter, 2) {
     val uartStd = UartCtrl.Parameter.full()
-    val gpioStatus = GpioCtrl.Parameter(Gpio.Parameter(4), 3, (0 to 2), (3 to 3), (3 to 3))
+    val gpioStatus =
+      GpioCtrl.Parameter(Gpio.Parameter(4), 3, Some(0 to 2), Some(3 to 3), Some(3 to 3))
   }
 
   case class Neon1(parameter: Neon.Parameter) extends Neon.Neon(parameter) {
