@@ -25,6 +25,12 @@ vars:
   PDK_CHECK: "{{.RUN}} 'ciel enable --pdk-family {{.PDK_FAMILY}} --pdk-root {{.PWD}}/pdks/ {{.PDK_HASH}}'"
 
 tasks:
+  lib-sbt-publishLocal:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'cd {{.PWD}}/{{.project}} && sbt publishLocal'"
+
   lib-generate:
     internal: true
     cmds:
@@ -59,7 +65,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "if [ -d {{ .PWD }}/software/{{ .package }}/{{ .app }}/ ]; then {{.RUN}} 'BOARD={{ .board }} SOURCE={{ .PWD }}/software/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ make -C {{ .ZIBAL_BASE }}/software/baremetal'; fi"
+      - "if [ -d {{ .PWD }}/software/{{ .package }}/{{ .app }}/ ]; then {{.RUN}} 'BOARD={{ .board }} SOURCE={{ .PWD }}/software/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ ARCH={{.arch}} make -C {{ .ZIBAL_BASE }}/software/baremetal'; fi"
 
   lib-sealring:
     internal: true
@@ -87,7 +93,15 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
+      - "{{.PDK_CHECK}}"
       - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .board }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/ {{if .stage}}{{.stage}}{{end}}'"
+
+  lib-update-metadata:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .board }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/ metadata-generate'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .board }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/ update_rules'"
 
   lib-filler:
     internal: true
@@ -142,6 +156,12 @@ tasks:
       - "{{.RUN}} 'find {{ .BUILD_ROOT  }}/{{ .SOC }}/{{ .board }}/orfs/ -type f -iname \"*.log\" -exec grep -v -e \"already destroyed\" -e \"XDG_RUNTIME_DIR not set\" -i {} \\+ |
                 grep --color -e WARNING -e ERROR'"
       - "{{.RUN}} 'find {{ .BUILD_ROOT  }}/{{ .SOC }}/{{ .board }}/orfs/reports/ -type f -iname \"6_finish.rpt\" -exec grep  \"violation count\" {} \\+'"
+
+  lib-check-metadata:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .board }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/orfs/ metadata-check'"
 
   clean-zibal:
     desc: Cleans up Zibal-specific files and artifacts.
