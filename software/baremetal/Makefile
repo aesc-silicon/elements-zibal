@@ -21,9 +21,11 @@ MAP = ${BUILD}/kernel.map
 
 LINKER = ${SOURCE}/kernel.ld
 
-AFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall
-CFLAGS = -march=rv32im_zicsr -mabi=ilp32 -Wall -g -ffunction-sections -fdata-sections
-LFLAGS = -march=rv32im_zicsr -mabi=ilp32 -m elf32lriscv --no-undefined -g --gc-sections
+ARCH ?= rv32i_zicsr
+
+AFLAGS = -march=${ARCH} -mabi=ilp32 -Wall
+CFLAGS = -march=${ARCH} -mabi=ilp32 -Wall -g -ffunction-sections -fdata-sections
+LFLAGS = -march=${ARCH} -mabi=ilp32 -m elf32lriscv --no-undefined -g --gc-sections
 
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 OBJECTS += $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
