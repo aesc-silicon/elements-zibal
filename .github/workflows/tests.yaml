@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           path: zibal
 
@@ -47,24 +47,37 @@ jobs:
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
 
       - name: Checkout VexRiscv
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           repository: aesc-silicon/elements-vexriscv
           path: vexriscv
 
       - name: Checkout Nafarr
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           repository: aesc-silicon/elements-nafarr
           ref: main
           path: nafarr
 
       - name: Checkout SpinalCrypto
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
           repository: SpinalHDL/SpinalCrypto
           ref: master
           path: SpinalCrypto
+
+      - name: Checkout VexiiRiscv
+        uses: actions/checkout@v6
+        with:
+          repository: SpinalHDL/VexiiRiscv
+          ref: dev
+          path: VexiiRiscv
+          submodules: true
+
+      - name: Publish VexiiRiscv
+        run: |
+          cd VexiiRiscv
+          sbt publishLocal
 
       - name: Compile
         run: |
