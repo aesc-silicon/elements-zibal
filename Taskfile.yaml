@@ -67,6 +67,12 @@ tasks:
       - "{{.CONTAINER_CHECK}}"
       - "if [ -d {{ .PWD }}/software/{{ .package }}/{{ .app }}/ ]; then {{.RUN}} 'BOARD={{ .board }} SOURCE={{ .PWD }}/software/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/firmware/{{ .app }}/ ARCH={{.arch}} make -C {{ .ZIBAL_BASE }}/software/baremetal'; fi"
 
+  lib-zephyr-firmware:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'west build -p -b {{.boardname}} -d {{.BUILD_ROOT}}/{{.SOC}}/{{.board}}/firmware/zephyr {{.app}}'"
+
   lib-sealring:
     internal: true
     cmds:
