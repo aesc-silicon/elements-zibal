@@ -29,19 +29,19 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'cd {{.PWD}}/{{.project}} && sbt publishLocal'"
+      - "{{.RUN}} 'cd {{.PWD}}/{{.project}} && sbt {{if .CI}}--warn{{end}} publishLocal'"
 
   lib-generate:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'BOARD={{ .board }} sbt \"runMain {{ .package }}.{{ .board }}Generate\"'"
+      - "{{.RUN}} 'BOARD={{ .board }} sbt {{if .CI}}--warn{{end}} \"runMain {{ .package }}.{{ .board }}Generate\"'"
 
   lib-simulate:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'BOARD={{ .board }} sbt \"runMain {{ .package }}.{{ .board }}Simulate {{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }} {{ if .duration }}{{ .duration }}{{ else }}100{{ end }}\"'"
+      - "{{.RUN}} 'BOARD={{ .board }} sbt {{if .CI}}--warn{{end}} \"runMain {{ .package }}.{{ .board }}Simulate {{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }} {{ if .duration }}{{ .duration }}{{ else }}100{{ end }}\"'"
 
   lib-view-simulation:
     internal: true
@@ -53,7 +53,7 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'mkdir -p {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/fpga/'"
-      - "{{.RUN}} 'BOARD={{ .board }} ./modules/elements/zibal/eda/{{ .vendor }}/fpga/syn.sh'"
+      - "{{.RUN}} 'BOARD={{ .board }} ./modules/elements/zibal/eda/{{ .vendor }}/fpga/syn.sh {{if .CI}}--quiet{{end}}'"
 
   lib-flash-bitstream:
     internal: true
