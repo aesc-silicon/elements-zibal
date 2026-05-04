@@ -31,6 +31,23 @@ tasks:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'cd {{.PWD}}/{{.project}} && sbt {{if .CI}}--warn{{end}} publishLocal'"
 
+  west-init:
+    desc: Initializes the west workspace using the local manifest.
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'west init -l {{.PWD}}/manifests'"
+
+  west-update:
+    desc: Fetches all west dependencies and exports the Zephyr CMake package.
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'west update'"
+      - "{{.RUN}} 'pip install --break-system-packages -r modules/elements/zephyr/scripts/requirements.txt'"
+      - "{{.RUN}} 'rm -rf ~/.cmake/packages/Zephyr'"
+      - "{{.RUN}} 'rm -rf ~/.cmake/packages/ZephyrUnittest'"
+      - "{{.RUN}} 'west zephyr-export'"
+
   lib-generate:
     internal: true
     cmds:
