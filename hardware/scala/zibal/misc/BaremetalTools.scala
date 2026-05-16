@@ -10,17 +10,19 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, Set, Map}
 import spinal.lib.bus.amba4.axi._
 import spinal.lib.bus.amba3.apb._
+import spinal.lib.bus.tilelink._
+import spinal.lib.bus.tilelink.{Bus => TileLink}
 import spinal.lib.bus.wishbone._
 import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
-import nafarr.peripherals.io.gpio.{Apb3Gpio, WishboneGpio}
-import nafarr.peripherals.io.pio.{Apb3Pio, WishbonePio}
-import nafarr.peripherals.io.pwm.{Apb3Pwm, WishbonePwm}
-import nafarr.peripherals.com.uart.{Apb3Uart, WishboneUart}
-import nafarr.peripherals.com.spi.{Apb3SpiController, WishboneSpiController}
-import nafarr.peripherals.com.i2c.{Apb3I2cController, WishboneI2cController}
-import nafarr.peripherals.pinmux.{Apb3Pinmux, WishbonePinmux}
-import nafarr.system.mtimer.{Apb3MachineTimer, WishboneMachineTimer}
-import nafarr.system.plic.{Apb3Plic, WishbonePlic}
+import nafarr.peripherals.io.gpio.{Apb3Gpio, TileLinkGpio, WishboneGpio}
+import nafarr.peripherals.io.pio.{Apb3Pio, TileLinkPio, WishbonePio}
+import nafarr.peripherals.io.pwm.{Apb3Pwm, TileLinkPwm, WishbonePwm}
+import nafarr.peripherals.com.uart.{Apb3Uart, TileLinkUart, WishboneUart}
+import nafarr.peripherals.com.spi.{Apb3SpiController, TileLinkSpiController, WishboneSpiController}
+import nafarr.peripherals.com.i2c.{Apb3I2cController, TileLinkI2cController, WishboneI2cController}
+import nafarr.peripherals.pinmux.{Apb3Pinmux, TileLinkPinmux, WishbonePinmux}
+import nafarr.system.mtimer.{Apb3MachineTimer, TileLinkMachineTimer, WishboneMachineTimer}
+import nafarr.system.plic.{Apb3Plic, TileLinkPlic, WishbonePlic}
 import nafarr.memory.hyperbus.{Apb3HyperBus, WishboneHyperBus}
 import nafarr.crypto.aes.Apb3AesMaskedAccelerator
 
@@ -170,5 +172,69 @@ object BaremetalTools {
       writer.write("#endif /* SOC_HEADER */\n")
       writer.close()
     }
+
+    def generateTileLink(
+        bridgeMapping: SizeMapping,
+        mapping: ArrayBuffer[(TileLink, SizeMapping)],
+        irqMapping: ArrayBuffer[(Int, Bool)]
+    ) = {
+      val filename = "soc.h"
+      val file = s"${config.swStorageBuildPath(name)}/${filename}"
+      val writer = new PrintWriter(new File(file))
+      SpinalInfo(s"Generating ${filename} for ${name}")
+
+      writer.write("#ifndef SOC_HEADER\n")
+      writer.write("#define SOC_HEADER\n\n")
+
+      val address = bridgeMapping.base
+      for ((ip, size) <- mapping) {
+        val parent = ip.parent.component
+        val regAddress = address + size.base
+        val definition = parent match {
+          case _: TileLinkUart =>
+            val ip = parent.asInstanceOf[TileLinkUart]
+            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
+            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
+          case _: TileLinkI2cController =>
+            val ip = parent.asInstanceOf[TileLinkI2cController]
+            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
+            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
+          case _: TileLinkSpiController =>
+            val ip = parent.asInstanceOf[TileLinkSpiController]
+            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
+            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
+          case _: TileLinkGpio =>
+            val ip = parent.asInstanceOf[TileLinkGpio]
+            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
+            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
+            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
+          case _: TileLinkPio =>
+            val ip = parent.asInstanceOf[TileLinkPio]
+            ip.headerBareMetal(parent.toString(), regAddress, size.size)
+          case _: TileLinkPwm =>
+            val ip = parent.asInstanceOf[TileLinkPwm]
+            ip.headerBareMetal(parent.toString(), regAddress, size.size)
+          case _: TileLinkPinmux =>
+            val ip = parent.asInstanceOf[TileLinkPinmux]
+            ip.headerBareMetal(parent.toString(), regAddress, size.size)
+          case _: TileLinkMachineTimer =>
+            val ip = parent.asInstanceOf[TileLinkMachineTimer]
+            ip.headerBareMetal(parent.toString(), regAddress, size.size)
+          case _: TileLinkPlic =>
+            val ip = parent.asInstanceOf[TileLinkPlic]
+            ip.headerBareMetal(parent.toString(), regAddress, size.size)
+          case _ => ""
+        }
+        writer.write(definition)
+        if (definition.length > 0)
+          writer.write("\n")
+      }
+      writer.write("#endif /* SOC_HEADER */\n")
+      writer.close()
+    }
+
   }
 }

@@ -7,23 +7,22 @@ package zibal.platform
 import spinal.core._
 import spinal.lib._
 
-import zibal.soc.SocParameter
-import zibal.misc.BinTools
 import zibal.misc.BaremetalTools
 import zibal.misc.ElementsConfig
+import zibal.soc.SocParameter
 
 import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
-import spinal.lib.bus.bmb._
-import spinal.lib.bus.wishbone._
+import spinal.lib.bus.tilelink.{Bus => TileLinkBus, BusParameter => TileLinkParameter}
 
-import nafarr.bus.bmb.BmbCache
-import nafarr.system.mtimer.{WishboneMachineTimer, MachineTimerCtrl}
-import nafarr.system.plic.{WishbonePlic, Plic, PlicCtrl}
-import nafarr.system.reset.{WishboneResetController, ResetControllerCtrl}
-import nafarr.system.clock.{WishboneClockController, ClockControllerCtrl}
-import nafarr.memory.spi.{BmbSpiXipController}
+import nafarr.bus.tilelink.{TileLinkCache, TileLinkDecoder, TileLinkArbiter}
+import nafarr.system.mtimer.{TileLinkMachineTimer, MachineTimerCtrl}
+import nafarr.system.plic.{TileLinkPlic, PlicCtrl}
+import nafarr.system.reset.{TileLinkResetController, ResetControllerCtrl}
+import nafarr.system.clock.{TileLinkClockController, ClockControllerCtrl}
+import nafarr.memory.spi.{TileLinkSpiXipController}
+import nafarr.memory.ocram.TileLinkOnChipRam
 import nafarr.peripherals.com.spi.{Spi, SpiControllerCtrl}
-import nafarr.cores.cpu.vexiiriscv.{VexiiRiscvCoreParameter, VexiiRiscvBmb}
+import nafarr.cores.cpu.vexiiriscv.{VexiiRiscvCoreParameter, TileLinkVexiiRiscv}
 
 import spinal.lib.com.jtag.Jtag
 
@@ -40,59 +39,65 @@ object Hydrogen {
           ClockControllerCtrl.Parameter,
           ResetControllerCtrl.ResetControllerBase
       ) => ClockControllerCtrl.ClockControllerBase,
-      onChipRamLogic: (BmbParameter, BigInt) => (Component, Bmb) =
-        (p: BmbParameter, onChipRamSize: BigInt) => {
-          val ram = BmbOnChipRam(
-            p = p,
-            size = onChipRamSize
-          )
+      onChipRamLogic: (TileLinkParameter, BigInt) => (Component, TileLinkBus) =
+        (p: TileLinkParameter, size: BigInt) => {
+          val ram = TileLinkOnChipRam(p = p, size = size)
           (ram, ram.io.bus)
         }
   ) extends PlatformParameter(socParameter) {
-    val core = VexiiRiscvCoreParameter.realtime(0xa0000000L)
+    val core   = VexiiRiscvCoreParameter.realtime(0xa0000000L)
     val mtimer = MachineTimerCtrl.Parameter.default
-    val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
+    val plic   = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
     val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
-    val spi = SpiControllerCtrl.Parameter.xip()
-
+    val spi    = SpiControllerCtrl.Parameter.xip()
   }
 
   class Hydrogen(parameter: Parameter) extends PlatformComponent(parameter) {
+
+    // -----------------------------------------------------------------------
+    // Platform IO
+    // -----------------------------------------------------------------------
     val io_plat = new Bundle {
       val reset = in(Bool)
       val clock = in(Bool)
-      val jtag = slave(Jtag())
-      val spi = master(Spi.Io(parameter.spi.io))
+      val jtag  = slave(Jtag())
+      val spi   = master(Spi.Io(parameter.spi.io))
     }
 
     def prepareBaremetal(name: String, elementsConfig: ElementsConfig.ElementsConfig) {
       val header = BaremetalTools.Header(elementsConfig, name)
-      header.generateWishbone(
-        this.system.wishboneBridge.mapping,
-        this.wishboneMapping,
+      header.generateTileLink(
+        this.system.periphMapping,
+        this.tileLinkMapping,
         this.irqMapping
       )
-    }
+   }
 
     override def initOnChipRam(path: String) {}
 
+    // -----------------------------------------------------------------------
+    // Reset and clock controllers
+    // -----------------------------------------------------------------------
     val resetCtrl = parameter.resetCtrl(parameter.resets)
     resetCtrl.io.mainReset := io_plat.reset
     resetCtrl.io.mainClock := io_plat.clock
-    resetCtrl.io.trigger := 0
+    resetCtrl.io.trigger   := 0
 
     val clockCtrl = parameter.clockCtrl(parameter.clocks, resetCtrl)
     ClockControllerCtrl.connect(parameter.clocks, clockCtrl, resetCtrl)
     clockCtrl.io.mainReset := io_plat.reset
     clockCtrl.io.mainClock := io_plat.clock
 
+    // -----------------------------------------------------------------------
+    // CPU (debug clock domain set explicitly; system CD from ClockingArea)
+    // -----------------------------------------------------------------------
     val core = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
-      val cpu = new VexiiRiscvBmb(
-        VexiiRiscvBmb.Parameter(
+      val cpu = new TileLinkVexiiRiscv(
+        TileLinkVexiiRiscv.Parameter(
           parameter.core.plugins,
-          parameter.core.iBusBmbParam,
-          parameter.core.dBusBmbParam
+          parameter.core.iBusTlParam,
+          parameter.core.dBusTlParam
         ),
         clockCtrl.getClockDomainByName("debug")
       )
@@ -104,117 +109,109 @@ object Hydrogen {
       io_plat.jtag <> cpu.jtag
     }
 
+    // -----------------------------------------------------------------------
+    // System interconnect (two-port TileLink)
+    //
+    // Port 1 — memory (TL-UH capable via cache):
+    //   iBus ──┐
+    //          ├─ arbiter ─→ OCRAM
+    //   dBus ──┘
+    //          iBus ──┐
+    //                 ├─ arbiter ─→ TileLinkCache ─→ TileLinkSpiXipController
+    //          dBus ──┘
+    //
+    // Port 2 — peripherals (TL-UL, via connectPeripherals()):
+    //   dBus ──→ peripheral decoder ─→ {PLIC, MTimer, ResetCtrl, ClockCtrl, …}
+    // -----------------------------------------------------------------------
     val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
 
-      /* BMB Subordinates */
+      val memParam   = parameter.core.iBusTlParam  // TL-UL, sourceWidth=1
+      val periphParam = TileLinkParameter.simple(32, 32, 4, 1)
+
+      // -----------------------------------------------------------------------
+      // Address mappings
+      // -----------------------------------------------------------------------
+      val ocramMapping  = SizeMapping(0x80000000L, parameter.onChipRamSize)
+      val spiMapping    = SizeMapping(0xa0000000L, parameter.spiRomSize)
+      val periphMapping = SizeMapping(0xf0000000L, 16 MB)
+
+      // -----------------------------------------------------------------------
+      // Memory bus decoders (iBus → 2 slaves, dBus → 3 slaves)
+      // -----------------------------------------------------------------------
+      val iBusDecoder = TileLinkDecoder(memParam, Seq(ocramMapping, spiMapping))
+      val dBusDecoder = TileLinkDecoder(memParam, Seq(ocramMapping, spiMapping, periphMapping))
+
+      iBusDecoder.io.up <> core.cpu.iBus
+      dBusDecoder.io.up <> core.cpu.dBus
+
+      // -----------------------------------------------------------------------
+      // Arbiters: combine iBus and dBus paths for OCRAM and SpiXip
+      // -----------------------------------------------------------------------
+      val ocramArbiter = TileLinkArbiter(memParam, 2)
+      val spiArbiter   = TileLinkArbiter(memParam, 2)
+
+      iBusDecoder.io.downs(0) <> ocramArbiter.io.ups(0)
+      dBusDecoder.io.downs(0) <> ocramArbiter.io.ups(1)
+
+      iBusDecoder.io.downs(1) <> spiArbiter.io.ups(0)
+      dBusDecoder.io.downs(1) <> spiArbiter.io.ups(1)
+
+      // -----------------------------------------------------------------------
+      // OCRAM (TileLinkArbiter output: sourceWidth = memParam.sourceWidth + 1)
+      // -----------------------------------------------------------------------
       val onChipRam = new Area {
-        val mapping = SizeMapping(0x80000000L, parameter.onChipRamSize)
-        val bmbParameter = BmbParameter(
-          addressWidth = log2Up(mapping.size) + 2,
-          dataWidth = 32,
-          lengthWidth = 6,
-          sourceWidth = 4,
-          contextWidth = 4
-        )
-        val (ctrl, port) = parameter.onChipRamLogic(bmbParameter, mapping.size)
+        val mapping  = ocramMapping
+        val busParam = ocramArbiter.io.down.p
+        val (ctrl, port) = parameter.onChipRamLogic(busParam, mapping.size)
+        port <> ocramArbiter.io.down
       }
 
-      val wishboneBridge = new Area {
-        val mapping = SizeMapping(0xf0000000L, 16 MB)
-        val bmbParameter = BmbParameter(
-          addressWidth = log2Up(mapping.size) + 2,
-          dataWidth = 32,
-          lengthWidth = 6,
-          sourceWidth = 4,
-          contextWidth = 4
-        )
-        val bridge = BmbToWishbone(p = bmbParameter)
-      }
-      val wishboneConfig = BmbToWishbone.getWishboneConfig(wishboneBridge.bmbParameter.access)
+      // -----------------------------------------------------------------------
+      // SPI XIP controller with a 4-word cache
+      // -----------------------------------------------------------------------
+      val spiXip = new Area {
+        val mapping    = spiMapping
+        val innerParam = spiArbiter.io.down.p   // sourceWidth = memParam.sourceWidth + 1
+        val outerParam = TileLinkCache.getOuterParameter(innerParam, 4)
 
-      val spiXipController = new Area {
-        val mapping = SizeMapping(0xa0000000L, parameter.spiRomSize)
-        val bmbParameter = BmbParameter(
-          addressWidth = log2Up(mapping.size) + 2,
-          dataWidth = 32,
-          lengthWidth = 6,
-          sourceWidth = 4,
-          contextWidth = 4
-        )
-        val ctrl = BmbSpiXipController(parameter.spi, bmbParameter, wishboneConfig)
+        val cache = TileLinkCache.Cache(innerParam, 4)
+        cache.io.inner <> spiArbiter.io.down
+
+        val ctrl = TileLinkSpiXipController(parameter.spi, outerParam)
+        ctrl.io.bus <> cache.io.outer
         io_plat.spi <> ctrl.io.spi
-
-        val cache = BmbCache(bmbParameter, 4)
-        ctrl.io.dataBus << cache.io.output
       }
 
-      /* Generate BMB Crossbar */
-      val iBusDecoder = BmbDecoder(
-        p = parameter.core.iBusBmbParam,
-        mappings = Seq(onChipRam.mapping, spiXipController.mapping),
-        capabilities = Seq(onChipRam.bmbParameter, spiXipController.bmbParameter)
-      )
-      iBusDecoder.io.input << core.cpu.iBus.pipelined(
-        cmdValid = true,
-        cmdReady = true,
-        rspValid = true,
-        rspReady = true
-      )
+      // -----------------------------------------------------------------------
+      // Peripheral bus (Port 2): dBus → peripheral decoder
+      // Published so that connectPeripherals() can wire the peripherals.
+      // -----------------------------------------------------------------------
+      val periphBusPort = TileLinkBus(periphParam)
+      dBusDecoder.io.downs(2) <> periphBusPort
 
-      val dBusDecoder = BmbDecoder(
-        p = parameter.core.dBusBmbParam,
-        mappings = Seq(onChipRam.mapping, spiXipController.mapping, wishboneBridge.mapping),
-        capabilities =
-          Seq(onChipRam.bmbParameter, spiXipController.bmbParameter, wishboneBridge.bmbParameter)
-      )
-      dBusDecoder.io.input << core.cpu.dBus.pipelined(
-        cmdValid = true,
-        cmdReady = true,
-        rspValid = true,
-        rspReady = true
-      )
-
-      val onChipRamArbiter = BmbArbiter(
-        inputsParameter = Seq(parameter.core.iBusBmbParam, parameter.core.dBusBmbParam),
-        outputParameter = onChipRam.bmbParameter,
-        lowerFirstPriority = true
-      )
-      onChipRam.port << onChipRamArbiter.io.output
-      onChipRamArbiter.io.inputs(0) << iBusDecoder.io.outputs(0)
-      onChipRamArbiter.io.inputs(1) << dBusDecoder.io.outputs(0)
-
-      val spiXipControllerArbiter = BmbArbiter(
-        inputsParameter = Seq(parameter.core.iBusBmbParam, parameter.core.dBusBmbParam),
-        outputParameter = spiXipController.bmbParameter,
-        lowerFirstPriority = true
-      )
-      spiXipController.cache.io.input << spiXipControllerArbiter.io.output
-      spiXipControllerArbiter.io.inputs(0) << iBusDecoder.io.outputs(1)
-      spiXipControllerArbiter.io.inputs(1) << dBusDecoder.io.outputs(1)
-
-      wishboneBridge.bridge.io.input << dBusDecoder.io.outputs(2)
-
-      /* Peripheral IP-Cores */
-      val plicCtrl = WishbonePlic(parameter.plic, wishboneConfig)
+      // -----------------------------------------------------------------------
+      // System peripherals
+      // -----------------------------------------------------------------------
+      val plicCtrl = TileLinkPlic(parameter.plic)
       core.cpu.globalInterrupt := plicCtrl.io.interrupt
       addPeripheralDevice(plicCtrl.io.bus, 0x800000, 4 MB)
 
-      val mtimerCtrl = WishboneMachineTimer(parameter.mtimer, wishboneConfig)
+      val mtimerCtrl = TileLinkMachineTimer(parameter.mtimer)
       core.cpu.mtimerInterrupt := mtimerCtrl.io.interrupt
       addPeripheralDevice(mtimerCtrl.io.bus, 0x20000, 4 kB)
 
-      val resetCtrlMapper = WishboneResetController(parameter.resets, wishboneConfig)
+      val resetCtrlMapper = TileLinkResetController(parameter.resets)
       resetCtrlMapper.io.config <> resetCtrl.io.config
       addPeripheralDevice(resetCtrlMapper.io.bus, 0x21000, 4 kB)
 
-      val clockCtrlMapper = WishboneClockController(parameter.clocks, wishboneConfig)
+      val clockCtrlMapper = TileLinkClockController(parameter.clocks)
       clockCtrlMapper.io.config <> clockCtrl.io.config
       addPeripheralDevice(clockCtrlMapper.io.bus, 0x22000, 4 kB)
 
-      addPeripheralDevice(spiXipController.ctrl.io.cfgSpiBus, 0x24000, 4 kB)
-      addPeripheralDevice(spiXipController.ctrl.io.cfgXipBus, 0x25000, 4 kB)
+      addPeripheralDevice(spiXip.ctrl.io.cfgSpiBus, 0x24000, 4 kB)
+      addPeripheralDevice(spiXip.ctrl.io.cfgXipBus, 0x25000, 4 kB)
 
-      publishPeripheralComponents(wishboneBridge.bridge, plicCtrl)
+      publishPeripheralComponents(periphBusPort, 0xf0000000L, plicCtrl)
     }
   }
 }

@@ -31,7 +31,7 @@ import spinal.lib.com.jtag.Jtag
 import vexriscv._
 import vexriscv.ip._
 import vexriscv.plugin._
-
+/*
 object Nitrogen {
 
   case class Parameter(
@@ -156,7 +156,6 @@ object Nitrogen {
     }
 
     val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
-      /* BMB Subordinates */
       val onChipRam = new Area {
         val mapping = SizeMapping(0x80000000L, parameter.onChipRamSize)
         val bmbParameter = BmbParameter(
@@ -178,7 +177,7 @@ object Nitrogen {
           sourceWidth = 4,
           contextWidth = 4
         )
-        val bridge = BmbToWishbone(p = bmbParameter)
+        val bridge = BmbToTileLink(p = bmbParameter)
       }
       val wishboneConfig = BmbToWishbone.getWishboneConfig(wishboneBridge.bmbParameter.access)
     }
@@ -250,7 +249,6 @@ object Nitrogen {
     }
 
     val crossbar = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
-      /* Generate BMB Crossbar */
       val iBusDecoder = BmbDecoder(
         p = VexRiscvCoreParameter.iBusConfig,
         mappings = Seq(system.onChipRam.mapping, hyperbus.mapping, spiXip.mapping),
@@ -316,7 +314,6 @@ object Nitrogen {
 
       system.wishboneBridge.bridge.io.input << dBusDecoder.io.outputs(3)
 
-      /* Peripheral IP-Cores */
       val plicCtrl = WishbonePlic(parameter.plic, system.wishboneConfig)
       core.globalInterrupt := plicCtrl.io.interrupt
       addPeripheralDevice(plicCtrl.io.bus, 0x800000, 4 MB)
@@ -342,3 +339,4 @@ object Nitrogen {
     }
   }
 }
+*/
