@@ -214,26 +214,6 @@ endif
             val parent = ip.parent.component
             val regAddress = address + size.base
             val deviceTree = parent match {
-              case _: Apb3Uart =>
-                val ip = parent.asInstanceOf[Apb3Uart]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3I2cController =>
-                val ip = parent.asInstanceOf[Apb3I2cController]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3SpiController =>
-                val ip = parent.asInstanceOf[Apb3SpiController]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3Gpio =>
-                val ip = parent.asInstanceOf[Apb3Gpio]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.deviceTreeZephyr(parent.toString(), regAddress, size.size, irqNumber)
               case _ => ""
             }
             writer.write(deviceTree)
