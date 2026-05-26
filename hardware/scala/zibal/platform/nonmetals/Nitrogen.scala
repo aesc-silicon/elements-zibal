@@ -78,7 +78,8 @@ object Nitrogen {
       header.generateWishbone(
         this.system.wishboneBridge.mapping,
         this.wishboneMapping,
-        this.irqMapping
+        this.irqMapping,
+        this.errorMapping
       )
     }
 
