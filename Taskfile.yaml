@@ -19,7 +19,7 @@ vars:
     -e KEPLER_FORMAL_EXE={{ .KEPLER_FORMAL_EXE }} \
     -e PATH={{ .PATH }} \
     --workdir={{ .PWD }} \
-    -it {{.CONTAINER_NAME}} \
+    {{if .CI}}-i{{else}}-it{{end}} {{.CONTAINER_NAME}} \
 "
   RUN: "{{.CONTAINER_CMD}} bash -c"
   PDK_CHECK: "{{.RUN}} 'ciel enable --pdk-family {{.PDK_FAMILY}} --pdk-root {{.PWD}}/pdks/ {{.PDK_HASH}}'"
