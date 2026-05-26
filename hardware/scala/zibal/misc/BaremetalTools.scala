@@ -10,19 +10,11 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, Set, Map}
 import spinal.lib.bus.amba4.axi._
 import spinal.lib.bus.amba3.apb._
+import spinal.lib.bus.tilelink._
+import spinal.lib.bus.tilelink.{Bus => TileLink}
 import spinal.lib.bus.wishbone._
 import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
-import nafarr.peripherals.io.gpio.{Apb3Gpio, WishboneGpio}
-import nafarr.peripherals.io.pio.{Apb3Pio, WishbonePio}
-import nafarr.peripherals.io.pwm.{Apb3Pwm, WishbonePwm}
-import nafarr.peripherals.com.uart.{Apb3Uart, WishboneUart}
-import nafarr.peripherals.com.spi.{Apb3SpiController, WishboneSpiController}
-import nafarr.peripherals.com.i2c.{Apb3I2cController, WishboneI2cController}
-import nafarr.peripherals.pinmux.{Apb3Pinmux, WishbonePinmux}
-import nafarr.system.mtimer.{Apb3MachineTimer, WishboneMachineTimer}
-import nafarr.system.plic.{Apb3Plic, WishbonePlic}
-import nafarr.memory.hyperbus.{Apb3HyperBus, WishboneHyperBus}
-import nafarr.crypto.aes.Apb3AesMaskedAccelerator
+import nafarr.peripherals.PeripheralsComponent
 
 object BaremetalTools {
 
@@ -35,7 +27,8 @@ object BaremetalTools {
         configs: mutable.LinkedHashMap[Axi4Bus, Axi4CrossbarSlaveConfig],
         bridge: Axi4Shared,
         apbMapping: ArrayBuffer[(Apb3, SizeMapping)],
-        irqMapping: ArrayBuffer[(Int, Bool)]
+        irqMapping: ArrayBuffer[Bool],
+        errorMapping: ArrayBuffer[Bool]
     ) = {
       val filename = "soc.h"
       val file = s"${config.swStorageBuildPath(name)}/${filename}"
@@ -51,53 +44,16 @@ object BaremetalTools {
           for ((ip, size) <- apbMapping) {
             val parent = ip.parent.component
             val regAddress = address + size.base
-            val definition = parent match {
-              case _: Apb3Uart =>
-                val ip = parent.asInstanceOf[Apb3Uart]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3I2cController =>
-                val ip = parent.asInstanceOf[Apb3I2cController]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3SpiController =>
-                val ip = parent.asInstanceOf[Apb3SpiController]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3Gpio =>
-                val ip = parent.asInstanceOf[Apb3Gpio]
-                val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-                val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-                ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-              case _: Apb3Pio =>
-                val ip = parent.asInstanceOf[Apb3Pio]
-                ip.headerBareMetal(parent.toString(), regAddress, size.size)
-              case _: Apb3Pwm =>
-                val ip = parent.asInstanceOf[Apb3Pwm]
-                ip.headerBareMetal(parent.toString(), regAddress, size.size)
-              case _: Apb3Pinmux =>
-                val ip = parent.asInstanceOf[Apb3Pinmux]
-                ip.headerBareMetal(parent.toString(), regAddress, size.size)
-              case _: Apb3MachineTimer =>
-                val ip = parent.asInstanceOf[Apb3MachineTimer]
-                ip.headerBareMetal(parent.toString(), regAddress, size.size)
-              case _: Apb3Plic =>
-                val ip = parent.asInstanceOf[Apb3Plic]
-                ip.headerBareMetal(parent.toString(), regAddress, size.size)
-              case _: Apb3HyperBus =>
-                val ip = parent.asInstanceOf[Apb3HyperBus]
-                ip.headerBareMetal(parent.toString(), regAddress, size.size)
-              case _: Apb3AesMaskedAccelerator =>
-                val ip = parent.asInstanceOf[Apb3AesMaskedAccelerator]
-                ip.headerBareMetal(parent.toString(), regAddress, size.size)
-              case _ => ""
-            }
+            val definition = buildDefinition(
+              parent,
+              componentName(parent),
+              regAddress,
+              size.size,
+              irqMapping,
+              errorMapping
+            )
             writer.write(definition)
-            if (definition.length > 0)
-              writer.write("\n")
+            if (definition.nonEmpty) writer.write("\n")
           }
         }
       }
@@ -105,10 +61,17 @@ object BaremetalTools {
       writer.close()
     }
 
+    private def componentName(c: Component): String = {
+      val raw = Option(c.getName()).filter(_.nonEmpty).getOrElse(c.getClass.getSimpleName)
+      val idx = raw.indexOf('_')
+      if (idx >= 0) raw.substring(idx + 1) else raw
+    }
+
     def generateWishbone(
         bridgeMapping: SizeMapping,
         wbMapping: ArrayBuffer[(Wishbone, SizeMapping)],
-        irqMapping: ArrayBuffer[(Int, Bool)]
+        irqMapping: ArrayBuffer[Bool],
+        errorMapping: ArrayBuffer[Bool]
     ) = {
       val filename = "soc.h"
       val file = s"${config.swStorageBuildPath(name)}/${filename}"
@@ -122,53 +85,77 @@ object BaremetalTools {
       for ((ip, size) <- wbMapping) {
         val parent = ip.parent.component
         val regAddress = address + size.base
-        val definition = parent match {
-          case _: WishboneUart =>
-            val ip = parent.asInstanceOf[WishboneUart]
-            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-          case _: WishboneI2cController =>
-            val ip = parent.asInstanceOf[WishboneI2cController]
-            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-          case _: WishboneSpiController =>
-            val ip = parent.asInstanceOf[WishboneSpiController]
-            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-          case _: WishboneGpio =>
-            val ip = parent.asInstanceOf[WishboneGpio]
-            val irqLine = irqMapping.filter(_._2 == ip.io.interrupt)
-            val irqNumber = if (irqLine.isEmpty) null else Some(irqLine(0)._1)
-            ip.headerBareMetal(parent.toString(), regAddress, size.size, irqNumber)
-          case _: WishbonePio =>
-            val ip = parent.asInstanceOf[WishbonePio]
-            ip.headerBareMetal(parent.toString(), regAddress, size.size)
-          case _: WishbonePwm =>
-            val ip = parent.asInstanceOf[WishbonePwm]
-            ip.headerBareMetal(parent.toString(), regAddress, size.size)
-          case _: WishbonePinmux =>
-            val ip = parent.asInstanceOf[WishbonePinmux]
-            ip.headerBareMetal(parent.toString(), regAddress, size.size)
-          case _: WishboneMachineTimer =>
-            val ip = parent.asInstanceOf[WishboneMachineTimer]
-            ip.headerBareMetal(parent.toString(), regAddress, size.size)
-          case _: WishbonePlic =>
-            val ip = parent.asInstanceOf[WishbonePlic]
-            ip.headerBareMetal(parent.toString(), regAddress, size.size)
-          case _: WishboneHyperBus =>
-            val ip = parent.asInstanceOf[WishboneHyperBus]
-            ip.headerBareMetal(parent.toString(), regAddress, size.size)
-          case _ => ""
-        }
+        val definition = buildDefinition(
+          parent,
+          componentName(parent),
+          regAddress,
+          size.size,
+          irqMapping,
+          errorMapping
+        )
         writer.write(definition)
-        if (definition.length > 0)
-          writer.write("\n")
+        if (definition.nonEmpty) writer.write("\n")
       }
       writer.write("#endif /* SOC_HEADER */\n")
       writer.close()
     }
+
+    def generateTileLink(
+        bridgeMapping: SizeMapping,
+        mapping: ArrayBuffer[(TileLink, SizeMapping)],
+        irqMapping: ArrayBuffer[Bool],
+        errorMapping: ArrayBuffer[Bool]
+    ) = {
+      val filename = "soc.h"
+      val file = s"${config.swStorageBuildPath(name)}/${filename}"
+      val writer = new PrintWriter(new File(file))
+      SpinalInfo(s"Generating ${filename} for ${name}")
+
+      writer.write("#ifndef SOC_HEADER\n")
+      writer.write("#define SOC_HEADER\n\n")
+
+      val address = bridgeMapping.base
+      for ((ip, size) <- mapping) {
+        val parent = ip.parent.component
+        val regAddress = address + size.base
+        val definition = buildDefinition(
+          parent,
+          componentName(parent),
+          regAddress,
+          size.size,
+          irqMapping,
+          errorMapping
+        )
+        writer.write(definition)
+        if (definition.nonEmpty) writer.write("\n")
+      }
+      writer.write("#endif /* SOC_HEADER */\n")
+      writer.close()
+    }
+
+    private def buildDefinition(
+        component: Component,
+        name: String,
+        address: BigInt,
+        size: BigInt,
+        irqMapping: ArrayBuffer[Bool],
+        errorMapping: ArrayBuffer[Bool]
+    ): String = component match {
+      case p: PeripheralsComponent =>
+        val irqNumber = p.getInterrupt.flatMap { sig =>
+          val idx = irqMapping.indexOf(sig)
+          if (idx < 0) None else Some(idx)
+        }
+        val errorNumber = p.getError.flatMap { sig =>
+          val idx = errorMapping.indexOf(sig)
+          if (idx < 0) None else Some(idx)
+        }
+        var d = p.headerBareMetal(name, address, size)
+        irqNumber.foreach(n => d += s"#define ${name.toUpperCase}_IRQ\t\t$n\n")
+        errorNumber.foreach(n => d += s"#define ${name.toUpperCase}_ERROR\t\t$n\n")
+        d
+      case _ => ""
+    }
+
   }
 }
