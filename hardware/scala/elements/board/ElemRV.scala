@@ -7,7 +7,8 @@ package elements.board
 import spinal.core._
 import spinal.lib._
 
-import zibal.board.{BoardParameter, KitParameter}
+import zibal.board.{BoardParameter, KitParameter, SysconInfo}
+import nafarr.{Product, Vendor}
 
 object ElemRVBoard {
 
@@ -22,5 +23,6 @@ object ElemRVBoard {
         SystemClock.frequency
       ) {
     def getJtagFrequency = 10 MHz
+    override val sysconInfo = SysconInfo(Vendor.AescSilicon, Product.ElemRV)
   }
 }
