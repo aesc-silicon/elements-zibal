@@ -306,6 +306,18 @@ object OpenROADTools {
         writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal4 TopMetal1}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal3 TopMetal1}\n")
+
+        if (macros.length > 0) {
+          val macroNames = macros.map(t => t._2).mkString(" ")
+          writer.write(
+            s"define_pdn_grid -name {sram_grid} -voltage_domains {CORE} -macro -cells {${macroNames}} -grid_over_boundary\n"
+          )
+          writer.write(
+            "add_pdn_ring -grid {sram_grid} -layer {Metal3 Metal4} -widths {3.0} -spacings {2.0} -core_offsets {4.0}\n"
+          )
+          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal3 Metal4}\n")
+          writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 TopMetal1}\n")
+        }
       }
 
       def generatePdn(designName: String) = {
