@@ -12,9 +12,21 @@ import zibal.misc.ElementsConfig
 import zibal.soc.SocParameter
 
 import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
-import spinal.lib.bus.tilelink.{Bus => TileLinkBus, BusParameter => TileLinkParameter}
+import spinal.lib.bus.tilelink.{
+  Bus => TileLinkBus,
+  BusParameter => TileLinkParameter,
+  Arbiter,
+  Decoder,
+  DecoderDownSpec,
+  NodeParameters,
+  M2sParameters,
+  M2sSupport,
+  M2sTransfers,
+  SizeRange
+}
+import spinal.lib.system.tag.{MappedNode, MappedTransfers}
 
-import nafarr.bus.tilelink.{TileLinkCache, TileLinkDecoder, TileLinkArbiter}
+import nafarr.bus.tilelink.TileLinkCache
 import nafarr.system.mtimer.{TileLinkMachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{TileLinkPlic, PlicCtrl}
 import nafarr.system.reset.{TileLinkResetController, ResetControllerCtrl}
@@ -151,6 +163,40 @@ object Hydrogen {
       val memParam = parameter.core.iBusTlParam // TL-UL, sourceWidth=1
       val periphParam = TileLinkParameter.simple(32, 32, 4, 1)
 
+      // NodeParameters matching the CPU's TL-UL bus
+      val memNode = NodeParameters(
+        M2sParameters(
+          M2sSupport(
+            transfers = M2sTransfers(
+              get = SizeRange.upTo(memParam.sizeBytes),
+              putFull = SizeRange.upTo(memParam.sizeBytes),
+              putPartial = SizeRange.upTo(memParam.sizeBytes)
+            ),
+            addressWidth = memParam.addressWidth,
+            dataWidth = memParam.dataWidth
+          ),
+          1 << memParam.sourceWidth
+        )
+      )
+
+      def downSpec(mapping: SizeMapping): DecoderDownSpec = {
+        val transfers = M2sTransfers(
+          get = SizeRange.upTo(memParam.sizeBytes),
+          putFull = SizeRange.upTo(memParam.sizeBytes),
+          putPartial = SizeRange.upTo(memParam.sizeBytes)
+        )
+        DecoderDownSpec(
+          mappeds = List(
+            MappedTransfers(
+              MappedNode(Component.current, mapping, Nil),
+              transfers
+            )
+          ),
+          transformers = Nil,
+          nodeParam = memNode
+        )
+      }
+
       // -----------------------------------------------------------------------
       // Address mappings
       // -----------------------------------------------------------------------
@@ -161,8 +207,9 @@ object Hydrogen {
       // -----------------------------------------------------------------------
       // Memory bus decoders (iBus → 2 slaves, dBus → 3 slaves)
       // -----------------------------------------------------------------------
-      val iBusDecoder = TileLinkDecoder(memParam, Seq(ocramMapping, spiMapping))
-      val dBusDecoder = TileLinkDecoder(memParam, Seq(ocramMapping, spiMapping, periphMapping))
+      val iBusDecoder = Decoder(memNode, Seq(downSpec(ocramMapping), downSpec(spiMapping)))
+      val dBusDecoder =
+        Decoder(memNode, Seq(downSpec(ocramMapping), downSpec(spiMapping), downSpec(periphMapping)))
 
       iBusDecoder.io.up <> core.cpu.iBus
       dBusDecoder.io.up <> core.cpu.dBus
@@ -170,8 +217,9 @@ object Hydrogen {
       // -----------------------------------------------------------------------
       // Arbiters: combine iBus and dBus paths for OCRAM and SpiXip
       // -----------------------------------------------------------------------
-      val ocramArbiter = TileLinkArbiter(memParam, 2)
-      val spiArbiter = TileLinkArbiter(memParam, 2)
+      val arbiterDownNode = Arbiter.downNodeFrom(Seq(memNode, memNode))
+      val ocramArbiter = Arbiter(Seq(memNode, memNode), arbiterDownNode)
+      val spiArbiter = Arbiter(Seq(memNode, memNode), arbiterDownNode)
 
       iBusDecoder.io.downs(0) <> ocramArbiter.io.ups(0)
       dBusDecoder.io.downs(0) <> ocramArbiter.io.ups(1)
@@ -180,7 +228,7 @@ object Hydrogen {
       dBusDecoder.io.downs(1) <> spiArbiter.io.ups(1)
 
       // -----------------------------------------------------------------------
-      // OCRAM (TileLinkArbiter output: sourceWidth = memParam.sourceWidth + 1)
+      // OCRAM (Arbiter output: sourceWidth = memParam.sourceWidth + 1)
       // -----------------------------------------------------------------------
       val onChipRam = new Area {
         val mapping = ocramMapping
