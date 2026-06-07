@@ -57,6 +57,7 @@ object OpenROADTools {
       var pdnMetal5Pitch: Double = 40.0
       var pdnTopMetal1Pitch: Double = 60.0
       var pdnTopMetal2Pitch: Double = 60.0
+      val additionalVerilogFiles = ArrayBuffer[String]()
 
       val pads = Map(
         Edge.North -> Map[Int, String](),
@@ -101,7 +102,11 @@ object OpenROADTools {
           orientation: String = "R0",
           depth: Int = 2
       ) = {
-        val macroName = macroComp.getClass.toString().split('$')(1)
+        val macroName = if (macroComp.definitionName != null) {
+          macroComp.definitionName
+        } else {
+          macroComp.getClass.toString().split('$')(1)
+        }
         val compName = getCompName(macroComp).substring(1).split('.').takeRight(depth).mkString(".")
         macros += ((compName, macroName, x, y, orientation))
       }
@@ -602,7 +607,9 @@ object OpenROADTools {
           writer.write(s"export DESIGN_NICKNAME=${designName}\n");
         }
         writer.write(s"export PLATFORM=ihp-${platform.tech}\n");
-        writer.write(s"export VERILOG_FILES=${config.zibalBuildPath}*.v\n")
+        val verilogFiles =
+          (Seq(s"${config.zibalBuildPath}*.v") ++ additionalVerilogFiles).mkString(" ")
+        writer.write(s"export VERILOG_FILES=${verilogFiles}\n")
         writer.write(s"export DIE_AREA = ${dieArea._1} ${dieArea._2} ${dieArea._3} ${dieArea._4}\n")
         writer.write(
           s"export CORE_AREA = ${coreArea._1} ${coreArea._2} ${coreArea._3} ${coreArea._4}\n"
