@@ -6,10 +6,37 @@ package zibal.misc
 
 import spinal.core._
 import spinal.core.sim._
+import spinal.core.internals.{MemTopology, PhaseMemBlackBoxingGeneric}
+import spinal.lib.blackbox.ihp.sg13g2.{IhpSramMacro, PhaseIhpSramBlackBox}
 
 import java.time.LocalDate
 
 object ElementsConfig {
+  class IhpSramBlackboxPolicy(macros: Seq[IhpSramMacro] = IhpSramMacro.defaults)
+      extends MemBlackboxingPolicy {
+    override def translationInterest(topology: MemTopology): Boolean = {
+      val depth = topology.mem.wordCount
+      val width = topology.mem.getWidth
+      val ports =
+        (topology.readWriteSync.size, topology.writes.size, topology.readsSync.size) match {
+          case (1, 0, 0) => 1
+          case (0, 1, 1) => 2
+          case _ => return false
+        }
+      macros.exists(m => m.ports == ports && m.depth == depth && m.width == width)
+    }
+
+    override def onUnblackboxable(topology: MemTopology, who: Any, message: String): Unit = {}
+  }
+
+  implicit class SpinalConfigPimp(config: SpinalConfig) {
+    def ihpSramBlackboxes: SpinalConfig = {
+      config.memBlackBoxers += new PhaseMemBlackBoxingGeneric(new IhpSramBlackboxPolicy())
+      config.memBlackBoxers += new PhaseIhpSramBlackBox()
+      config
+    }
+  }
+
   def apply(top: Object) = ElementsConfig(top)
   case class ElementsConfig(top: Object) {
     val socName = System.getenv("SOC")
