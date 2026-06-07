@@ -161,7 +161,7 @@ object Hydrogen {
     val system = new ClockingArea(clockCtrl.getClockDomainByName("system")) {
 
       val memParam = parameter.core.iBusTlParam // TL-UL, sourceWidth=1
-      val periphParam = TileLinkParameter.simple(32, 32, 4, 1)
+      val periphParam = TileLinkParameter.simple(32, 32, memParam.sizeBytes, 1)
 
       // NodeParameters matching the CPU's TL-UL bus
       val memNode = NodeParameters(
