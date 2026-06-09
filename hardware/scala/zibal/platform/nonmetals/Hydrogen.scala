@@ -49,7 +49,7 @@ object Hydrogen {
   case class Parameter(
       socParameter: SocParameter,
       onChipRamSize: BigInt,
-      spiRomSize: BigInt,
+      spiFlashSize: BigInt,
       resetCtrl: (
           ResetControllerCtrl.Parameter
       ) => ResetControllerCtrl.ResetControllerBase,
@@ -201,7 +201,7 @@ object Hydrogen {
       // Address mappings
       // -----------------------------------------------------------------------
       val ocramMapping = SizeMapping(0x80000000L, parameter.onChipRamSize)
-      val spiMapping = SizeMapping(0xa0000000L, parameter.spiRomSize)
+      val spiMapping = SizeMapping(0xa0000000L, parameter.spiFlashSize)
       val periphMapping = SizeMapping(0xf0000000L, 16 MB)
 
       // -----------------------------------------------------------------------

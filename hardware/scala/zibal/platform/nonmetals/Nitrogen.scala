@@ -37,7 +37,7 @@ object Nitrogen {
   case class Parameter(
       socParameter: SocParameter,
       onChipRamSize: BigInt,
-      spiRomSize: BigInt,
+      spiFlashSize: BigInt,
       hyperbusPartitions: List[(BigInt, Boolean)],
       resetCtrl: (
           ResetControllerCtrl.Parameter
@@ -215,7 +215,7 @@ object Nitrogen {
     }
 
     val spiXip = new ClockingArea(clockCtrl.getClockDomainByName("spiXip")) {
-      val mapping = SizeMapping(0xa0000000L, parameter.spiRomSize)
+      val mapping = SizeMapping(0xa0000000L, parameter.spiFlashSize)
       val bmbParameter = BmbParameter(
         addressWidth = log2Up(mapping.size) + 2,
         dataWidth = 32,
