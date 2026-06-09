@@ -91,7 +91,7 @@ SPDX-License-Identifier: CERN-OHL-W-2.0
     def genASICSimConfig = SimConfig
       .withConfig(this.genASICSpinalConfig)
       .withWave
-      .addSimulatorFlag("--trace-max-width 100000")
+      .addSimulatorFlag("--trace-max-width 100000 --Wno-SPECIFYIGN")
       .workspacePath(this.zibalBuildPath)
       .allOptimisation
   }
