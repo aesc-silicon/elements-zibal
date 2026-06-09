@@ -49,7 +49,8 @@ object Carbon {
   case class Parameter(
       socParameter: SocParameter,
       onChipRamSize: BigInt,
-      spiRomSize: BigInt,
+      spiFlashSize: BigInt,
+      iCacheSize: BigInt,
       resetCtrl: (
           ResetControllerCtrl.Parameter
       ) => ResetControllerCtrl.ResetControllerBase,
@@ -66,7 +67,7 @@ object Carbon {
   ) extends PlatformParameter(socParameter) {
     val core = VexiiRiscvCoreParameter.realtime(
       0xa0000000L,
-      iCacheSets = 32,
+      iCacheSize = iCacheSize,
       withMul = true,
       withCompressed = true,
       withBarrelShifter = true
@@ -207,7 +208,7 @@ object Carbon {
       // Address mappings
       // -----------------------------------------------------------------------
       val ocramMapping = SizeMapping(0x80000000L, parameter.onChipRamSize)
-      val spiMapping = SizeMapping(0xa0000000L, parameter.spiRomSize)
+      val spiMapping = SizeMapping(0xa0000000L, parameter.spiFlashSize)
       val periphMapping = SizeMapping(0xf0000000L, 16 MB)
 
       // -----------------------------------------------------------------------
