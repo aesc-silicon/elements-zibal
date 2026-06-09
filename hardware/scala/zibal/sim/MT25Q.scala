@@ -66,10 +66,8 @@ object MT25Q {
 
     val chipClockDomain = ClockDomain(
       clock = io.dataClock,
-      reset = io.reset,
       config = ClockDomainConfig(
-        resetKind = ASYNC,
-        resetActiveLevel = LOW
+        resetKind = BOOT
       )
     )
 
