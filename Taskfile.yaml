@@ -33,7 +33,6 @@ tasks:
 
   west-init:
     desc: Initializes the west workspace using the local manifest.
-    internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'west init -l {{.PWD}}/manifests'"
