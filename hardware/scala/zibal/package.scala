@@ -14,7 +14,8 @@ import nafarr.{Product, Vendor, Feature}
 package object board {
   case class KitParameter(
       resets: List[ResetParameter],
-      clocks: List[ClockParameter]
+      clocks: List[ClockParameter],
+      inputClock: ClockParameter
   )
 
   /** Board-level chip identity forwarded to the syscon IP.

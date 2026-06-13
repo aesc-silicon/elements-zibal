@@ -73,15 +73,17 @@ object Carbon {
       withBarrelShifter = true
     )
     val mtimer = MachineTimerCtrl.Parameter.default
-    val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
+    val clocks = ClockControllerCtrl.Parameter(
+      getKitParameter.clocks,
+      getKitParameter.inputClock
+    )
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
     def buildSyscon(features: List[Feature.E] = Nil) = Syscon.Parameter(
       vendor = getBoardParameter.sysconInfo.vendor,
       platform = Platform.Carbon,
       platformClass = PlatformClass.NonMetal,
       product = getBoardParameter.sysconInfo.product,
-      refClockHz =
-        getKitParameter.clocks.find(_.name == "system").map(_.frequency.toLong).getOrElse(0L),
+      refClockHz = getKitParameter.inputClock.frequency.toLong,
       siliconMajor = getBoardParameter.sysconInfo.siliconMajor,
       siliconMinor = getBoardParameter.sysconInfo.siliconMinor,
       features = features
