@@ -58,7 +58,10 @@ object Nitrogen {
     val core = VexRiscvCoreParameter.mcu(0xa0000000L, 1024, 1024).plugins
     val mtimer = MachineTimerCtrl.Parameter.default
     val plic = PlicCtrl.Parameter.default(getSocParameter.getInterruptCount(0))
-    val clocks = ClockControllerCtrl.Parameter(getKitParameter.clocks)
+    val clocks = ClockControllerCtrl.Parameter(
+      getKitParameter.clocks,
+      getKitParameter.inputClock
+    )
     val resets = ResetControllerCtrl.Parameter(getKitParameter.resets)
     val hyperbus = HyperBusCtrl.Parameter.default(hyperbusPartitions)
     val spi = SpiControllerCtrl.Parameter.xip()
