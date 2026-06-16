@@ -125,12 +125,12 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'klayout -n {{ .TECH }} -zz -r {{ .KLAYOUT_HOME }}/tech/scripts/sealring.py
-                -rd width={{ .WIDTH }} -rd height={{ .HEIGHT }}
+                -rd width={{ .WIDTH }} -rd length={{ .LENGTH }}
                 -rd output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/macros/sealring/sealring.gds.gz'"
     vars:
       WIDTH:
         sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TARGET }}Top.sealring.txt
-      HEIGHT:
+      LENGTH:
         sh: tail -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TARGET }}Top.sealring.txt
 
   lib-bondpad:
