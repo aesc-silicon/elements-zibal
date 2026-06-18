@@ -64,6 +64,37 @@ tasks:
     cmds:
       - "{{.RUN}} 'gtkwave -o {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .board }}/zibal/{{ .board }}Board/{{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }}/wave.vcd'"
 
+  lib-emulate:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'renode --console --disable-xwt -e \"set bin @{{.BUILD_ROOT}}/{{.SOC}}/firmware/image_container.img; include @hardware/scala/{{.package}}/{{.package}}_emul.resc; start\"'"
+
+  lib-emulate-gui:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'renode --console -e \"set bin @{{.BUILD_ROOT}}/{{.SOC}}/firmware/image_container.img; include @hardware/scala/{{.package}}/{{.package}}_emul.resc; start\"'"
+
+  lib-cosim-build:
+    internal: true
+    # Builds one Verilated library per peripheral (TileLink* modules from the generated netlist).
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'bash {{.ZIBAL_BASE}}/hardware/renode/cosim/build-cosim.sh {{.BUILD_ROOT}}/{{.SOC}}/{{.board}}/zibal/{{.board}}Top.v {{.BUILD_ROOT}}/{{.SOC}}/{{.board}}/cosim {{.PWD}}/tools/renode-verilator-integration /opt/renode'"
+
+  lib-cosim:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'renode --console --disable-xwt -e \"set bin @{{.BUILD_ROOT}}/{{.SOC}}/firmware/image_container.img; set cosimdir @{{.BUILD_ROOT}}/{{.SOC}}/{{.board}}/cosim; include @hardware/scala/{{.package}}/{{.package}}_cosim.resc; start\"'"
+
+  lib-cosim-gui:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'renode --console -e \"set bin @{{.BUILD_ROOT}}/{{.SOC}}/firmware/image_container.img; set cosimdir @{{.BUILD_ROOT}}/{{.SOC}}/{{.board}}/cosim; include @hardware/scala/{{.package}}/{{.package}}_cosim.resc; start\"'"
+
   lib-synthesize-fpga:
     internal: true
     cmds:
