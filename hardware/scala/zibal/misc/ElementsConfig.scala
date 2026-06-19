@@ -41,9 +41,16 @@ object ElementsConfig {
   case class ElementsConfig(top: Object) {
     val socName = System.getenv("SOC")
     val boardName = System.getenv("BOARD")
+    val targetName = scala.util.Properties.envOrElse("TARGET", "")
     val buildRoot = scala.util.Properties.envOrElse("BUILD_ROOT", "./build") + "/"
 
-    val socBoard = socName + "/" + boardName
+    // FPGA verification builds (BOARD differs from the ASIC TARGET) nest under their target as
+    // <SOC>/<TARGET>/fpga/<BOARD>; ASIC builds (BOARD == TARGET, or TARGET unset) stay <SOC>/<BOARD>.
+    val socBoard =
+      if (targetName.nonEmpty && targetName != boardName)
+        socName + "/" + targetName + "/fpga/" + boardName
+      else
+        socName + "/" + boardName
     val buildPath = buildRoot + socBoard + "/"
     val zibalBuildPath = buildPath + "zibal/"
     val openroadBuildPath = buildPath + "openroad/"
