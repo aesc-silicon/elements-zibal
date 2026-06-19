@@ -4,8 +4,16 @@
 #
 # SPDX-License-Identifier: CERN-OHL-W-2.0
 
-ZIBAL_BUILD=${BUILD_ROOT}/${SOC}/${BOARD}/zibal/
-FPGA_BUILD=${BUILD_ROOT}/${SOC}/${BOARD}/fpga/
+# FPGA verification builds (BOARD differs from the ASIC TARGET) nest under their target as
+# <SOC>/<TARGET>/fpga/<BOARD>; otherwise fall back to the flat <SOC>/<BOARD> layout.
+if [ -n "${TARGET}" ] && [ "${TARGET}" != "${BOARD}" ]; then
+	BASE=${BUILD_ROOT}/${SOC}/${TARGET}/fpga/${BOARD}
+	ZIBAL_BUILD=${BASE}/zibal/
+	FPGA_BUILD=${BASE}/
+else
+	ZIBAL_BUILD=${BUILD_ROOT}/${SOC}/${BOARD}/zibal/
+	FPGA_BUILD=${BUILD_ROOT}/${SOC}/${BOARD}/fpga/
+fi
 TOP=${BOARD}Top
 
 cd ${ZIBAL_BUILD}
