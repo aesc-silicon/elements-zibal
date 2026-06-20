@@ -9,6 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 
 import spinal.core._
 import spinal.lib.bus.bmb._
+import zibal.misc.ElementsConfig
 import vexriscv.ip.{DataCacheConfig, InstructionCacheConfig}
 import vexriscv.plugin._
 import vexriscv.{VexRiscv, VexRiscvConfig, plugin}
@@ -39,8 +40,7 @@ object VexRiscvCoreParameter {
     canWrite = true,
     alignment = BmbParameter.BurstAlignement.LENGTH
   )
-  val yamlPath = scala.util.Properties.envOrElse("BUILD_ROOT", "./build") + "/" +
-    System.getenv("SOC") + "/" + System.getenv("BOARD") + "/zibal/VexRiscv.yaml"
+  val yamlPath = ElementsConfig.zibalBuildPath + "VexRiscv.yaml"
   def realtime(resetAddress: BigInt) = VexRiscvCoreParameter(
     plugins = ArrayBuffer(
       new IBusSimplePlugin(

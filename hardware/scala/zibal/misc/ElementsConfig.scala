@@ -11,7 +11,26 @@ import spinal.lib.blackbox.ihp.sg13g2.{IhpSramMacro, PhaseIhpSramBlackBox}
 
 import java.time.LocalDate
 
-object ElementsConfig {
+// Build-path layout derived purely from the environment, shared by both the ElementsConfig
+// instance and callers without one (e.g. VexRiscvCoreParameter), so the rule lives in one place.
+trait ElementsBuildPaths {
+  def socName = System.getenv("SOC")
+  def boardName = System.getenv("BOARD")
+  def targetName = scala.util.Properties.envOrElse("TARGET", "")
+  def buildRoot = scala.util.Properties.envOrElse("BUILD_ROOT", "./build") + "/"
+
+  // FPGA verification builds (BOARD differs from the ASIC TARGET) nest under their target as
+  // <SOC>/<TARGET>/fpga/<BOARD>; ASIC builds (BOARD == TARGET, or TARGET unset) stay <SOC>/<BOARD>.
+  def socBoard =
+    if (targetName.nonEmpty && targetName != boardName)
+      socName + "/" + targetName + "/fpga/" + boardName
+    else
+      socName + "/" + boardName
+  def buildPath = buildRoot + socBoard + "/"
+  def zibalBuildPath = buildPath + "zibal/"
+}
+
+object ElementsConfig extends ElementsBuildPaths {
   class IhpSramBlackboxPolicy(macros: Seq[IhpSramMacro] = IhpSramMacro.defaults)
       extends MemBlackboxingPolicy {
     override def translationInterest(topology: MemTopology): Boolean = {
@@ -38,21 +57,7 @@ object ElementsConfig {
   }
 
   def apply(top: Object) = ElementsConfig(top)
-  case class ElementsConfig(top: Object) {
-    val socName = System.getenv("SOC")
-    val boardName = System.getenv("BOARD")
-    val targetName = scala.util.Properties.envOrElse("TARGET", "")
-    val buildRoot = scala.util.Properties.envOrElse("BUILD_ROOT", "./build") + "/"
-
-    // FPGA verification builds (BOARD differs from the ASIC TARGET) nest under their target as
-    // <SOC>/<TARGET>/fpga/<BOARD>; ASIC builds (BOARD == TARGET, or TARGET unset) stay <SOC>/<BOARD>.
-    val socBoard =
-      if (targetName.nonEmpty && targetName != boardName)
-        socName + "/" + targetName + "/fpga/" + boardName
-      else
-        socName + "/" + boardName
-    val buildPath = buildRoot + socBoard + "/"
-    val zibalBuildPath = buildPath + "zibal/"
+  case class ElementsConfig(top: Object) extends ElementsBuildPaths {
     val openroadBuildPath = buildPath + "openroad/"
 
     def zephyrBinary = buildRoot + "zephyr/zephyr.bin"
