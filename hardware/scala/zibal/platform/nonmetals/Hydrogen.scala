@@ -99,7 +99,10 @@ object Hydrogen {
       val reset = in(Bool)
       val clock = in(Bool)
       val jtag = slave(Jtag())
-      val spi = master(Spi.Io(parameter.spi.io))
+      val spiXip = new Bundle {
+        val spi = master(Spi.Io(parameter.spi.io))
+        val reset = out(Bool())
+      }
     }
 
     def prepareBaremetal(name: String, elementsConfig: ElementsConfig.ElementsConfig) {
@@ -127,6 +130,15 @@ object Hydrogen {
     clockCtrl.io.mainReset := io_plat.reset
     clockCtrl.io.mainClock := io_plat.clock
 
+    // Export an (active-low) reset to a pad for external flash reset. Prefer a
+    // dedicated "flash" reset domain (released before the CPU so the flash
+    // finishes reset recovery before the first fetch); fall back to the system
+    // reset for tops that don't define one.
+    io_plat.spiXip.reset := resetCtrl.resetDict
+      .get("flash")
+      .map(reset => resetCtrl.io.resets(reset._2))
+      .getOrElse(clockCtrl.getClockDomainByName("system").reset)
+
     // -----------------------------------------------------------------------
     // CPU (debug clock domain set explicitly; system CD from ClockingArea)
     // -----------------------------------------------------------------------
@@ -141,7 +153,11 @@ object Hydrogen {
       )
 
       clockCtrl.getClockDomainByName("debug") {
-        resetCtrl.triggerByNameWithCond("system", RegNext(cpu.ndmreset))
+        val ndmreset = RegNext(cpu.ndmreset)
+        resetCtrl.triggerByNameWithCond("system", ndmreset)
+        if (resetCtrl.triggerDict.contains("flash")) {
+          resetCtrl.triggerByNameWithCond("flash", ndmreset)
+        }
       }
 
       io_plat.jtag <> cpu.jtag
@@ -252,7 +268,7 @@ object Hydrogen {
 
         val ctrl = TileLinkSpiXipController(parameter.spi, outerParam)
         ctrl.io.bus <> cache.io.outer
-        io_plat.spi <> ctrl.io.spi
+        io_plat.spiXip.spi <> ctrl.io.spi
       }
 
       // -----------------------------------------------------------------------
@@ -307,6 +323,9 @@ object Hydrogen {
       addInterrupt(esmInterrupt)
       resetCtrl.triggerByNameWithCond("system", esmError)
       resetCtrl.triggerByNameWithCond("debug", esmError)
+      if (resetCtrl.triggerDict.contains("flash")) {
+        resetCtrl.triggerByNameWithCond("flash", esmError)
+      }
 
       val sysconCtrlMapper = TileLinkSyscon(parameter.buildSyscon(getSysconFeatures()))
       addPeripheralDevice(sysconCtrlMapper.io.bus, 0x23000, 4 kB)
