@@ -19,6 +19,7 @@ object MT25Q {
     val io = new Bundle {
       val clock = in(Bool)
       val reset = in(Bool)
+      val rst = in(Bool)
       val chipSelect = in(Bool)
       val dataClock = in(Bool)
       val dqIn = Vec(in(Bool), 4).addTag(crossClockDomain)
@@ -28,7 +29,7 @@ object MT25Q {
     val chipSelect = !io.chipSelect
     val chipReset = False
     val resetIn = io.reset & !io.chipSelect
-    val reset = resetIn | chipReset
+    val reset = (resetIn | chipReset) & io.rst
 
     val dummyClockDomain = ClockDomain(
       clock = io.clock,
@@ -66,8 +67,10 @@ object MT25Q {
 
     val chipClockDomain = ClockDomain(
       clock = io.dataClock,
+      reset = io.rst,
       config = ClockDomainConfig(
-        resetKind = BOOT
+        resetKind = ASYNC,
+        resetActiveLevel = LOW
       )
     )
 
