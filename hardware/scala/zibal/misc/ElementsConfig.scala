@@ -8,6 +8,7 @@ import spinal.core._
 import spinal.core.sim._
 import spinal.core.internals.{MemTopology, PhaseMemBlackBoxingGeneric}
 import spinal.lib.blackbox.ihp.sg13g2.{IhpSramMacro, PhaseIhpSramBlackBox}
+import nafarr.blackboxes.ihp.sg13g2.Memory
 
 import java.time.LocalDate
 
@@ -31,7 +32,7 @@ trait ElementsBuildPaths {
 }
 
 object ElementsConfig extends ElementsBuildPaths {
-  class IhpSramBlackboxPolicy(macros: Seq[IhpSramMacro] = IhpSramMacro.defaults)
+  class IhpSramBlackboxPolicy(macros: Seq[IhpSramMacro] = Memory.sramMacros)
       extends MemBlackboxingPolicy {
     override def translationInterest(topology: MemTopology): Boolean = {
       val depth = topology.mem.wordCount
@@ -51,7 +52,7 @@ object ElementsConfig extends ElementsBuildPaths {
   implicit class SpinalConfigPimp(config: SpinalConfig) {
     def ihpSramBlackboxes: SpinalConfig = {
       config.memBlackBoxers += new PhaseMemBlackBoxingGeneric(new IhpSramBlackboxPolicy())
-      config.memBlackBoxers += new PhaseIhpSramBlackBox()
+      config.memBlackBoxers += new PhaseIhpSramBlackBox(Memory.sramMacros)
       config
     }
   }
