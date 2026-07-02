@@ -59,6 +59,15 @@ object OpenROADTools {
       var pdnTopMetal2Pitch: Double = 60.0
       val additionalVerilogFiles = ArrayBuffer[String]()
 
+      // Yosys ABC mapping strategy (area or speed script).
+      private var abcStrategy: Option[String] = None
+      def setAbcArea() = {
+        abcStrategy = Some("ABC_AREA")
+      }
+      def setAbcSpeed() = {
+        abcStrategy = Some("ABC_SPEED")
+      }
+
       val pads = Map(
         Edge.North -> Map[Int, String](),
         Edge.East -> Map[Int, String](),
@@ -623,6 +632,9 @@ object OpenROADTools {
           } else {
             writer.write("export MAX_ROUTING_LAYER = TopMetal1\n")
           }
+        }
+        abcStrategy.foreach { strategy =>
+          writer.write(s"export ${strategy} = 1\n")
         }
         writer.write("export TNS_END_PERCENT = 100\n")
         writer.write(s"export PLACE_DENSITY = ${placeDensity}\n")
