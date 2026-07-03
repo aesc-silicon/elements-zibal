@@ -117,7 +117,11 @@ object OpenROADTools {
           macroComp.getClass.toString().split('$')(1)
         }
         val compName = getCompName(macroComp).substring(1).split('.').takeRight(depth).mkString(".")
-        macros += ((compName, macroName, x, y, orientation))
+        // Snap onto the manufacturer grid and clean up floating-point dust so
+        // the emitted coordinates always carry two decimals.
+        val snappedX = math.rint(math.rint(x / platform.x) * platform.x * 100) / 100
+        val snappedY = math.rint(math.rint(y / platform.y) * platform.y * 100) / 100
+        macros += ((compName, macroName, snappedX, snappedY, orientation))
       }
 
       def addBlock(
