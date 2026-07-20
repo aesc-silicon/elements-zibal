@@ -777,6 +777,21 @@ object OpenROADTools {
             writer.write(s"${instance}.gds\n")
           }
           writer.write("export GDS_FILES += $(ADDITIONAL_GDS)\n")
+          // CLD Files
+          writer.write(
+            s"export CDL_FILE = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/cdl/${platform.tech}_stdcell.cdl\n"
+          )
+          if (hasIoRing) {
+            writer.write(
+              s"export CDL_FILE += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/cdl/${platform.tech}_io.cdl\n"
+            )
+          }
+          for (instance: String <- macros.map(t => t._2).toSet) {
+            writer.write(
+              s"export CDL_FILE += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/cdl/"
+            )
+            writer.write(s"${instance}.cdl\n")
+          }
 
           // HACK: Remove Filler4000 and Filler10000 because these narrow pad to core connections blocking the PDN stripes.
           // HACK: Remove Filler2000 to fix the same issue with CMOS5L
