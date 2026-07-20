@@ -81,7 +81,7 @@ tasks:
     # Builds one Verilated library per peripheral (TileLink* modules from the generated netlist).
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'bash {{.ZIBAL_BASE}}/hardware/renode/cosim/build-cosim.sh {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/zibal/{{.TARGET}}Top.v {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/cosim {{.PWD}}/tools/renode-verilator-integration /opt/renode'"
+      - "{{.RUN}} 'bash {{.ZIBAL_BASE}}/hardware/renode/cosim/build-cosim.sh {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/zibal/{{.TOPCELL}}.v {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/cosim {{.PWD}}/tools/renode-verilator-integration /opt/renode'"
 
   lib-cosim:
     internal: true
@@ -129,9 +129,9 @@ tasks:
                 -rd output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/macros/sealring/sealring.gds.gz'"
     vars:
       WIDTH:
-        sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TARGET }}Top.sealring.txt
+        sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TOPCELL }}.sealring.txt
       HEIGHT:
-        sh: tail -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TARGET }}Top.sealring.txt
+        sh: tail -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TOPCELL }}.sealring.txt
 
   lib-bondpad:
     internal: true
@@ -147,53 +147,54 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.PDK_CHECK}}"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TARGET }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{if .stage}}{{.stage}}{{end}}'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{if .stage}}{{.stage}}{{end}}'"
 
   lib-generate-netlist:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TARGET }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.cdl'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.cdl'"
 
   lib-update-metadata:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TARGET }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ metadata-generate'"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TARGET }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ update_rules'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ metadata-generate'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ update_rules'"
 
   lib-filler:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       # Don't use KLAYOUT_HOME with any PDK path
-      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill fill --process {{ .PDK }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.gds'"
+      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill fill --process {{ .PDK }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds'"
 
   lib-run-drc:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/drc/run_drc.py --path {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.gds --topcell {{ .TARGET }}Top --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/drc/ --no_recommended --mp={{numCPU}} {{ if .level }}--disable_extra_rules{{end}} {{ if .nofeol }}--no_feol{{end}} {{ if .precheck }}--no_angle --precheck_drc{{end}}'"
+      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/drc/run_drc.py --path {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds --topcell {{ .TOPCELL }} --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/drc/ --no_recommended --mp={{numCPU}} {{ if .level }}--disable_extra_rules{{end}} {{ if .nofeol }}--no_feol{{end}} {{ if .precheck }}--no_angle --precheck_drc{{end}}'"
 
   lib-view-drc:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'klayout -n {{ .TECH }}
-                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.gds
-                -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/drc/6_final_{{ .TARGET }}Top_full.lyrdb'"
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds
+                -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/drc/6_final_{{ .TOPCELL }}_full.lyrdb'"
 
   lib-run-lvs:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/lvs/run_lvs.py --layout {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.gds --netlist {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.cdl --topcell {{ .TARGET }}Top --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/lvs/'"
+      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/lvs/run_lvs.py --layout {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds --netlist {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.cdl --topcell {{ .TOPCELL }} --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/lvs/'"
+
 
   lib-view-openroad:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top{{if .macro}}_{{ .macro }}{{end}}/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'"
+      - "{{.RUN}} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}{{if .macro}}_{{ .macro }}{{end}}/base/{{if .stage }}{{ .stage }}{{else}}6_final{{end}}.odb)'"
 
   open-openroad:
     desc: Starts OpenROAD with no layout file loaded.
@@ -206,7 +207,7 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'klayout -n {{ .TECH }}
-                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top{{if .macro}}_{{ .macro }}{{end}}/base/6_final.gds'"
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}{{if .macro}}_{{ .macro }}{{end}}/base/6_final.gds'"
 
   open-klayout:
     desc: Starts KLayout with no layout file loaded.
@@ -226,7 +227,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TARGET }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ metadata-check'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ metadata-check'"
 
   clean-zibal:
     desc: Cleans up Zibal-specific files and artifacts.

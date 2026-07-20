@@ -68,6 +68,12 @@ object OpenROADTools {
         abcStrategy = Some("ABC_SPEED")
       }
 
+      // Optional override for the chip top-cell name.
+      private var _topCellName: Option[String] = None
+      def setTopCellName(name: String) = {
+        _topCellName = Some(name)
+      }
+
       val pads = Map(
         Edge.North -> Map[Int, String](),
         Edge.East -> Map[Int, String](),
@@ -599,7 +605,7 @@ object OpenROADTools {
         writer.close()
       }
 
-      def generate: Unit = generate(config.className)
+      def generate: Unit = generate(_topCellName.getOrElse(config.className))
       def generate(designName: String): Unit = {
         val design = if (isBlock) s"${designName}/${designName}" else designName
         val filename = if (isBlock) "config.mk" else s"${designName}.mk"
