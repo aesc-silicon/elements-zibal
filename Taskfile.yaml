@@ -149,6 +149,12 @@ tasks:
       - "{{.PDK_CHECK}}"
       - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TARGET }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{if .stage}}{{.stage}}{{end}}'"
 
+  lib-generate-netlist:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TARGET }}Top.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.cdl'"
+
   lib-update-metadata:
     internal: true
     cmds:
@@ -176,6 +182,12 @@ tasks:
       - "{{.RUN}} 'klayout -n {{ .TECH }}
                 -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.gds
                 -m {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/drc/6_final_{{ .TARGET }}Top_full.lyrdb'"
+
+  lib-run-lvs:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/lvs/run_lvs.py --layout {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.gds --netlist {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TARGET }}Top/base/6_final.cdl --topcell {{ .TARGET }}Top --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/lvs/'"
 
   lib-view-openroad:
     internal: true
