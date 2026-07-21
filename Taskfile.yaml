@@ -153,7 +153,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.cdl'"
+      - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}{{ .SOC }}/{{ .TARGET }}/orfs {{ .BUILD_ROOT }}{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.cdl'"
 
   lib-update-metadata:
     internal: true
