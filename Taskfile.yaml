@@ -189,6 +189,14 @@ tasks:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'python3 {{ .KLAYOUT_HOME }}/tech/lvs/run_lvs.py --layout {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds --netlist {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.cdl --topcell {{ .TOPCELL }} --run_dir {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/lvs/'"
 
+  lib-view-lvs:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'klayout -n {{ .TECH }}
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds
+                -mn {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/lvs/6_final.lvsdb'"
+
 
   lib-view-openroad:
     internal: true
