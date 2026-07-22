@@ -245,3 +245,43 @@ tasks:
     desc: Removes temporary files and intermediate build outputs.
     cmds:
       - task: clean-zibal
+
+# LibreLane internal tasks
+
+  lib-librelane-build:
+    internal: true
+    # Hardens every design listed in build-order.txt (blocks first, then the
+    # top) in one pass. The run dir is derived from each config's basename so a
+    # block's final/ views land where the top's MACROS reference them.
+    # Pass macro=<design> to harden only that single design (e.g. a macro).
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.PDK_CHECK}}"
+      - "{{.RUN}} 'macro=\"{{.macro}}\"; while read -r cfg; do [ -z \"$cfg\" ] && continue; design=$(basename \"$cfg\" .yaml); [ -n \"$macro\" ] && [ \"$design\" != \"$macro\" ] && continue; rd={{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/librelane/$design; mkdir -p \"$rd\"; echo \"### LibreLane: $design ###\"; PYTHONPATH={{.PWD}}/tools/librelane python3 -m librelane --pdk {{.PDK}} --pdk-root {{.PDK_ROOT}} --force-run-dir \"$rd\" \"$cfg\" || exit 1; done < {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/zibal/librelane/build-order.txt'"
+
+  lib-librelane-openroad:
+    internal: true
+    # Opens the LibreLane final ODB in the OpenROAD GUI. Design defaults to the
+    # top (TOPCELL); pass macro=<design> to open a hardened block instead.
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} '{{ .OPENROAD_EXE }} -gui <(echo read_db {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/librelane/{{ if .macro }}{{ .macro }}{{ else }}{{ .TOPCELL }}{{ end }}/final/odb/{{ if .macro }}{{ .macro }}{{ else }}{{ .TOPCELL }}{{ end }}.odb)'"
+
+  lib-librelane-klayout:
+    internal: true
+    # Opens the LibreLane final GDS in KLayout. Design defaults to the top
+    # (TOPCELL); pass macro=<design> to open a hardened block instead.
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'klayout -n {{ .TECH }}
+                -e {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/librelane/{{ if .macro }}{{ .macro }}{{ else }}{{ .TOPCELL }}{{ end }}/final/gds/{{ if .macro }}{{ .macro }}{{ else }}{{ .TOPCELL }}{{ end }}.gds'"
+
+  lib-librelane-view-drc:
+    internal: true
+    # Opens the LibreLane final GDS in KLayout with the KLayout.DRC marker
+    # database loaded (-m). The DRC step dir carries a run-dependent number, so
+    # the newest drc.klayout.lyrdb is resolved at runtime. Design defaults to the
+    # top (TOPCELL); pass macro=<design> for a hardened block.
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'design={{ if .macro }}{{ .macro }}{{ else }}{{ .TOPCELL }}{{ end }}; rd={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/librelane/$design; drc=$(ls -t $rd/*-klayout-drc/reports/drc.klayout.lyrdb 2>/dev/null | head -1); if [ -z \"$drc\" ]; then echo \"No KLayout DRC report found for $design under $rd. Run the LibreLane build first.\"; exit 1; fi; klayout -n {{ .TECH }} -e $rd/final/gds/$design.gds -m \"$drc\"'"
