@@ -40,6 +40,15 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
   val pinmuxInputs = Map[String, (Int, TriState[Bool])]()
   val pinmuxMapping = ArrayBuffer[(Int, List[Int])]()
 
+  class PeripheralDomain(val syncCd: ClockDomain) {
+    var bus: TileLinkBus = null
+    var base: BigInt = 0
+    val devices = ArrayBuffer[(TileLinkBus, SizeMapping)]()
+    val irqs = ArrayBuffer[Bool]()
+    val errors = ArrayBuffer[Bool]()
+  }
+  val peripheralDomains = scala.collection.mutable.LinkedHashMap[String, PeripheralDomain]()
+
   var periphBus: TileLinkBus = null
   var periphBase: BigInt = 0
   var plicCtrl: TileLinkPlic = null
@@ -93,59 +102,23 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
       return
     }
 
-    // Inline 1-to-N TileLink address decoder for the peripheral bus.
-    // Addresses in tileLinkMapping are local offsets from periphBase.
-    val n = tileLinkMapping.size
-
-    for ((bus, localMapping) <- tileLinkMapping) {
-      val absMapping = SizeMapping(periphBase + localMapping.base, localMapping.size)
-      val hit = absMapping.hit(periphBus.a.address)
-      bus.a.valid := periphBus.a.valid && hit
-      bus.a.opcode := periphBus.a.opcode
-      bus.a.param := periphBus.a.param
-      bus.a.size := periphBus.a.size.resize(bus.p.sizeWidth)
-      bus.a.source := periphBus.a.source.resize(bus.p.sourceWidth)
-      bus.a.address := periphBus.a.address.resize(bus.p.addressWidth)
-      bus.a.mask := periphBus.a.mask
-      bus.a.data := periphBus.a.data
-      bus.a.corrupt := periphBus.a.corrupt
-    }
-    periphBus.a.ready := Vec(tileLinkMapping.map { case (bus, localMapping) =>
-      val absMapping = SizeMapping(periphBase + localMapping.base, localMapping.size)
-      bus.a.ready && absMapping.hit(periphBus.a.address)
-    }).orR
-
-    // D channel: priority merge back to peripheral bus master.
-    val dValids = Vec(tileLinkMapping.map(_._1.d.valid))
-    val dChosen = OHMasking.first(dValids.asBits)
-    val buses = tileLinkMapping.map(_._1).toSeq
-
-    val sw = periphBus.p.sizeWidth
-    val srcw = periphBus.p.sourceWidth
-
-    periphBus.d.valid := dValids.orR
-    periphBus.d.opcode := MuxOH(dChosen, buses.map(_.d.opcode))
-    periphBus.d.param := MuxOH(dChosen, buses.map(_.d.param))
-    periphBus.d.size := MuxOH(dChosen, buses.map(_.d.size.resize(sw)))
-    periphBus.d.source := MuxOH(dChosen, buses.map(_.d.source.resize(srcw)))
-    periphBus.d.sink := 0
-    periphBus.d.denied := MuxOH(dChosen, buses.map(_.d.denied))
-    periphBus.d.data := MuxOH(dChosen, buses.map(_.d.data))
-    periphBus.d.corrupt := MuxOH(dChosen, buses.map(_.d.corrupt))
-
-    for ((bus, i) <- buses.zipWithIndex) {
-      bus.d.ready := periphBus.d.ready && dChosen(i)
+    decodePeripheralBus(periphBus, periphBase, tileLinkMapping)
+    for ((_, domain) <- peripheralDomains) {
+      decodePeripheralBus(domain.bus, domain.base, domain.devices)
     }
 
-    // Connect IRQ sources to the PLIC.
-    for ((interrupt, index) <- irqMapping.zipWithIndex) {
+    val crossedIrqs =
+      peripheralDomains.values.flatMap(d => d.irqs.map(pin => d.syncCd(BufferCC(pin, False))))
+    for ((interrupt, index) <- (irqMapping ++ crossedIrqs).zipWithIndex) {
       plicCtrl.io.sources(index) := interrupt
     }
 
-    // Connect error sources to the ESM inputs.
     if (esmCtrl != null) {
+      val crossedErrors =
+        peripheralDomains.values.flatMap(d => d.errors.map(pin => d.syncCd(BufferCC(pin, False))))
+      val allErrors = errorMapping ++ crossedErrors
       val n = esmCtrl.io.inputs.getBitsWidth
-      val inputs = (0 until n).map(i => if (i < errorMapping.size) errorMapping(i) else False)
+      val inputs = (0 until n).map(i => if (i < allErrors.size) allErrors(i) else False)
       esmCtrl.io.inputs := Cat(inputs.reverse)
     }
   }
@@ -162,16 +135,81 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
       .toList
   }
 
-  def addPeripheralDevice(port: TileLinkBus, address: BigInt, size: BigInt) {
-    tileLinkMapping += port -> SizeMapping(address, size)
+  def decodePeripheralBus(
+      master: TileLinkBus,
+      base: BigInt,
+      mapping: ArrayBuffer[(TileLinkBus, SizeMapping)]
+  ) {
+    for ((bus, localMapping) <- mapping) {
+      val absMapping = SizeMapping(base + localMapping.base, localMapping.size)
+      val hit = absMapping.hit(master.a.address)
+      bus.a.valid := master.a.valid && hit
+      bus.a.opcode := master.a.opcode
+      bus.a.param := master.a.param
+      bus.a.size := master.a.size.resize(bus.p.sizeWidth)
+      bus.a.source := master.a.source.resize(bus.p.sourceWidth)
+      bus.a.address := master.a.address.resize(bus.p.addressWidth)
+      bus.a.mask := master.a.mask
+      bus.a.data := master.a.data
+      bus.a.corrupt := master.a.corrupt
+    }
+    master.a.ready := Vec(mapping.map { case (bus, localMapping) =>
+      val absMapping = SizeMapping(base + localMapping.base, localMapping.size)
+      bus.a.ready && absMapping.hit(master.a.address)
+    }).orR
+
+    val dValids = Vec(mapping.map(_._1.d.valid))
+    val dChosen = OHMasking.first(dValids.asBits)
+    val buses = mapping.map(_._1).toSeq
+    val sw = master.p.sizeWidth
+    val srcw = master.p.sourceWidth
+
+    master.d.valid := dValids.orR
+    master.d.opcode := MuxOH(dChosen, buses.map(_.d.opcode))
+    master.d.param := MuxOH(dChosen, buses.map(_.d.param))
+    master.d.size := MuxOH(dChosen, buses.map(_.d.size.resize(sw)))
+    master.d.source := MuxOH(dChosen, buses.map(_.d.source.resize(srcw)))
+    master.d.sink := 0
+    master.d.denied := MuxOH(dChosen, buses.map(_.d.denied))
+    master.d.data := MuxOH(dChosen, buses.map(_.d.data))
+    master.d.corrupt := MuxOH(dChosen, buses.map(_.d.corrupt))
+
+    for ((bus, i) <- buses.zipWithIndex) {
+      bus.d.ready := master.d.ready && dChosen(i)
+    }
+  }
+
+  def publishPeripheralDomain(name: String, bus: TileLinkBus, base: BigInt) {
+    val domain = new PeripheralDomain(ClockDomain.current)
+    domain.bus = bus
+    domain.base = base
+    peripheralDomains(name) = domain
+  }
+
+  def addPeripheralDevice(
+      port: TileLinkBus,
+      address: BigInt,
+      size: BigInt,
+      domain: String = "system"
+  ) {
+    val mapping = port -> SizeMapping(address, size)
+    if (domain == "system") tileLinkMapping += mapping
+    else peripheralDomains(domain).devices += mapping
   }
 
   def addPeripheralDevice(port: Wishbone, address: BigInt, size: BigInt) {
     wishboneMapping += port -> SizeMapping(address, size)
   }
 
-  def addInterrupt(pin: Bool) { irqMapping += pin }
-  def addError(pin: Bool) { errorMapping += pin }
+  def addInterrupt(pin: Bool, domain: String = "system") {
+    if (domain == "system") irqMapping += pin
+    else peripheralDomains(domain).irqs += pin
+  }
+
+  def addError(pin: Bool, domain: String = "system") {
+    if (domain == "system") errorMapping += pin
+    else peripheralDomains(domain).errors += pin
+  }
 
   def addPinmuxInput(pin: Bool, name: String, output: Boolean = true) {
     assert(
