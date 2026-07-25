@@ -24,10 +24,9 @@ lazy val root = (project in file("."))
     Compile / scalaSource := baseDirectory.value / "hardware" / "scala",
     Test / scalaSource := baseDirectory.value / "test" / "scala"
   )
-  .dependsOn(nafarr, vexRiscv, spinalCrypto)
+  .dependsOn(nafarr, spinalCrypto)
 
 lazy val nafarr = RootProject(file("../nafarr/"))
-lazy val vexRiscv = RootProject(file("../vexriscv/"))
 lazy val spinalCrypto = RootProject(file("../SpinalCrypto/"))
 
 run / connectInput := true
