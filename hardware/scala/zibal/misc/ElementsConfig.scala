@@ -12,8 +12,6 @@ import nafarr.blackboxes.ihp.sg13g2.Memory
 
 import java.time.LocalDate
 
-// Build-path layout derived purely from the environment, shared by both the ElementsConfig
-// instance and callers without one (e.g. VexRiscvCoreParameter), so the rule lives in one place.
 trait ElementsBuildPaths {
   def socName = System.getenv("SOC")
   def boardName = System.getenv("BOARD")
@@ -41,12 +39,21 @@ object ElementsConfig extends ElementsBuildPaths {
         (topology.readWriteSync.size, topology.writes.size, topology.readsSync.size) match {
           case (1, 0, 0) => 1
           case (0, 1, 1) => 2
-          case _ => return false
+          case _ =>
+            println(
+              s"[IHP SRAM] skip ${topology.mem.getName()}: unsupported ports ${depth}x${width}"
+            )
+            return false
         }
-      macros.exists(m => m.ports == ports && m.depth == depth && m.width == width)
+      val matched = macros.exists(m => m.ports == ports && m.depth == depth && m.width == width)
+      if (!matched)
+        println(s"[IHP SRAM] no macro for ${topology.mem.getName()}: ${ports}P ${depth}x${width}")
+      matched
     }
 
-    override def onUnblackboxable(topology: MemTopology, who: Any, message: String): Unit = {}
+    override def onUnblackboxable(topology: MemTopology, who: Any, message: String): Unit = {
+      println(s"[IHP SRAM] unblackboxable ${topology.mem.getName()}: $message")
+    }
   }
 
   implicit class SpinalConfigPimp(config: SpinalConfig) {
