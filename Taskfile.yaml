@@ -78,10 +78,10 @@ tasks:
 
   lib-cosim-build:
     internal: true
-    # Builds one Verilated library per peripheral (TileLink* modules from the generated netlist).
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'bash {{.ZIBAL_BASE}}/hardware/renode/cosim/build-cosim.sh {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/zibal/{{.TOPCELL}}.v {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/cosim {{.PWD}}/tools/renode-verilator-integration /opt/renode'"
+      - "{{.RUN}} 'bash {{.ZIBAL_BASE}}/hardware/renode/cosim/check-cosim.sh hardware/scala/{{.package}}/{{.package}}_cosim.repl hardware/scala/{{.package}}/{{.package}}_cosim.resc {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/cosim/peripherals.tsv {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/cosim'"
 
   lib-cosim:
     internal: true
