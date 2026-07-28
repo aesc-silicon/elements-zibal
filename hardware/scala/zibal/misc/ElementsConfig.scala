@@ -74,6 +74,7 @@ object ElementsConfig extends ElementsBuildPaths {
     def swStorageBaremetalImage(name: String) = swStorageBuildPath(name) + "kernel.img"
     def swStorageZephyrBinary(name: String) = swStorageBuildPath(name) + "zephyr/zephyr/zephyr.bin"
     def swStorageImageContainer = softwareBuildPath + "image_container.img"
+    def cosimManifest = buildPath + "cosim/peripherals.tsv"
 
     /* Probably not used anymore */
     val symbiflowBuildPath = buildPath + "symbiflow/"
