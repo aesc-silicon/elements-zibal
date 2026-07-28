@@ -25,6 +25,11 @@ set(CSOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/tilelink_ul.cpp)
 
 set(COMP_LIB_ARGS -fPIC)
+# Clock/reset port prefix = the peripheral's SpinalHDL clock domain (passed by build-cosim.sh).
+if(COSIM_CLOCK_DOMAIN)
+  list(APPEND COMP_LIB_ARGS -DCOSIM_CLOCK_DOMAIN=${COSIM_CLOCK_DOMAIN})
+  list(APPEND COMP_EXEC_ARGS -DCOSIM_CLOCK_DOMAIN=${COSIM_CLOCK_DOMAIN})
+endif()
 # Select the peripheral's optional outputs (passed per-peripheral by build-cosim.sh).
 if(COSIM_HAS_INTERRUPT)
   list(APPEND COMP_LIB_ARGS -DCOSIM_HAS_INTERRUPT)

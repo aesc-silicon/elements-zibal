@@ -7,10 +7,13 @@
 // The Verilated DUT is one `TileLink*` submodule elaborated out of the full SoC netlist
 // (build/<SOC>/<board>/zibal/<board>Top.v) via Verilator's --top-module; the netlist is symlinked
 // to a fixed name so the generated class/header are always `Vdut`. All Nafarr TileLink peripherals
-// share the same TL-UL bus port (io_bus_a_*, io_bus_d_*, system_clk, system_resetn), so this one
-// file drives every peripheral. Per-peripheral optional outputs are selected at build time:
-//   -DCOSIM_HAS_INTERRUPT  -> register io_interrupt as the next cosim->Renode signal
-//   -DCOSIM_HAS_ERROR      -> register io_error     as the next cosim->Renode signal
+// share the same TL-UL bus port (io_bus_a_*, io_bus_d_*), so this one file drives every peripheral.
+// Clock and reset are ports of the peripheral's SpinalHDL clock domain, so their names carry that
+// domain's prefix (system_clk/system_resetn, peripheral_clk/peripheral_resetn, ...). Per-peripheral
+// selections are made at build time by build-cosim.sh:
+//   -DCOSIM_CLOCK_DOMAIN=<name> -> clock/reset port prefix (default: system)
+//   -DCOSIM_HAS_INTERRUPT       -> register io_interrupt as the next cosim->Renode signal
+//   -DCOSIM_HAS_ERROR           -> register io_error     as the next cosim->Renode signal
 // Peripheral-specific I/O (gpio pins, uart txd/rxd, i2c scl/sda, ...) is left at Verilator defaults.
 //
 #include <verilated.h>
@@ -19,6 +22,15 @@
 #include "src/renode_bus.h"
 #include <cstdio>
 #include <cstdlib>
+
+// Resolve the clock-domain-prefixed port names, e.g. peripheral -> peripheral_clk/peripheral_resetn.
+#ifndef COSIM_CLOCK_DOMAIN
+#define COSIM_CLOCK_DOMAIN system
+#endif
+#define COSIM_CAT_(a, b) a##b
+#define COSIM_CAT(a, b) COSIM_CAT_(a, b)
+#define COSIM_CLK    COSIM_CAT(COSIM_CLOCK_DOMAIN, _clk)
+#define COSIM_RESETN COSIM_CAT(COSIM_CLOCK_DOMAIN, _resetn)
 
 RenodeAgent *agent = new RenodeAgent;
 Vdut *top = new Vdut;
@@ -32,8 +44,8 @@ void initAgent(RenodeAgent *a)
 {
     TileLinkUL *bus = new TileLinkUL();
 
-    bus->clk       = &top->system_clk;
-    bus->resetn    = &top->system_resetn;
+    bus->clk       = &top->COSIM_CLK;
+    bus->resetn    = &top->COSIM_RESETN;
 
     bus->a_valid   = &top->io_bus_a_valid;
     bus->a_ready   = &top->io_bus_a_ready;
