@@ -81,25 +81,20 @@ object ReportTools {
       rstTable(header, rows)
     }
 
-    def interruptRst(): String = {
-      val periphBase = platform.tileLinkMapping
-      val irqs = platform.irqMapping
+    private def allDevices: Seq[(TileLinkBus, SizeMapping)] =
+      (platform.tileLinkMapping ++ platform.peripheralDomains.values.flatMap(_.devices)).toSeq
 
-      val rows = irqs.zipWithIndex.map { case (signal, index) =>
-        val name = findPeripheralName(signal, periphBase)
-        Seq(index.toString, name)
+    def interruptRst(): String = {
+      val rows = platform.baremetalIrqs.zipWithIndex.map { case (signal, index) =>
+        Seq((index + 1).toString, findPeripheralName(signal, allDevices))
       }
 
       rstTable(Seq("IRQ", "Source"), rows)
     }
 
     def errorRst(): String = {
-      val periphBase = platform.tileLinkMapping
-      val errors = platform.errorMapping
-
-      val rows = errors.zipWithIndex.map { case (signal, index) =>
-        val name = findPeripheralName(signal, periphBase)
-        Seq(index.toString, name)
+      val rows = platform.baremetalErrors.zipWithIndex.map { case (signal, index) =>
+        Seq(index.toString, findPeripheralName(signal, allDevices))
       }
 
       rstTable(Seq("Error", "Source"), rows)
@@ -147,17 +142,17 @@ object ReportTools {
 
       // Interrupts
       sb.append("  \"interrupts\": [\n")
-      val irqEntries = platform.irqMapping.zipWithIndex.map { case (signal, index) =>
-        val name = findPeripheralName(signal, platform.tileLinkMapping)
-        s"""    {"irq": $index, "source": "$name"}"""
+      val irqEntries = platform.baremetalIrqs.zipWithIndex.map { case (signal, index) =>
+        val name = findPeripheralName(signal, allDevices)
+        s"""    {"irq": ${index + 1}, "source": "$name"}"""
       }
       sb.append(irqEntries.mkString(",\n"))
       sb.append("\n  ],\n")
 
       // Errors
       sb.append("  \"errors\": [\n")
-      val errorEntries = platform.errorMapping.zipWithIndex.map { case (signal, index) =>
-        val name = findPeripheralName(signal, platform.tileLinkMapping)
+      val errorEntries = platform.baremetalErrors.zipWithIndex.map { case (signal, index) =>
+        val name = findPeripheralName(signal, allDevices)
         s"""    {"error": $index, "source": "$name"}"""
       }
       sb.append(errorEntries.mkString(",\n"))
@@ -180,7 +175,7 @@ object ReportTools {
 
     private def findPeripheralName(
         signal: Bool,
-        mapping: ArrayBuffer[(TileLinkBus, SizeMapping)]
+        mapping: Seq[(TileLinkBus, SizeMapping)]
     ): String = {
       val component = signal.component
       walkParents(component, mapping)
@@ -188,7 +183,7 @@ object ReportTools {
 
     private def walkParents(
         component: Component,
-        mapping: ArrayBuffer[(TileLinkBus, SizeMapping)]
+        mapping: Seq[(TileLinkBus, SizeMapping)]
     ): String = {
       for ((bus, _) <- mapping) {
         val parent = bus.parent.component
