@@ -7,8 +7,6 @@ package zibal.platform
 import spinal.core._
 import spinal.lib._
 
-import zibal.misc.BaremetalTools
-import zibal.misc.ElementsConfig
 import zibal.soc.SocParameter
 
 import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
@@ -112,16 +110,6 @@ object Carbon {
       }
     }
 
-    def prepareBaremetal(name: String, elementsConfig: ElementsConfig.ElementsConfig) {
-      val header = BaremetalTools.Header(elementsConfig, name)
-      header.generateTileLink(
-        this.system.periphMapping,
-        this.tileLinkMapping,
-        this.irqMapping,
-        this.errorMapping
-      )
-    }
-
     override def initOnChipRam(path: String) {}
 
     // -----------------------------------------------------------------------
@@ -137,10 +125,6 @@ object Carbon {
     clockCtrl.io.mainReset := io_plat.reset
     clockCtrl.io.mainClock := io_plat.clock
 
-    // Export an (active-low) reset to a pad for external flash reset. Prefer a
-    // dedicated "flash" reset domain (released before the CPU so the flash
-    // finishes reset recovery before the first fetch); fall back to the system
-    // reset for tops that don't define one.
     io_plat.spiXip.reset := resetCtrl.resetDict
       .get("flash")
       .map(reset => resetCtrl.io.resets(reset._2))
