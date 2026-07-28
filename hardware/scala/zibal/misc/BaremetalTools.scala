@@ -66,7 +66,7 @@ object BaremetalTools {
       case p: PeripheralsComponent =>
         val irqNumber = p.getInterrupt.flatMap { sig =>
           val idx = irqMapping.indexOf(sig)
-          if (idx < 0) None else Some(idx)
+          if (idx < 0) None else Some(idx + 1)
         }
         val errorNumber = p.getError.flatMap { sig =>
           val idx = errorMapping.indexOf(sig)
