@@ -47,6 +47,20 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
   var wishboneBridge: BmbToWishbone = null
   var wishbonePlic: WishbonePlic = null
 
+  def baremetalGroups: Seq[(BigInt, Seq[(TileLinkBus, SizeMapping)])] =
+    (periphBase, tileLinkMapping.toSeq) +:
+      peripheralDomains.values.map(d => (d.base, d.devices.toSeq)).toSeq
+
+  // Bus-agnostic device list for header generation: (component, base, size).
+  def baremetalDevices: Seq[(Component, BigInt, BigInt)] =
+    baremetalGroups.flatMap { case (base, mapping) =>
+      mapping.map { case (bus, size) => (bus.parent.component, base + size.base, size.size) }
+    }
+  def baremetalIrqs: Seq[Bool] =
+    (irqMapping ++ peripheralDomains.values.flatMap(_.irqs)).toSeq
+  def baremetalErrors: Seq[Bool] =
+    (errorMapping ++ peripheralDomains.values.flatMap(_.errors)).toSeq
+
   def publishPeripheralComponents(
       bus: TileLinkBus,
       base: BigInt,

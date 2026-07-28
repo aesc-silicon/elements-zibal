@@ -6,14 +6,7 @@ package zibal.misc
 
 import java.io._
 import spinal.core._
-import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, Set, Map}
-import spinal.lib.bus.amba4.axi._
-import spinal.lib.bus.amba3.apb._
-import spinal.lib.bus.tilelink._
-import spinal.lib.bus.tilelink.{Bus => TileLink}
-import spinal.lib.bus.wishbone._
-import spinal.lib.bus.misc.{SizeMapping, AddressMapping}
+
 import nafarr.peripherals.PeripheralsComponent
 
 object BaremetalTools {
@@ -23,85 +16,11 @@ object BaremetalTools {
     val storage = SoftwareStorage(config, name, "baremetal")
     storage.dump()
 
+    /** Emit the bare-metal SoC header from a bus-agnostic device list: each
+      * entry is (component, absolute base address, size).
+      */
     def generate(
-        configs: mutable.LinkedHashMap[Axi4Bus, Axi4CrossbarSlaveConfig],
-        bridge: Axi4Shared,
-        apbMapping: ArrayBuffer[(Apb3, SizeMapping)],
-        irqMapping: ArrayBuffer[Bool],
-        errorMapping: ArrayBuffer[Bool]
-    ) = {
-      val filename = "soc.h"
-      val file = s"${config.swStorageBuildPath(name)}/${filename}"
-      val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generating ${filename} for ${name}")
-
-      writer.write("#ifndef SOC_HEADER\n")
-      writer.write("#define SOC_HEADER\n\n")
-
-      for ((connection, config) <- configs) {
-        if (connection == bridge) {
-          val address = config.mapping.base
-          for ((ip, size) <- apbMapping) {
-            val parent = ip.parent.component
-            val regAddress = address + size.base
-            val definition = buildDefinition(
-              parent,
-              componentName(parent),
-              regAddress,
-              size.size,
-              irqMapping,
-              errorMapping
-            )
-            writer.write(definition)
-            if (definition.nonEmpty) writer.write("\n")
-          }
-        }
-      }
-      writer.write("#endif /* SOC_HEADER */\n")
-      writer.close()
-    }
-
-    private def componentName(c: Component): String = {
-      val raw = Option(c.getName()).filter(_.nonEmpty).getOrElse(c.getClass.getSimpleName)
-      val idx = raw.indexOf('_')
-      if (idx >= 0) raw.substring(idx + 1) else raw
-    }
-
-    def generateWishbone(
-        bridgeMapping: SizeMapping,
-        wbMapping: ArrayBuffer[(Wishbone, SizeMapping)],
-        irqMapping: ArrayBuffer[Bool],
-        errorMapping: ArrayBuffer[Bool]
-    ) = {
-      val filename = "soc.h"
-      val file = s"${config.swStorageBuildPath(name)}/${filename}"
-      val writer = new PrintWriter(new File(file))
-      SpinalInfo(s"Generating ${filename} for ${name}")
-
-      writer.write("#ifndef SOC_HEADER\n")
-      writer.write("#define SOC_HEADER\n\n")
-
-      val address = bridgeMapping.base
-      for ((ip, size) <- wbMapping) {
-        val parent = ip.parent.component
-        val regAddress = address + size.base
-        val definition = buildDefinition(
-          parent,
-          componentName(parent),
-          regAddress,
-          size.size,
-          irqMapping,
-          errorMapping
-        )
-        writer.write(definition)
-        if (definition.nonEmpty) writer.write("\n")
-      }
-      writer.write("#endif /* SOC_HEADER */\n")
-      writer.close()
-    }
-
-    def generateTileLink(
-        groups: Seq[(BigInt, Seq[(TileLink, SizeMapping)])],
+        devices: Seq[(Component, BigInt, BigInt)],
         irqMapping: Seq[Bool],
         errorMapping: Seq[Bool]
     ) = {
@@ -113,22 +32,27 @@ object BaremetalTools {
       writer.write("#ifndef SOC_HEADER\n")
       writer.write("#define SOC_HEADER\n\n")
 
-      for ((base, mapping) <- groups; (ip, size) <- mapping) {
-        val parent = ip.parent.component
-        val regAddress = base + size.base
-        val definition = buildDefinition(
-          parent,
-          componentName(parent),
-          regAddress,
-          size.size,
-          irqMapping,
-          errorMapping
-        )
+      for ((component, address, size) <- devices) {
+        val definition =
+          buildDefinition(
+            component,
+            componentName(component),
+            address,
+            size,
+            irqMapping,
+            errorMapping
+          )
         writer.write(definition)
         if (definition.nonEmpty) writer.write("\n")
       }
       writer.write("#endif /* SOC_HEADER */\n")
       writer.close()
+    }
+
+    private def componentName(c: Component): String = {
+      val raw = Option(c.getName()).filter(_.nonEmpty).getOrElse(c.getClass.getSimpleName)
+      val idx = raw.indexOf('_')
+      if (idx >= 0) raw.substring(idx + 1) else raw
     }
 
     private def buildDefinition(
