@@ -101,10 +101,9 @@ object BaremetalTools {
     }
 
     def generateTileLink(
-        bridgeMapping: SizeMapping,
-        mapping: ArrayBuffer[(TileLink, SizeMapping)],
-        irqMapping: ArrayBuffer[Bool],
-        errorMapping: ArrayBuffer[Bool]
+        groups: Seq[(BigInt, Seq[(TileLink, SizeMapping)])],
+        irqMapping: Seq[Bool],
+        errorMapping: Seq[Bool]
     ) = {
       val filename = "soc.h"
       val file = s"${config.swStorageBuildPath(name)}/${filename}"
@@ -114,10 +113,9 @@ object BaremetalTools {
       writer.write("#ifndef SOC_HEADER\n")
       writer.write("#define SOC_HEADER\n\n")
 
-      val address = bridgeMapping.base
-      for ((ip, size) <- mapping) {
+      for ((base, mapping) <- groups; (ip, size) <- mapping) {
         val parent = ip.parent.component
-        val regAddress = address + size.base
+        val regAddress = base + size.base
         val definition = buildDefinition(
           parent,
           componentName(parent),
@@ -138,8 +136,8 @@ object BaremetalTools {
         name: String,
         address: BigInt,
         size: BigInt,
-        irqMapping: ArrayBuffer[Bool],
-        errorMapping: ArrayBuffer[Bool]
+        irqMapping: Seq[Bool],
+        errorMapping: Seq[Bool]
     ): String = component match {
       case p: PeripheralsComponent =>
         val irqNumber = p.getInterrupt.flatMap { sig =>
