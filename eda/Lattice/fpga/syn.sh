@@ -42,3 +42,4 @@ fi
 yosys ${YOSYS_FLAGS} -p "${ADDITIONAL_VERILOG} read_verilog ${ZIBAL_BUILD}/${TOP}.v; synth_${FPGA_FAMILY} -top ${TOP} -json ${FPGA_BUILD}/${TOP}.json"
 nextpnr-${FPGA_FAMILY} ${NEXTPNR_FLAGS} --${FPGA_DEVICE} --package ${FPGA_PACKAGE} --json ${FPGA_BUILD}/${TOP}.json --lpf ${ZIBAL_BUILD}/${TOP}.lpf --textcfg ${FPGA_BUILD}/${TOP}.config --freq ${FPGA_FREQUENCY}
 ecppack ${FPGA_BUILD}/${TOP}.config ${FPGA_BUILD}/${TOP}.bit
+ecppack ${FPGA_BUILD}/${TOP}.config ${FPGA_BUILD}/${TOP}.bin
