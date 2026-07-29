@@ -104,9 +104,12 @@ tasks:
 
   lib-flash-bitstream:
     internal: true
+    vars:
+      mode: '{{ .mode | default "sram" }}'
+      IMAGE_BASE: "{{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/fpga/{{ .FPGA }}/{{ .FPGA }}Top"
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.RUN}} 'openFPGALoader -b {{ .OPENFPGALOADER_BOARD }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/fpga/{{ .FPGA }}/{{ .FPGA }}Top.bit'"
+      - "{{.RUN}} 'openFPGALoader -b {{ .OPENFPGALOADER_BOARD }}{{ if eq .mode \"spi\" }} -f {{ .IMAGE_BASE }}.bin{{ else }} {{ .IMAGE_BASE }}.bit{{ end }}'"
 
   lib-baremetal-firmware:
     internal: true
