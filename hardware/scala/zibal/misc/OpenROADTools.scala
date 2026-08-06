@@ -96,6 +96,7 @@ object OpenROADTools {
       val generatedClocks =
         Map[String, (Int, Float, String, String, ArrayBuffer[(String, String)])]()
       val falsePath = ArrayBuffer[(String, String)]()
+      val clockGroups = ArrayBuffer[Seq[Seq[String]]]()
       var hasIoConstrains: Boolean = false
       val ioPinConstraints = Map(
         "top" -> ArrayBuffer[String](),
@@ -199,6 +200,14 @@ object OpenROADTools {
         falsePath += ((from, to))
         if (inverse)
           falsePath += ((to, from))
+      }
+
+      def setAsynchronousClocks(clocks: String*) = {
+        clockGroups += clocks.map(Seq(_))
+      }
+
+      def setAsynchronousClockGroups(groups: Seq[String]*) = {
+        clockGroups += groups.toSeq
       }
 
       def setIoPinConstraint(io: Data, location: String) = {
@@ -593,6 +602,11 @@ object OpenROADTools {
               s"set_false_path -from [get_clocks ${falsePath._1}] -to [get_clocks ${falsePath._2}]\n"
             )
           }
+        }
+
+        clockGroups.foreach { statement =>
+          val groups = statement.map(group => s"-group {${group.mkString(" ")}}").mkString(" ")
+          writer.write(s"set_clock_groups -asynchronous ${groups}\n")
         }
 
         if (hasIoRing) {
