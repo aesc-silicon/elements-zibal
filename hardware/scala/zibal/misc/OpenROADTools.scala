@@ -53,6 +53,7 @@ object OpenROADTools {
       var pdnRingWidth: Double = 5.0
       var pdnRingSpace: Double = 2.0
       var pdnRingCoreOffset: Double = 4.5
+      var pdnSramRingWidth: Double = 3.0
       var pdnMetal4Pitch: Double = 40.0
       var pdnMetal5Pitch: Double = 40.0
       var pdnTopMetal1Pitch: Double = 60.0
@@ -251,7 +252,7 @@ object OpenROADTools {
         writer.close()
       }
 
-      def generatePdnBlock(writer: PrintWriter) = {
+      def generatePdnBlockG2(writer: PrintWriter) = {
         writer.write(
           "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {Metal4 Metal5}\n"
         )
@@ -281,6 +282,23 @@ object OpenROADTools {
           writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal3 Metal4}\n")
           writer.write("add_pdn_connect -grid {sram_grid} -layers {Metal4 Metal5}\n")
         }
+      }
+
+      def generatePdnBlockCMOS5L(writer: PrintWriter) = {
+        writer.write(
+          "define_pdn_grid -name {grid} -voltage_domains {CORE} -pins {Metal4}\n"
+        )
+        writer.write(
+          "add_pdn_stripe -grid {grid} -layer {Metal1} -width {0.44} -pitch {7.56} -offset {0} -followpins -extend_to_core_ring\n"
+        )
+        writer.write(
+          s"add_pdn_ring -grid {grid} -layers {Metal3 Metal4} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}}\n"
+        )
+        writer.write(
+          s"add_pdn_stripe -grid {grid} -layer {Metal4} -width {2.0} -pitch {${pdnMetal4Pitch}} -offset {10.0} -extend_to_core_ring\n"
+        )
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
+        writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
       }
 
       def generatePdnMainG2(writer: PrintWriter) = {
@@ -396,7 +414,11 @@ object OpenROADTools {
         writer.write("set_voltage_domain -name {CORE} -power {VDD} -ground {VSS}\n")
         writer.write("# stdcell grid\n")
         if (isBlock) {
-          generatePdnBlock(writer)
+          if (platform.tech == "sg13g2") {
+            generatePdnBlockG2(writer)
+          } else {
+            generatePdnBlockCMOS5L(writer)
+          }
         } else {
           if (platform.tech == "sg13g2") {
             generatePdnMainG2(writer)
@@ -656,7 +678,11 @@ object OpenROADTools {
         )
         writer.write("export LEC_CHECK = 0\n")
         if (isBlock) {
-          writer.write("export MAX_ROUTING_LAYER = Metal5\n")
+          if (platform.tech == "sg13g2") {
+            writer.write("export MAX_ROUTING_LAYER = Metal5\n")
+          } else {
+            writer.write("export MAX_ROUTING_LAYER = Metal4\n")
+          }
         } else {
           if (platform.tech == "sg13g2") {
             writer.write("export MAX_ROUTING_LAYER = TopMetal2\n")
