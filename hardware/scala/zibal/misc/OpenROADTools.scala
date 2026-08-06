@@ -208,6 +208,11 @@ object OpenROADTools {
         }
       }
 
+      def setIoPinConstraint(name: String, location: String) = {
+        hasIoConstrains = true
+        ioPinConstraints(location) += name
+      }
+
       def generateSealring(designName: String) = {
         val filename = s"${designName}.sealring.txt"
         val file = s"${config.zibalBuildPath}${filename}"
