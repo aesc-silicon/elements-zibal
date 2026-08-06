@@ -138,7 +138,9 @@ object OpenROADTools {
           orientation: String = "R0"
       ) = {
         val compName = getCompName(macroComp).substring(1).split('.').takeRight(2).mkString(".")
-        blocks += ((compName, blockName, x, y, orientation))
+        val snappedX = math.rint(math.rint(x / platform.x) * platform.x * 100) / 100
+        val snappedY = math.rint(math.rint(y / platform.y) * platform.y * 100) / 100
+        blocks += ((compName, blockName, snappedX, snappedY, orientation))
       }
 
       def addClock(pin: Bool, frequency: HertzNumber, group: String = "") = {
