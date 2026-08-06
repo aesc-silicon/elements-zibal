@@ -358,7 +358,7 @@ object OpenROADTools {
           "add_pdn_stripe -grid {grid} -layer {Metal4} -width {4.0} -pitch {51.665} -offset {23.0} -extend_to_core_ring\n"
         )
         writer.write(
-          "add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {4.0} -pitch {75.0} -offset {25.0} -extend_to_core_ring\n"
+          s"add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {4.0} -pitch {${pdnTopMetal1Pitch}} -offset {10.0} -extend_to_core_ring\n"
         )
         writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
