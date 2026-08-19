@@ -62,7 +62,7 @@ tasks:
   lib-view-simulation:
     internal: true
     cmds:
-      - "{{.RUN}} 'gtkwave -o {{ .BUILD_ROOT }}/{{ .SOC }}/{{ if .FPGA }}{{ .TARGET }}/fpga/{{ .FPGA }}{{ else }}{{ .TARGET }}{{ end }}/zibal/{{ .FPGA | default .TARGET }}Board/{{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }}/wave.vcd'"
+      - "{{.RUN}} 'gtkwave -o --rcvar \"do_initial_zoom_fit 1\"{{ if .savefile }} -a {{ .savefile }}{{ end }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ if .FPGA }}{{ .TARGET }}/fpga/{{ .FPGA }}{{ else }}{{ .TARGET }}{{ end }}/zibal/{{ .FPGA | default .TARGET }}Board/{{ if .test_case }}{{ .test_case }}{{ else }}simulate{{ end }}/wave.vcd'"
 
   lib-emulate:
     internal: true
