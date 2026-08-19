@@ -81,10 +81,10 @@ object Nitrogen {
         }
   ) extends PlatformParameter(socParameter) {
     val ocramMapping = SizeMapping(0x80000000L, onChipRamSize)
-    val hyperramMapping = SizeMapping(0x90000000L, 64 MB)
+    val hyperbusMapping = SizeMapping(0x90000000L, 64 MB)
     val spiMapping = SizeMapping(0xa0000000L, spiFlashSize)
     val periphMapping = SizeMapping(0xf0000000L, 16 MB)
-    val hyperramUncachedMapping = SizeMapping(0xb0000000L, 64 MB)
+    val hyperbusUncachedMapping = SizeMapping(0xb0000000L, 64 MB)
 
     val core = VexiiRiscvCoreParameter.performance(
       0xa0000000L,
@@ -93,8 +93,8 @@ object Nitrogen {
       btbSets = btbSets,
       pmpRegions = 8,
       withCompressed = true,
-      mainRegions = Seq(ocramMapping, hyperramMapping, spiMapping),
-      ioRegions = Seq(periphMapping, hyperramUncachedMapping)
+      mainRegions = Seq(ocramMapping, hyperbusMapping, spiMapping),
+      ioRegions = Seq(periphMapping, hyperbusUncachedMapping)
     )
     val mtimer = MachineTimerCtrl.Parameter.default
     val clocks = ClockControllerCtrl.Parameter(
@@ -212,12 +212,12 @@ object Nitrogen {
 
       val memSlaves = Seq(
         downSpec(parameter.ocramMapping),
-        downSpec(parameter.hyperramMapping),
+        downSpec(parameter.hyperbusMapping),
         downSpec(parameter.spiMapping)
       )
       val dIoMemSlaves = Seq(
         downSpec(parameter.ocramMapping),
-        downSpec(parameter.hyperramMapping, parameter.hyperramUncachedMapping),
+        downSpec(parameter.hyperbusMapping, parameter.hyperbusUncachedMapping),
         downSpec(parameter.spiMapping)
       )
       val iBusDecoder = Decoder(memNode, memSlaves)
@@ -230,16 +230,16 @@ object Nitrogen {
 
       val arbiterDownNode = Arbiter.downNodeFrom(Seq(memNode, memNode, memNode))
       val ocramArbiter = Arbiter(Seq(memNode, memNode, memNode), arbiterDownNode)
-      val hyperramArbiter = Arbiter(Seq(memNode, memNode, memNode), arbiterDownNode)
+      val hyperbusArbiter = Arbiter(Seq(memNode, memNode, memNode), arbiterDownNode)
       val spiArbiter = Arbiter(Seq(memNode, memNode, memNode), arbiterDownNode)
 
       iBusDecoder.io.downs(0) <> ocramArbiter.io.ups(0)
       dBusDecoder.io.downs(0) <> ocramArbiter.io.ups(1)
       dIoBusDecoder.io.downs(0) <> ocramArbiter.io.ups(2)
 
-      iBusDecoder.io.downs(1) <> hyperramArbiter.io.ups(0)
-      dBusDecoder.io.downs(1) <> hyperramArbiter.io.ups(1)
-      dIoBusDecoder.io.downs(1) <> hyperramArbiter.io.ups(2)
+      iBusDecoder.io.downs(1) <> hyperbusArbiter.io.ups(0)
+      dBusDecoder.io.downs(1) <> hyperbusArbiter.io.ups(1)
+      dIoBusDecoder.io.downs(1) <> hyperbusArbiter.io.ups(2)
 
       iBusDecoder.io.downs(2) <> spiArbiter.io.ups(0)
       dBusDecoder.io.downs(2) <> spiArbiter.io.ups(1)
@@ -252,13 +252,13 @@ object Nitrogen {
         port <> ocramArbiter.io.down
       }
 
-      val hyperram = new Area {
-        val mapping = parameter.hyperramMapping
-        val busParam = hyperramArbiter.io.down.p
+      val hyperbus = new Area {
+        val mapping = parameter.hyperbusMapping
+        val busParam = hyperbusArbiter.io.down.p
         val systemCd = clockCtrl.getClockDomainByName("system")
         val hyperbusCd = clockCtrl.getClockDomainByName("hyperbus")
         val cc = FifoCc(busParam, systemCd, hyperbusCd, 8, 2, 2, 8, 2)
-        cc.io.input <> hyperramArbiter.io.down
+        cc.io.input <> hyperbusArbiter.io.down
         val cfgCc = FifoCc(periphParam, systemCd, hyperbusCd, 2, 2, 2, 2, 2)
         val cluster = hyperbusCd {
           parameter.hyperBusLogic(parameter.hyperbus, busParam, periphParam)
@@ -321,7 +321,7 @@ object Nitrogen {
       addPeripheralDevice(watchdogCtrlMapper.io.bus, 0x27000, 4 kB)
       addInterrupt(watchdogCtrlMapper.io.interrupt)
       addError(watchdogCtrlMapper.io.error)
-      addError(hyperram.error)
+      addError(hyperbus.error)
 
       val (esmInterrupt: Bool, esmError: Bool) = if (parameter.hasEsm) {
         val esmCtrlMapper = TileLinkEsm(parameter.esm)
@@ -341,7 +341,7 @@ object Nitrogen {
         resetCtrl.triggerByNameWithCond("flash", esmError)
       }
 
-      addPeripheralDevice(hyperram.cfgCc.io.input, 0x29000, 4 kB)
+      addPeripheralDevice(hyperbus.cfgCc.io.input, 0x29000, 4 kB)
 
       val sysconCtrlMapper = TileLinkSyscon(parameter.buildSyscon(getSysconFeatures()))
       addPeripheralDevice(sysconCtrlMapper.io.bus, 0x23000, 4 kB)
