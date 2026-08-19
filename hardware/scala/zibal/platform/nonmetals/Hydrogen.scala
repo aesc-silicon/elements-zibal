@@ -24,7 +24,6 @@ import spinal.lib.bus.tilelink.{
 }
 import spinal.lib.system.tag.{MappedNode, MappedTransfers}
 
-import nafarr.bus.tilelink.TileLinkCache
 import nafarr.system.mtimer.{TileLinkMachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{TileLinkPlic, PlicCtrl}
 import nafarr.system.reset.{TileLinkResetController, ResetControllerCtrl}
@@ -151,7 +150,7 @@ object Hydrogen {
     // System interconnect — dual-decoder crossbar
     //
     //   iBus ──→ iDecoder ──┬──→ ocramArbiter ──→ OCRAM
-    //                       └──→ spiArbiter   ──→ SpiCache ──→ SpiXip
+    //                       └──→ spiArbiter   ──→ SpiXip
     //
     //   dBus ──→ dDecoder ──┬──→ ocramArbiter ─┘ (shared with iBus)
     //                       ├──→ spiArbiter   ─┘ (shared with iBus)
@@ -240,18 +239,14 @@ object Hydrogen {
       }
 
       // -----------------------------------------------------------------------
-      // SPI XIP controller with a 4-word cache
+      // SPI XIP controller
       // -----------------------------------------------------------------------
       val spiXip = new Area {
         val mapping = spiMapping
         val innerParam = spiArbiter.io.down.p // sourceWidth = memParam.sourceWidth + 1
-        val outerParam = TileLinkCache.getOuterParameter(innerParam, 4)
 
-        val cache = TileLinkCache.Cache(innerParam, 4)
-        cache.io.inner <> spiArbiter.io.down
-
-        val ctrl = TileLinkSpiXipController(parameter.spi, outerParam)
-        ctrl.io.bus <> cache.io.outer
+        val ctrl = TileLinkSpiXipController(parameter.spi, innerParam, cacheWords = 4)
+        ctrl.io.bus <> spiArbiter.io.down
         io_plat.spiXip.spi <> ctrl.io.spi
       }
 
