@@ -24,7 +24,6 @@ import spinal.lib.bus.tilelink.{
 }
 import spinal.lib.system.tag.{MappedNode, MappedTransfers}
 
-import nafarr.bus.tilelink.TileLinkCache
 import nafarr.system.mtimer.{TileLinkMachineTimer, MachineTimerCtrl}
 import nafarr.system.plic.{TileLinkPlic, PlicCtrl}
 import nafarr.system.reset.{TileLinkResetController, ResetControllerCtrl}
