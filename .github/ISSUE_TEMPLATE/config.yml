@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/aesc-silicon/elements-zibal/discussions
+    about: Ask about platforms, boards or the build flows, or find a place to start.
+  - name: Contribution guide
+    url: https://github.com/aesc-silicon/elements-zibal/blob/main/CONTRIBUTING.md
+    about: Setting up the workspace, what lives here, and how to verify a change.
+  - name: IP cores, drivers and Renode models
+    url: https://github.com/aesc-silicon/elements-nafarr/issues
+    about: Peripherals and system IP live in Nafarr — open the issue there.

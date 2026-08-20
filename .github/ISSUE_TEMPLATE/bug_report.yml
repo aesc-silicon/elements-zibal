@@ -1,0 +1,107 @@
+# SPDX-FileCopyrightText: 2026 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+name: Bug report
+description: A platform, board or build flow does not behave the way it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If the problem is in an IP core, its register map, its driver or its
+        documentation, it belongs in
+        [Nafarr](https://github.com/aesc-silicon/elements-nafarr/issues). When in
+        doubt, file it here and we will move it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of Zibal?
+      options:
+        - Platform (hardware/scala/zibal/platform)
+        - Board definition (hardware/scala/elements/board)
+        - OpenROAD / ASIC flow
+        - Lattice FPGA flow
+        - Xilinx FPGA flow
+        - LibreLane flow
+        - OpenOCD / GDB — debugging or flashing
+        - Renode / simulation tooling
+        - Report or metadata generation
+        - Taskfile
+    validations:
+      required: true
+
+  - type: input
+    id: platform-board
+    attributes:
+      label: Platform and board
+      description: >-
+        Which platform and which board, if the problem is specific to them.
+      placeholder: "Hydrogen on ECPIX5"
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did you see it?
+      description: >-
+        This matters: the same symptom in simulation and on hardware usually has a
+        completely different cause.
+      options:
+        - Elaboration / sbt compile
+        - RTL simulation
+        - Renode emulation
+        - FPGA synthesis or place-and-route
+        - On an FPGA board
+        - ASIC flow
+        - On silicon
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How do we reproduce it?
+      description: >-
+        The exact commands. If a downstream project is needed to trigger it, say
+        which and at what revision.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output
+      description: >-
+        Tool output, generated constraints, or the relevant part of a report.
+        Paste text rather than a screenshot where you can. For generated
+        collateral, a before/after diff is ideal.
+      render: text
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: >-
+        Output of `git rev-parse --short HEAD`. Please give the Nafarr revision
+        too — it is a source dependency and the pair matters.
+      placeholder: "1f09d46 (nafarr 8b3a3d4)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: >-
+        Tool versions — Yosys, nextpnr, OpenROAD, Vivado, OpenOCD — host OS, or
+        anything else you think is relevant.
