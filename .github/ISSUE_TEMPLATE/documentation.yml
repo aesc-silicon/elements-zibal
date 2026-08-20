@@ -1,0 +1,48 @@
+# SPDX-FileCopyrightText: 2026 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+name: Documentation
+description: Something is missing, wrong or hard to follow in the documentation.
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Documentation issues are genuinely useful — a wrong pin assignment or an
+        undocumented setup step costs somebody an afternoon. Small fixes are also a
+        good first pull request if you would rather send one directly.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - Wrong — it does not match the hardware or the code
+        - Missing — there is no documentation for this
+        - Unclear — it is there but I could not follow it
+        - Setup instructions did not work
+    validations:
+      required: true
+
+  - type: input
+    id: where
+    attributes:
+      label: Where?
+      description: >-
+        A file or a section — for example a README, a comment in a board
+        definition, or the setup steps in CONTRIBUTING.md.
+      placeholder: "CONTRIBUTING.md, setup section"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is the problem?
+      description: >-
+        If something is wrong, please say what the correct value is and where you
+        found it — the Scala source is the authority, and a pointer to the
+        relevant file makes the fix quick and verifiable.
+    validations:
+      required: true

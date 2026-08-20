@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: 2026 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+name: New platform, board or flow
+description: Propose a new platform, a board definition, or support for another tool.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A new **IP core** belongs in
+        [Nafarr](https://github.com/aesc-silicon/elements-nafarr/issues). Use this
+        template for platforms, board definitions, EDA flows and tooling.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this?
+      options:
+        - A new board definition
+        - A new platform
+        - Support for another EDA tool or flow
+        - A change to an existing platform
+        - Tooling or generator improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do?
+      description: >-
+        For a board: the FPGA or package, the clocks, and which peripherals you
+        want wired up. For a platform: the CPU configuration, the interconnect
+        topology and the memory map. For a flow: which tool and which step.
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What do you need it for?
+      description: >-
+        The use case shapes the design. A platform for a small microcontroller and
+        one for a cache-coherent multicore look nothing alike, and knowing which
+        you need avoids a redesign later.
+    validations:
+      required: true
+
+  - type: input
+    id: hardware
+    attributes:
+      label: Do you have the hardware?
+      description: >-
+        For a board definition this matters — the pin assignments cannot really be
+        verified without one.
+      placeholder: "Yes, an ECPIX5"
+
+  - type: dropdown
+    id: contributing
+    attributes:
+      label: Would you like to implement it?
+      description: >-
+        Either answer is fine. We ask because it changes how much detail the
+        ticket needs.
+      options:
+        - "Yes, I would like to work on this"
+        - "Yes, with some guidance"
+        - "No, I am suggesting it"
+    validations:
+      required: true
