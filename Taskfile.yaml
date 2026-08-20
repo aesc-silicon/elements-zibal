@@ -132,9 +132,9 @@ tasks:
                 -rd output={{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/macros/sealring/sealring.gds.gz'"
     vars:
       WIDTH:
-        sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TOPCELL }}.sealring.txt
-      LENGTH:
         sh: tail -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TOPCELL }}.sealring.txt
+      LENGTH:
+        sh: head -n 1 {{ .BUILD_ROOT}}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ .TOPCELL }}.sealring.txt
 
   lib-bondpad:
     internal: true
