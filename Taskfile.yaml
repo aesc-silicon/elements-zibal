@@ -100,7 +100,7 @@ tasks:
     cmds:
       - "{{.CONTAINER_CHECK}}"
       - "{{.RUN}} 'mkdir -p {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/fpga/{{ .FPGA }}/'"
-      - "{{.RUN}} 'BOARD={{ .FPGA }} ./modules/elements/zibal/eda/{{ .vendor }}/fpga/syn.sh {{if .CI}}--quiet{{end}}'"
+      - "{{.RUN}} 'ALLOW_TIMING_FAIL={{ .ALLOW_TIMING_FAIL | default \"0\" }} BOARD={{ .FPGA }} ./modules/elements/zibal/eda/{{ .vendor }}/fpga/syn.sh {{if .CI}}--quiet{{end}}'"
 
   lib-flash-bitstream:
     internal: true
