@@ -43,19 +43,10 @@ relative path, and VexiiRiscv is consumed as a locally published artifact.
 
 ```bash
 # All of these must sit next to each other in the same directory.
-git clone https://github.com/aesc-silicon/elements-zibal.git zibal
-git clone https://github.com/aesc-silicon/elements-nafarr.git nafarr
-git clone https://github.com/SpinalHDL/SpinalCrypto.git SpinalCrypto
-git clone --recurse-submodules -b dev https://github.com/SpinalHDL/VexiiRiscv.git VexiiRiscv
-
-# Nafarr resolves VexiiRiscv from the local ivy cache, so publish it once.
-cd VexiiRiscv && sbt publishLocal && cd ..
+git clone --recurse-submodules https://github.com/aesc-silicon/elements-zibal.git zibal
 
 cd zibal && sbt compile
 ```
-
-If you change VexiiRiscv later, re-run `sbt publishLocal` — a stale artifact in
-`~/.ivy2` is used silently, with no warning that it is out of date.
 
 ## Before you open a pull request
 

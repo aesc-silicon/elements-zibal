@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 aesc silicon
+#
+# SPDX-License-Identifier: CERN-OHL-W-2.0
+
+[submodule "ext/nafarr"]
+	path = ext/nafarr
+	url = https://github.com/aesc-silicon/elements-nafarr
