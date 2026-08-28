@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: CERN-OHL-W-2.0
 
-val spinalVersion = "1.14.2"
-
 lazy val root = (project in file("."))
   .settings(
     name := "Zibal",
@@ -15,19 +13,27 @@ lazy val root = (project in file("."))
       )
     ),
     libraryDependencies ++= Seq(
-      "com.github.spinalhdl" % "spinalhdl-core_2.12" % spinalVersion,
-      "com.github.spinalhdl" % "spinalhdl-lib_2.12" % spinalVersion,
-      compilerPlugin("com.github.spinalhdl" % "spinalhdl-idsl-plugin_2.12" % spinalVersion),
       "org.scalatest" %% "scalatest" % "3.2.17",
       "org.yaml" % "snakeyaml" % "1.8"
     ),
     Compile / scalaSource := baseDirectory.value / "hardware" / "scala",
-    Test / scalaSource := baseDirectory.value / "test" / "scala"
+    Test / scalaSource := baseDirectory.value / "test" / "scala",
+    Test / parallelExecution := false,
+    scalacOptions += s"-Xplugin:${(spinalHdlIdslPlugin / Compile / packageBin).value.getAbsolutePath}",
+    scalacOptions += "-Xplugin-require:idsl-plugin",
+    envVars += ("NAFARR_BASE" -> (nafarr / baseDirectory).value.getAbsolutePath)
   )
-  .dependsOn(nafarr, spinalCrypto)
+  .dependsOn(nafarr, spinalHdlIdslPlugin, spinalHdlCore, spinalHdlLib, spinalHdlSim)
 
-lazy val nafarr = RootProject(file("../nafarr/"))
-lazy val spinalCrypto = RootProject(file("../SpinalCrypto/"))
+val nafarrPath = sys.env.getOrElse("NAFARR_PATH", "ext/nafarr")
+val spinalHdlPath = sys.env.getOrElse("SPINALHDL_PATH", nafarrPath + "/ext/VexiiRiscv/ext/SpinalHDL")
+
+lazy val nafarr = RootProject(file(nafarrPath))
+
+lazy val spinalHdlIdslPlugin = ProjectRef(file(spinalHdlPath), "idslplugin")
+lazy val spinalHdlCore = ProjectRef(file(spinalHdlPath), "core")
+lazy val spinalHdlLib = ProjectRef(file(spinalHdlPath), "lib")
+lazy val spinalHdlSim = ProjectRef(file(spinalHdlPath), "sim")
 
 run / connectInput := true
 fork := true

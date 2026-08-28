@@ -22,33 +22,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          path: zibal
+          submodules: recursive
 
       - name: Setup Scala
         uses: olafurpg/setup-scala@v11
 
-      - name: Checkout VexRiscv
-        uses: actions/checkout@v2
-        with:
-          repository: aesc-silicon/elements-vexriscv
-          ref: main
-          path: vexriscv
-
-      - name: Checkout Nafarr
-        uses: actions/checkout@v2
-        with:
-          repository: aesc-silicon/elements-nafarr
-          ref: main
-          path: nafarr
-
-      - name: Checkout SpinalCrypto
-        uses: actions/checkout@v2
-        with:
-          repository: SpinalHDL/SpinalCrypto
-          ref: master
-          path: SpinalCrypto
-
       - name: Check Format
         run: |
-          cd zibal
           sbt scalafmtCheck
