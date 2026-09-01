@@ -157,7 +157,7 @@ object Carbon {
     // System interconnect — dual-decoder crossbar
     //
     //   iBus ──→ iDecoder ──┬──→ ocramArbiter ──→ OCRAM
-    //                       └──→ spiArbiter   ──→ SpiCache ──→ SpiXip
+    //                       └──→ spiArbiter   ──→ SpiXip
     //
     //   dBus ──→ dDecoder ──┬──→ ocramArbiter ─┘ (shared with iBus)
     //                       ├──→ spiArbiter   ─┘ (shared with iBus)
