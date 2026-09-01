@@ -243,9 +243,9 @@ object Hydrogen {
       // -----------------------------------------------------------------------
       val spiXip = new Area {
         val mapping = spiMapping
-        val innerParam = spiArbiter.io.down.p // sourceWidth = memParam.sourceWidth + 1
+        val busParam = spiArbiter.io.down.p
 
-        val ctrl = TileLinkSpiXipController(parameter.spi, innerParam, cacheWords = 4)
+        val ctrl = TileLinkSpiXipController(parameter.spi, busParam, cacheWords = 4)
         ctrl.io.bus <> spiArbiter.io.down
         io_plat.spiXip.spi <> ctrl.io.spi
       }
