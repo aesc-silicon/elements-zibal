@@ -115,7 +115,7 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "if [ -d {{ .PWD }}/software/{{ .package }}/{{ .app }}/ ]; then {{.RUN}} 'BOARD={{ .FPGA | default .TARGET }} SOURCE={{ .PWD }}/software/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/firmware/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/firmware/{{ .app }}/ ARCH={{.arch}} make -C {{ .ZIBAL_BASE }}/software/baremetal'; fi"
+      - "if [ -d {{ .PWD }}/software/{{ .package }}/{{ .app }}/ ]; then {{.RUN}} 'BOARD={{ .FPGA | default .TARGET }} SOURCE={{ .PWD }}/software/{{ .package }}/{{ .app }}/ BUILD={{ .BUILD_ROOT }}/{{ .SOC }}/firmware/{{ .app }}/ SOC_HEADER={{ .BUILD_ROOT }}/{{ .SOC }}/firmware/{{ .app }}/ ARCH={{.arch}} make -C {{ .ZIBAL_BASE }}/software/{{ .makefile | default \"baremetal\" }}'; fi"
 
   lib-zephyr-firmware:
     internal: true
