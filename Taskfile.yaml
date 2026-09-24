@@ -169,12 +169,18 @@ tasks:
       - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ metadata-generate'"
       - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ update_rules'"
 
-  lib-filler:
+  lib-gdsfill:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      # Don't use KLAYOUT_HOME with any PDK path
-      - "{{.RUN}} 'KLAYOUT_HOME= gdsfill fill --process {{ .PDK }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds'"
+      - "{{.RUN}} 'gdsfill fill --process {{ .PDK }} {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds'"
+
+  lib-gdscheck:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "mkdir -p {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/drc/"
+      - "{{.RUN}} 'gdscheck run --process {{.PDK}} --topcell {{.TOPCELL}} --input {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/results/{{ .PDK }}/{{ .TOPCELL }}/base/6_final.gds {{ if .deck }}--deck {{ .deck }}{{ else }}--suite {{ .suite | default \"main\" }}{{ end }} --report {{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/drc/6_final_{{ .TOPCELL }}_full.lyrdb'"
 
   lib-run-drc:
     internal: true
