@@ -22,7 +22,6 @@ vars:
     {{if .CI}}-i{{else}}-it{{end}} {{.CONTAINER_NAME}} \
 "
   RUN: "{{.CONTAINER_CMD}} bash -c"
-  PDK_CHECK: "{{.RUN}} 'ciel enable --pdk-family {{.PDK_FAMILY}} --pdk-root {{.PWD}}/pdks/ {{.PDK_HASH}}'"
 
 tasks:
   lib-sbt-publishLocal:
@@ -46,6 +45,12 @@ tasks:
       - "{{.RUN}} 'rm -rf ~/.cmake/packages/Zephyr'"
       - "{{.RUN}} 'rm -rf ~/.cmake/packages/ZephyrUnittest'"
       - "{{.RUN}} 'west zephyr-export'"
+
+  lib-ciel-enable:
+    internal: true
+    cmds:
+      - "{{.CONTAINER_CHECK}}"
+      - "{{.RUN}} 'ciel enable --pdk-family {{.PDK_FAMILY}} --pdk-root {{.PWD}}/pdks/ {{.PDK_HASH}}'"
 
   lib-generate:
     internal: true
@@ -149,7 +154,6 @@ tasks:
     internal: true
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.PDK_CHECK}}"
       - "{{.RUN}} 'source {{ .OPENROAD_FLOW_ROOT }}/../env.sh && make -C {{ .OPENROAD_FLOW_ROOT }} DESIGN_CONFIG={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/zibal/{{ if .macro}}{{ .macro}}/config.mk{{ else }}{{ .TOPCELL }}.mk{{ end }} WORK_HOME={{ .BUILD_ROOT }}/{{ .SOC }}/{{ .TARGET }}/orfs/ {{if .drt_end_iter}}DETAILED_ROUTE_END_ITERATION={{ .drt_end_iter }} {{end}}{{if .stage}}{{.stage}}{{end}}'"
 
   lib-generate-netlist:
@@ -259,7 +263,6 @@ tasks:
     # Pass macro=<design> to harden only that single design (e.g. a macro).
     cmds:
       - "{{.CONTAINER_CHECK}}"
-      - "{{.PDK_CHECK}}"
       - "{{.RUN}} 'macro=\"{{.macro}}\"; while read -r cfg; do [ -z \"$cfg\" ] && continue; design=$(basename \"$cfg\" .yaml); [ -n \"$macro\" ] && [ \"$design\" != \"$macro\" ] && continue; rd={{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/librelane/$design; mkdir -p \"$rd\"; echo \"### LibreLane: $design ###\"; PYTHONPATH={{.PWD}}/tools/librelane python3 -m librelane --pdk {{.PDK}} --pdk-root {{.PDK_ROOT}} --force-run-dir \"$rd\" \"$cfg\" || exit 1; done < {{.BUILD_ROOT}}/{{.SOC}}/{{.TARGET}}/zibal/librelane/build-order.txt'"
 
   lib-librelane-openroad:
