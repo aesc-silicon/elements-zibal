@@ -37,9 +37,10 @@ import nafarr.system.watchdog.{TileLinkWatchdog, WatchdogCtrl}
 import nafarr.memory.spi.{TileLinkSpiXipController}
 import nafarr.memory.ocram.TileLinkOnChipRam
 import nafarr.peripherals.com.spi.{Spi, SpiControllerCtrl}
-import nafarr.cores.cpu.vexiiriscv.{VexiiRiscvCoreParameter, TileLinkVexiiRiscv}
+import nafarr.cores.cpu.vexiiriscv.{VexiiRiscvCoreParameter, TileLinkVexiiRiscv, DebugTransport}
 
 import spinal.lib.com.jtag.Jtag
+import spinal.lib.com.swd.Swd
 
 object Hydrogen {
 
@@ -59,9 +60,10 @@ object Hydrogen {
         (p: TileLinkParameter, size: BigInt) => {
           val ram = TileLinkOnChipRam(p = p, size = size)
           (ram, ram.io.bus)
-        }
+        },
+      debugTransport: DebugTransport = DebugTransport.Jtag
   ) extends PlatformParameter(socParameter) {
-    val core = VexiiRiscvCoreParameter.realtime(0xa0000000L)
+    val core = VexiiRiscvCoreParameter.realtime(0xa0000000L, debugTransport = debugTransport)
     val mtimer = MachineTimerCtrl.Parameter.default
     val clocks = ClockControllerCtrl.Parameter(
       getKitParameter.clocks,
@@ -95,7 +97,8 @@ object Hydrogen {
     val io_plat = new Bundle {
       val reset = in(Bool)
       val clock = in(Bool)
-      val jtag = slave(Jtag())
+      val jtag = (parameter.debugTransport == DebugTransport.Jtag) generate slave(Jtag())
+      val swd = (parameter.debugTransport == DebugTransport.Swd) generate slave(Swd())
       val spiXip = new Bundle {
         val spi = master(Spi.Io(parameter.spi.io))
         val reset = out(Bool())
@@ -143,7 +146,10 @@ object Hydrogen {
         }
       }
 
-      io_plat.jtag <> cpu.jtag
+      parameter.debugTransport match {
+        case DebugTransport.Jtag => io_plat.jtag <> cpu.jtag
+        case DebugTransport.Swd => io_plat.swd <> cpu.swd
+      }
     }
 
     // -----------------------------------------------------------------------
