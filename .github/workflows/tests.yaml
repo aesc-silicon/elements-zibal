@@ -17,6 +17,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -24,11 +25,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup Java 11
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '21'
 
       - name: Setup SBT
         run: |
