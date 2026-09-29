@@ -34,10 +34,11 @@ if [ ! -f "$MANIFEST" ]; then
   exit 1
 fi
 
-# Module *types* that are not single-TL-bus co-sim targets: clock-domain-crossing bridges, and the
-# interrupt controller / machine timer that Renode models natively. Everything else is co-simulated.
+# Module *types* that are not single-TL-bus co-sim targets: clock-domain-crossing bridges, bus
+# masters (DMA), and the interrupt controller / machine timer that Renode models natively.
+# Everything else is co-simulated.
 # HAS_INTERRUPT/HAS_ERROR and the clock domain are taken from the manifest, not hardcoded.
-SKIP_MODULES=" FifoCc TileLinkPlic TileLinkMachineTimer "
+SKIP_MODULES=" FifoCc TileLinkPlic TileLinkMachineTimer TileLinkDma "
 
 # Each peripheral builds into its own dir from read-only inputs, so they are independent and run
 # concurrently - this fills the cores that a single build leaves idle during Verilator's
