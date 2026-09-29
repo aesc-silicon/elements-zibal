@@ -22,7 +22,8 @@ import spinal.lib.io.ReadableOpenDrain
 import nafarr.system.plic.{TileLinkPlic, WishbonePlic}
 import nafarr.system.esm.Esm
 import nafarr.peripherals.pinmux.{TileLinkPinmux, Pinmux}
-import nafarr.peripherals.PeripheralsComponent
+import nafarr.peripherals.{PeripheralsComponent, SysconFeatures}
+import nafarr.system.syscon.TileLinkSyscon
 import nafarr.Feature
 import nafarr.bus.wishbone._
 
@@ -55,6 +56,8 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
   var esmCtrl: Esm.Core[_] = null
   var wishboneBridge: BmbToWishbone = null
   var wishbonePlic: WishbonePlic = null
+  var sysconCtrl: TileLinkSyscon = null
+  private var sysconBuilder: () => Unit = null
 
   def baremetalGroups: Seq[(BigInt, Seq[(TileLinkBus, SizeMapping)])] =
     (periphBase, tileLinkMapping.toSeq) +:
@@ -89,7 +92,26 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
     esmCtrl = esm
   }
 
+  /** Registers the syscon at `address` of the current clock domain's peripheral bus.
+    *
+    * It is built by connectPeripherals(), once the SoC has added all its IPs, so that the
+    * feature register covers every component of the platform.
+    */
+  def addSyscon(address: BigInt, size: BigInt)(build: List[Feature.E] => TileLinkSyscon) {
+    val cd = ClockDomain.current
+    sysconBuilder = () =>
+      cd {
+        sysconCtrl = build(getSysconFeatures()).setName("system_sysconCtrlMapper")
+        addPeripheralDevice(sysconCtrl.io.bus, address, size)
+      }
+  }
+
   def connectPeripherals() {
+    if (sysconBuilder != null) {
+      sysconBuilder()
+      sysconBuilder = null
+    }
+
     if (wishboneBridge != null) {
       WishboneDecoder2(
         master = wishboneBridge.io.output,
@@ -124,15 +146,12 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
   }
 
   def getSysconFeatures(): List[Feature.E] = {
-    tileLinkMapping
-      .flatMap { case (bus, _) =>
-        bus.parent.component match {
-          case p: PeripheralsComponent => p.sysconFeatures.getOrElse(Nil)
-          case _ => Nil
-        }
-      }
-      .distinct
-      .toList
+    val features = ArrayBuffer[Feature.E]()
+    this.walkComponents {
+      case c: SysconFeatures => features ++= c.sysconFeatures.getOrElse(Nil)
+      case _ =>
+    }
+    features.distinct.sortBy(_.position).toList
   }
 
   def decodePeripheralBus(
