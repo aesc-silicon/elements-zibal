@@ -8,6 +8,7 @@ import java.io._
 import spinal.core._
 
 import nafarr.peripherals.PeripheralsComponent
+import nafarr.system.dma.DmaHandshake
 
 object BaremetalTools {
 
@@ -22,7 +23,8 @@ object BaremetalTools {
     def generate(
         devices: Seq[(Component, BigInt, BigInt)],
         irqMapping: Seq[Bool],
-        errorMapping: Seq[Bool]
+        errorMapping: Seq[Bool],
+        dmaRequestMapping: Seq[DmaHandshake] = Nil
     ) = {
       val filename = "soc.h"
       val file = s"${config.swStorageBuildPath(name)}/${filename}"
@@ -40,7 +42,8 @@ object BaremetalTools {
             address,
             size,
             irqMapping,
-            errorMapping
+            errorMapping,
+            dmaRequestMapping
           )
         writer.write(definition)
         if (definition.nonEmpty) writer.write("\n")
@@ -61,7 +64,8 @@ object BaremetalTools {
         address: BigInt,
         size: BigInt,
         irqMapping: Seq[Bool],
-        errorMapping: Seq[Bool]
+        errorMapping: Seq[Bool],
+        dmaRequestMapping: Seq[DmaHandshake]
     ): String = component match {
       case p: PeripheralsComponent =>
         val irqNumber = p.getInterrupt.flatMap { sig =>
@@ -75,6 +79,18 @@ object BaremetalTools {
         var d = p.headerBareMetal(name, address, size)
         irqNumber.foreach(n => d += s"#define ${name.toUpperCase}_IRQ\t\t$n\n")
         errorNumber.foreach(n => d += s"#define ${name.toUpperCase}_ERROR\t\t$n\n")
+        // DMA request lines: <NAME>_DMA_{TX,RX}, or <NAME>_DMA<n>_{TX,RX} for several bundles.
+        val requests = p.getDmaRequests
+        for ((request, index) <- requests.zipWithIndex) {
+          val prefix = name.toUpperCase + (if (requests.size > 1) s"_DMA$index" else "_DMA")
+          for ((direction, handshake) <- Seq("TX" -> request.tx, "RX" -> request.rx)) {
+            // Reference lookup: DmaHandshake is a case class, so == matches any instance.
+            val line = dmaRequestMapping.indexWhere(_ eq handshake)
+            if (line >= 0) {
+              d += s"#define ${prefix}_${direction}\t\t$line\n"
+            }
+          }
+        }
         d
       case _ => ""
     }

@@ -24,6 +24,7 @@ import nafarr.system.esm.Esm
 import nafarr.peripherals.pinmux.{TileLinkPinmux, Pinmux}
 import nafarr.peripherals.{PeripheralsComponent, SysconFeatures}
 import nafarr.system.syscon.TileLinkSyscon
+import nafarr.system.dma.DmaHandshake
 import nafarr.Feature
 import nafarr.bus.wishbone._
 
@@ -38,6 +39,8 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
   val wishboneMapping = ArrayBuffer[(Wishbone, SizeMapping)]()
   val irqMapping = ArrayBuffer[Bool]()
   val errorMapping = ArrayBuffer[Bool]()
+  // DMA request handshakes, indexed by DMA request line.
+  val dmaRequestMapping = ArrayBuffer[DmaHandshake]()
   val pinmuxInputs = Map[String, (Int, TriState[Bool])]()
   val pinmuxMapping = ArrayBuffer[(Int, List[Int])]()
 
@@ -72,6 +75,7 @@ abstract class PlatformComponent(parameter: PlatformParameter) extends Component
     (irqMapping ++ peripheralDomains.values.flatMap(_.irqs)).toSeq
   def baremetalErrors: Seq[Bool] =
     (errorMapping ++ peripheralDomains.values.flatMap(_.errors)).toSeq
+  def baremetalDmaRequests: Seq[DmaHandshake] = dmaRequestMapping.toSeq
 
   def publishPeripheralComponents(
       bus: TileLinkBus,
