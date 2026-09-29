@@ -343,8 +343,9 @@ object Nitrogen {
 
       addPeripheralDevice(hyperbus.cfgCc.io.input, 0x29000, 4 kB)
 
-      val sysconCtrlMapper = TileLinkSyscon(parameter.buildSyscon(getSysconFeatures()))
-      addPeripheralDevice(sysconCtrlMapper.io.bus, 0x23000, 4 kB)
+      addSyscon(0x23000, 4 kB) { features =>
+        TileLinkSyscon(parameter.buildSyscon(features))
+      }
 
       publishPeripheralComponents(periphBusPort, 0xf0000000L, plicCtrl)
     }
