@@ -22,19 +22,25 @@ LINKER = ${SOURCE}/kernel.ld
 
 ARCH ?= rv32i_zicsr
 
+# The base ISA sets the ABI default and the ELF formats; ABI can be overridden (e.g. ilp32d).
+XLEN := $(if $(filter rv64%,$(ARCH)),64,$(if $(filter rv32%,$(ARCH)),32,$(error ARCH must start with rv32 or rv64: $(ARCH))))
+ABI ?= $(if $(filter 64,$(XLEN)),lp64,ilp32)
+LD_EMULATION = elf$(XLEN)lriscv
+BFD_TARGET = elf$(XLEN)-littleriscv
+
 # 0 scales the iteration count until the run exceeds the 10 s EEMBC requires.
 ITERATIONS ?= 0
 
 OPTIMIZE = -O2
-FLAGS_STR = ${OPTIMIZE} -march=${ARCH} -mabi=ilp32
+FLAGS_STR = ${OPTIMIZE} -march=${ARCH} -mabi=${ABI}
 
-AFLAGS = -march=${ARCH} -mabi=ilp32 -Wall
-CFLAGS = -march=${ARCH} -mabi=ilp32 -Wall -g -ffunction-sections -fdata-sections
+AFLAGS = -march=${ARCH} -mabi=${ABI} -Wall
+CFLAGS = -march=${ARCH} -mabi=${ABI} -Wall -g -ffunction-sections -fdata-sections
 CFLAGS += ${OPTIMIZE} -DITERATIONS=${ITERATIONS} -DFLAGS_STR='"${FLAGS_STR}"'
-LFLAGS = -march=${ARCH} -mabi=ilp32 -m elf32lriscv --no-undefined -g --gc-sections
+LFLAGS = -march=${ARCH} -mabi=${ABI} -m ${LD_EMULATION} --no-undefined -g --gc-sections
 
 # rv32i resolves multiply and divide through libgcc, which ld does not add.
-LIBGCC := $(shell ${GCC}-gcc -march=${ARCH} -mabi=ilp32 -print-libgcc-file-name)
+LIBGCC := $(shell ${GCC}-gcc -march=${ARCH} -mabi=${ABI} -print-libgcc-file-name)
 
 COREMARK_OBJECTS = core_main.o core_list_join.o core_matrix.o core_state.o core_util.o
 
@@ -57,7 +63,7 @@ $(LIST): $(BUILD)output.elf
 
 # Rule to make the image file.
 $(TARGET): $(BUILD)output.elf
-	$(GCC)-objcopy --input-target=elf32-littleriscv $(BUILD)output.elf -O binary $(TARGET)
+	$(GCC)-objcopy --input-target=${BFD_TARGET} $(BUILD)output.elf -O binary $(TARGET)
 
 # Rule to make the elf file.
 $(BUILD)output.elf: $(OBJECTS) $(LINKER)

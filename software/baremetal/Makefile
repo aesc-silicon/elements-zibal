@@ -21,9 +21,15 @@ LINKER = ${SOURCE}/kernel.ld
 
 ARCH ?= rv32i_zicsr
 
-AFLAGS = -march=${ARCH} -mabi=ilp32 -Wall
-CFLAGS = -march=${ARCH} -mabi=ilp32 -Wall -g -ffunction-sections -fdata-sections
-LFLAGS = -march=${ARCH} -mabi=ilp32 -m elf32lriscv --no-undefined -g --gc-sections
+# The base ISA sets the ABI default and the ELF formats; ABI can be overridden (e.g. ilp32d).
+XLEN := $(if $(filter rv64%,$(ARCH)),64,$(if $(filter rv32%,$(ARCH)),32,$(error ARCH must start with rv32 or rv64: $(ARCH))))
+ABI ?= $(if $(filter 64,$(XLEN)),lp64,ilp32)
+LD_EMULATION = elf$(XLEN)lriscv
+BFD_TARGET = elf$(XLEN)-littleriscv
+
+AFLAGS = -march=${ARCH} -mabi=${ABI} -Wall
+CFLAGS = -march=${ARCH} -mabi=${ABI} -Wall -g -ffunction-sections -fdata-sections
+LFLAGS = -march=${ARCH} -mabi=${ABI} -m ${LD_EMULATION} --no-undefined -g --gc-sections
 
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 OBJECTS += $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
@@ -42,7 +48,7 @@ $(LIST): $(BUILD)output.elf
 
 # Rule to make the image file.
 $(TARGET): $(BUILD)output.elf
-	$(GCC)-objcopy --input-target=elf32-littleriscv $(BUILD)output.elf -O binary $(TARGET)
+	$(GCC)-objcopy --input-target=${BFD_TARGET} $(BUILD)output.elf -O binary $(TARGET)
 
 # Rule to make the elf file.
 $(BUILD)output.elf: $(OBJECTS) $(LINKER)
