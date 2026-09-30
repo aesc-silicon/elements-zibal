@@ -83,4 +83,18 @@ object ElemRVFlask {
       override val sysconInfo = ElemRVFlask.sysconInfo
     }
   }
+
+  object Sulfur {
+    val oscillatorFrequency = 60 MHz
+
+    case class Parameter(
+        kitParameter: KitParameter
+    ) extends BoardParameter(
+          kitParameter,
+          oscillatorFrequency
+        ) {
+      def getJtagFrequency = 10 MHz
+      override val sysconInfo = ElemRVFlask.sysconInfo
+    }
+  }
 }
