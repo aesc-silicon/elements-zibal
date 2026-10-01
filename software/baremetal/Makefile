@@ -31,6 +31,9 @@ AFLAGS = -march=${ARCH} -mabi=${ABI} -Wall
 CFLAGS = -march=${ARCH} -mabi=${ABI} -Wall -g -ffunction-sections -fdata-sections
 LFLAGS = -march=${ARCH} -mabi=${ABI} -m ${LD_EMULATION} --no-undefined -g --gc-sections
 
+# rv32i resolves multiply and divide through libgcc, which ld does not add.
+LIBGCC := $(shell ${GCC}-gcc -march=${ARCH} -mabi=${ABI} -print-libgcc-file-name)
+
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 OBJECTS += $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
 OBJECTS += $(patsubst $(DRIVER)%.c,$(BUILD)%.o,$(wildcard $(DRIVER)*.c))
@@ -52,7 +55,7 @@ $(TARGET): $(BUILD)output.elf
 
 # Rule to make the elf file.
 $(BUILD)output.elf: $(OBJECTS) $(LINKER)
-	$(GCC)-ld $(LFLAGS) $(OBJECTS) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) --print-memory-usage
+	$(GCC)-ld $(LFLAGS) $(OBJECTS) $(LIBGCC) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER) --print-memory-usage
 
 # Rule to make the object files.
 $(BUILD)%.o: $(SOURCE)%.s $(BUILD)
