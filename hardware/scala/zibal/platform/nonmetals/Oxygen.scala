@@ -46,9 +46,15 @@ import nafarr.memory.hyperbus.{
   HyperBusCtrl
 }
 import nafarr.peripherals.com.spi.{Spi, SpiControllerCtrl}
-import nafarr.cores.cpu.vexiiriscv.{VexiiRiscvCoreParameter, TileLinkVexiiRiscv, VexiiRiscvBlock}
+import nafarr.cores.cpu.vexiiriscv.{
+  VexiiRiscvCoreParameter,
+  TileLinkVexiiRiscv,
+  VexiiRiscvBlock,
+  DebugTransport
+}
 
 import spinal.lib.com.jtag.Jtag
+import spinal.lib.com.swd.Swd
 
 /** Nitrogen with atomics (A), bit manipulation (Zba/Zbb/Zbc/Zbs), Zicbom cache operations and a
   * DMA controller.
@@ -88,7 +94,8 @@ object Oxygen {
       ) => TileLinkHyperBusCluster =
         (hp: HyperBusCtrl.Parameter, bp: TileLinkParameter, cp: TileLinkParameter) => {
           TileLinkHyperBusGenericPhyCluster(hp, bp, cp)
-        }
+        },
+      debugTransport: DebugTransport = DebugTransport.Jtag
   ) extends PlatformParameter(socParameter) {
     val ocramMapping = SizeMapping(0x80000000L, onChipRamSize)
     val hyperbusMapping = SizeMapping(0x90000000L, 64 MB)
@@ -107,7 +114,8 @@ object Oxygen {
       withBitManip = true,
       withAtomics = true,
       mainRegions = Seq(ocramMapping, hyperbusMapping, spiMapping),
-      ioRegions = Seq(periphMapping, hyperbusUncachedMapping)
+      ioRegions = Seq(periphMapping, hyperbusUncachedMapping),
+      debugTransport = debugTransport
     )
     require(
       dma.burstBytes <= core.iBusTlParam.sizeBytes,
@@ -144,7 +152,8 @@ object Oxygen {
     val io_plat = new Bundle {
       val reset = in(Bool)
       val clock = in(Bool)
-      val jtag = slave(Jtag())
+      val jtag = (parameter.debugTransport == DebugTransport.Jtag) generate slave(Jtag())
+      val swd = (parameter.debugTransport == DebugTransport.Swd) generate slave(Swd())
       val hyperbus = master(HyperBus.Io(parameter.hyperbus))
       val spiXip = new Bundle {
         val spi = master(Spi.Io(parameter.spi.io))
@@ -189,7 +198,10 @@ object Oxygen {
         }
       }
 
-      io_plat.jtag <> cpu.jtag
+      parameter.debugTransport match {
+        case DebugTransport.Jtag => io_plat.jtag <> cpu.jtag
+        case DebugTransport.Swd => io_plat.swd <> cpu.swd
+      }
     }
 
     // -----------------------------------------------------------------------
