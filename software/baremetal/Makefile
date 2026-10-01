@@ -11,7 +11,11 @@ MISC   = ${NAFARR_BASE}/software/misc/
 SOURCE ?= ${ZIBAL_BASE}/hardware/scala/elements/soc/${SOC}/${BOARD}/bootrom/
 SOC_HEADER ?= ${SOURCE}
 
+# Optional directory with sources shared between applications, e.g. print helpers.
+COMMON ?=
+
 INCLUDE = -I ${NAFARR_BASE}/software/include/ -I ${BUILD} -I ${SOURCE} -I ${SOC_HEADER}
+INCLUDE += $(if $(COMMON),-I $(COMMON))
 
 TARGET = ${BUILD}/kernel.img
 LIST = ${BUILD}/kernel.lst
@@ -38,6 +42,9 @@ OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
 OBJECTS += $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
 OBJECTS += $(patsubst $(DRIVER)%.c,$(BUILD)%.o,$(wildcard $(DRIVER)*.c))
 OBJECTS += $(patsubst $(MISC)%.c,$(BUILD)%.o,$(wildcard $(MISC)*.c))
+ifneq ($(COMMON),)
+OBJECTS += $(patsubst $(COMMON)%.c,$(BUILD)%.o,$(wildcard $(COMMON)*.c))
+endif
 
 # Rule to make everything.
 all: $(TARGET) $(LIST)
@@ -69,6 +76,11 @@ $(BUILD)%.o: $(DRIVER)%.c $(BUILD)
 
 $(BUILD)%.o: $(MISC)%.c $(BUILD)
 	$(GCC)-gcc $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+ifneq ($(COMMON),)
+$(BUILD)%.o: $(COMMON)%.c $(BUILD)
+	$(GCC)-gcc $(CFLAGS) $(INCLUDE) -c $< -o $@
+endif
 
 $(BUILD):
 	mkdir -p $@
