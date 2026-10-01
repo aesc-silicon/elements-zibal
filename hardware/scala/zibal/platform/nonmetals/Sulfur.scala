@@ -51,10 +51,12 @@ import nafarr.cores.cpu.vexiiriscv.{
   Fpu,
   VexiiRiscvCoreParameter,
   TileLinkVexiiRiscv,
-  VexiiRiscvBlock
+  VexiiRiscvBlock,
+  DebugTransport
 }
 
 import spinal.lib.com.jtag.Jtag
+import spinal.lib.com.swd.Swd
 
 /** Phosphorus with a double-precision FPU (F/D).
   *
@@ -100,7 +102,8 @@ object Sulfur {
       ) => TileLinkHyperBusCluster =
         (hp: HyperBusCtrl.Parameter, bp: TileLinkParameter, cp: TileLinkParameter) => {
           TileLinkHyperBusGenericPhyCluster(hp, bp, cp)
-        }
+        },
+      debugTransport: DebugTransport = DebugTransport.Jtag
   ) extends PlatformParameter(socParameter) {
     val ocramMapping = SizeMapping(0x80000000L, onChipRamSize)
     val hyperbusMapping = SizeMapping(0x90000000L, 64 MB)
@@ -123,7 +126,8 @@ object Sulfur {
       fpu = Fpu.Double,
       memDataWidth = memDataWidth,
       mainRegions = Seq(ocramMapping, hyperbusMapping, spiMapping),
-      ioRegions = Seq(periphMapping, hyperbusUncachedMapping)
+      ioRegions = Seq(periphMapping, hyperbusUncachedMapping),
+      debugTransport = debugTransport
     )
     // System bus width: the widest CPU bus.
     val dataWidth =
@@ -164,7 +168,8 @@ object Sulfur {
     val io_plat = new Bundle {
       val reset = in(Bool)
       val clock = in(Bool)
-      val jtag = slave(Jtag())
+      val jtag = (parameter.debugTransport == DebugTransport.Jtag) generate slave(Jtag())
+      val swd = (parameter.debugTransport == DebugTransport.Swd) generate slave(Swd())
       val hyperbus = master(HyperBus.Io(parameter.hyperbus))
       val spiXip = new Bundle {
         val spi = master(Spi.Io(parameter.spi.io))
@@ -209,7 +214,10 @@ object Sulfur {
         }
       }
 
-      io_plat.jtag <> cpu.jtag
+      parameter.debugTransport match {
+        case DebugTransport.Jtag => io_plat.jtag <> cpu.jtag
+        case DebugTransport.Swd => io_plat.swd <> cpu.swd
+      }
     }
 
     // -----------------------------------------------------------------------
