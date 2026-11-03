@@ -26,6 +26,28 @@ object OpenROADTools {
     }
   }
 
+  /** Views of a macro that is not part of the PDK SRAM library. */
+  case class MacroFiles(
+      lef: String,
+      gds: String,
+      cdl: String,
+      typLib: String,
+      slowLib: String,
+      fastLib: String
+  )
+  object MacroFiles {
+
+    /** `<dir>/<name>.{lef,gds.gz,cdl}` and `<dir>/<name>_<corner>.lib` with the IHP corners. */
+    def ihp(dir: String, name: String) = MacroFiles(
+      s"$dir/$name.lef",
+      s"$dir/$name.gds.gz",
+      s"$dir/$name.cdl",
+      s"$dir/${name}_typ_1p20V_25C.lib",
+      s"$dir/${name}_slow_1p08V_125C.lib",
+      s"$dir/${name}_fast_1p32V_m40C.lib"
+    )
+  }
+
   def divisible(n: Double, p: Int): Double = { val s = math pow (10, p); (math floor n * s) / s }
   def divisible(a: Double, b: Double): Boolean = {
     return ((a / b) % 1) < 0.0001
@@ -49,7 +71,12 @@ object OpenROADTools {
       var usePdkFiles: Boolean = true
       var placeDensity: Double = 0.75
       var holdSlackMargin: Double = 0.0
+      var macroHalo: Tuple2[Double, Double] = (20, 20)
       var ioPercentage: Double = 0.2
+      // Block inputs come from flops of the parent design, whose clock tree balances the
+      // insertion delay of this block; the earliest input change after the clock edge at
+      // the block port, in ns.
+      var blockInputMinDelay: Double = 0.0
       var pdnRingWidth: Double = 5.0
       var pdnRingSpace: Double = 2.0
       var pdnRingCoreOffset: Double = 4.5
@@ -58,6 +85,9 @@ object OpenROADTools {
       var pdnMetal5Pitch: Double = 40.0
       var pdnTopMetal1Pitch: Double = 60.0
       var pdnTopMetal2Pitch: Double = 60.0
+      // offset of the chip-level Metal4 core stripes; tune it so no stripe ends in a
+      // sliver overlap with a TopMetal1 pad strap (PDN-0110)
+      var pdnChipMetal4Offset: Double = 23.0
       val additionalVerilogFiles = ArrayBuffer[String]()
 
       // Yosys ABC mapping strategy (area or speed script).
@@ -82,6 +112,8 @@ object OpenROADTools {
         Edge.West -> Map[Int, String]()
       )
       val macros = ArrayBuffer[(String, String, Double, Double, String)]()
+      // macro cell name -> views; macros without an entry are PDK SRAMs
+      val macroFiles = Map[String, MacroFiles]()
       val blocks = ArrayBuffer[(String, String, Double, Double, String)]()
       // booleans represent (input, output)
       val ioClockGroups = Map[String, (String, Boolean, Boolean)](
@@ -97,6 +129,7 @@ object OpenROADTools {
       val generatedClocks =
         Map[String, (Int, Float, String, String, ArrayBuffer[(String, String)])]()
       val falsePath = ArrayBuffer[(String, String)]()
+      val holdFalsePath = ArrayBuffer[String]()
       val clockGroups = ArrayBuffer[Seq[Seq[String]]]()
       var hasIoConstrains: Boolean = false
       val ioPinConstraints = Map(
@@ -117,13 +150,15 @@ object OpenROADTools {
           x: Double,
           y: Double,
           orientation: String = "R0",
-          depth: Int = 2
+          depth: Int = 2,
+          files: Option[MacroFiles] = None
       ) = {
         val macroName = if (macroComp.definitionName != null) {
           macroComp.definitionName
         } else {
           macroComp.getClass.toString().split('$')(1)
         }
+        files.foreach(macroFiles(macroName) = _)
         val compName = getCompName(macroComp).substring(1).split('.').takeRight(depth).mkString(".")
         // Snap onto the manufacturer grid and clean up floating-point dust so
         // the emitted coordinates always carry two decimals.
@@ -203,6 +238,17 @@ object OpenROADTools {
           falsePath += ((to, from))
       }
 
+      // Removes the hold check on macro input pins whose design guarantees they are stable
+      // around the capturing edge. depth: as in addMacro.
+      def setHoldFalsePath(depth: Int, pins: BaseType*) = {
+        pins.foreach { pin =>
+          val compName =
+            getCompName(pin.component).substring(1).split('.').takeRight(depth).mkString(".")
+          val bits = if (pin.getBitsWidth > 1) "[*]" else ""
+          holdFalsePath += s"${compName}/${pin.getName()}${bits}"
+        }
+      }
+
       def setAsynchronousClocks(clocks: String*) = {
         clockGroups += clocks.map(Seq(_))
       }
@@ -247,6 +293,14 @@ object OpenROADTools {
         for ((macroName, instance, x, y, orientation) <- blocks) {
           writer.write(
             s"place_macro -macro_name ${macroName} -location {${x} ${y}} -orientation ${orientation} -exact\n"
+          )
+          // the block abstract leaves the margin between its PDN ring and die edge open on
+          // Metal4; at the core edge the chip stripes then end there in an unrepairable
+          // channel (PDN-0179), so cover the whole block on Metal4
+          writer.write(
+            s"set bbox [[[ord::get_db_block] findInst {${macroName}}] getBBox]\n" +
+              "odb::dbObstruction_create [ord::get_db_block] [[ord::get_db_tech] findLayer Metal4] " +
+              "[$bbox xMin] [$bbox yMin] [$bbox xMax] [$bbox yMax]\n"
           )
         }
         writer.close()
@@ -299,6 +353,16 @@ object OpenROADTools {
         )
         writer.write("add_pdn_connect -grid {grid} -layers {Metal1 Metal4}\n")
         writer.write("add_pdn_connect -grid {grid} -layers {Metal3 Metal4}\n")
+
+        // Block macros keep Metal4 free: the Metal4 stripes run over them and drop onto
+        // their Metal3 power pins.
+        if (macros.length > 0) {
+          val macroNames = macros.map(t => t._2).mkString(" ")
+          writer.write(
+            s"define_pdn_grid -name {macro_grid} -voltage_domains {CORE} -macro -cells {${macroNames}}\n"
+          )
+          writer.write("add_pdn_connect -grid {macro_grid} -layers {Metal3 Metal4}\n")
+        }
       }
 
       def generatePdnMainG2(writer: PrintWriter) = {
@@ -355,7 +419,7 @@ object OpenROADTools {
           s"add_pdn_ring -grid {grid} -layers {Metal3 Metal4} -widths {${pdnRingWidth}} -spacings {${pdnRingSpace}} -core_offsets {${pdnRingCoreOffset}} -connect_to_pads\n"
         )
         writer.write(
-          "add_pdn_stripe -grid {grid} -layer {Metal4} -width {4.0} -pitch {51.665} -offset {23.0} -extend_to_core_ring\n"
+          s"add_pdn_stripe -grid {grid} -layer {Metal4} -width {4.0} -pitch {51.665} -offset {${pdnChipMetal4Offset}} -extend_to_core_ring\n"
         )
         writer.write(
           s"add_pdn_stripe -grid {grid} -layer {TopMetal1} -width {4.0} -pitch {${pdnTopMetal1Pitch}} -offset {10.0} -extend_to_core_ring\n"
@@ -562,7 +626,7 @@ object OpenROADTools {
               s"set_input_delay -max 0 -clock ${clock._1} $$all_inputs_wo_clk_rst_${clock._1}\n"
             )
             writer.write(
-              s"set_input_delay -min 0 -clock ${clock._1} $$all_inputs_wo_clk_rst_${clock._1}\n"
+              s"set_input_delay -min ${blockInputMinDelay} -clock ${clock._1} $$all_inputs_wo_clk_rst_${clock._1}\n"
             )
             writer.write(
               s"set_output_delay -max 0 -clock ${clock._1} [all_outputs]\n"
@@ -631,6 +695,12 @@ object OpenROADTools {
               s"set_false_path -from [get_clocks ${falsePath._1}] -to [get_clocks ${falsePath._2}]\n"
             )
           }
+        }
+
+        if (holdFalsePath.nonEmpty) {
+          writer.write(
+            s"set_false_path -hold -to [get_pins {${holdFalsePath.mkString(" ")}}]\n"
+          )
         }
 
         clockGroups.foreach { statement =>
@@ -703,7 +773,7 @@ object OpenROADTools {
         writer.write("export TNS_END_PERCENT = 100\n")
         writer.write(s"export PLACE_DENSITY = ${placeDensity}\n")
         writer.write(s"export HOLD_SLACK_MARGIN = ${holdSlackMargin}\n")
-        writer.write("export MACRO_PLACE_HALO = 20 20\n")
+        writer.write(s"export MACRO_PLACE_HALO = ${macroHalo._1} ${macroHalo._2}\n")
         if (multiCornerEnabled) {
           if (isBlock) {
             writer.write("export CORNERS = slow typ fast\n")
@@ -758,6 +828,9 @@ object OpenROADTools {
           writer.write(s"export BLOCKS = ${blocks.map(t => t._2).mkString(" ")}\n")
         }
         if (usePdkFiles) {
+          val macroCells = macros.map(t => t._2).toSet
+          val sramMacros = macroCells.filterNot(macroFiles.contains)
+          val externalMacros = macroCells.toSeq.sorted.flatMap(macroFiles.get)
           writer.write("export LOAD_ADDITIONAL_FILES = 0\n")
           writer.write(
             s"export TECH_LEF = $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_stdcell/lef/${platform.tech}_tech.lef\n"
@@ -774,11 +847,14 @@ object OpenROADTools {
               s"export ADDITIONAL_LEFS += ${config.zibalBuildPath}/macros/bondpad/bondpad_70x70.lef\n"
             )
           }
-          for (instance: String <- macros.map(t => t._2).toSet) {
+          for (instance: String <- sramMacros) {
             writer.write(
               s"export ADDITIONAL_LEFS += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/lef/"
             )
             writer.write(s"${instance}.lef\n")
+          }
+          for (files <- externalMacros) {
+            writer.write(s"export ADDITIONAL_LEFS += ${files.lef}\n")
           }
           // Lib Files
           writer.write(
@@ -800,8 +876,21 @@ object OpenROADTools {
             writer.write(
               s"export FAST_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/lib/${platform.tech}_io_fast_1p32V_3p6V_m40C.lib\n"
             )
+            // pad cells have logic functions (pad = c2p, p2c = pad); without dont_use ABC and
+            // the resizer pick them as strong buffers, which are never placed in the IO ring
+            val padCells = Seq("In") ++ Seq("Out", "TriOut", "InOut").flatMap(kind =>
+              Seq("4mA", "16mA", "30mA").map(kind + _)
+            )
+            writer.write(
+              s"export DONT_USE_CELLS += ${padCells.map(cell => s"${platform.tech}_IOPad${cell}").mkString(" ")}\n"
+            )
           }
-          for (instance: String <- macros.map(t => t._2).toSet) {
+          for (files <- externalMacros) {
+            writer.write(s"export TYP_LIB_FILES += ${files.typLib}\n")
+            writer.write(s"export SLOW_LIB_FILES += ${files.slowLib}\n")
+            writer.write(s"export FAST_LIB_FILES += ${files.fastLib}\n")
+          }
+          for (instance: String <- sramMacros) {
             writer.write(
               s"export TYP_LIB_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/lib/"
             )
@@ -830,11 +919,14 @@ object OpenROADTools {
               s"export GDS_FILES += ${config.zibalBuildPath}/macros/bondpad/bondpad_70x70.gds.gz\n"
             )
           }
-          for (instance: String <- macros.map(t => t._2).toSet) {
+          for (instance: String <- sramMacros) {
             writer.write(
               s"export GDS_FILES += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/gds/"
             )
             writer.write(s"${instance}.gds\n")
+          }
+          for (files <- externalMacros) {
+            writer.write(s"export GDS_FILES += ${files.gds}\n")
           }
           writer.write("export GDS_FILES += $(ADDITIONAL_GDS)\n")
           // CLD Files
@@ -846,11 +938,14 @@ object OpenROADTools {
               s"export CDL_FILE += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_io/cdl/${platform.tech}_io.cdl\n"
             )
           }
-          for (instance: String <- macros.map(t => t._2).toSet) {
+          for (instance: String <- sramMacros) {
             writer.write(
               s"export CDL_FILE += $$(PDK_ROOT)/ihp-${platform.tech}/libs.ref/${platform.tech}_sram/cdl/"
             )
             writer.write(s"${instance}.cdl\n")
+          }
+          for (files <- externalMacros) {
+            writer.write(s"export CDL_FILE += ${files.cdl}\n")
           }
 
           // HACK: Remove Filler4000 and Filler10000 because these narrow pad to core connections blocking the PDN stripes.
